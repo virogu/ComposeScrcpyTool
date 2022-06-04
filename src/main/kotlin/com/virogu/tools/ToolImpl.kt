@@ -1,0 +1,33 @@
+package com.virogu.tools
+
+import com.virogu.tools.adb.ProgressTool
+import com.virogu.tools.adb.ProgressToolsImpl
+import com.virogu.tools.config.ConfigTool
+import com.virogu.tools.config.ConfigToolImpl
+import com.virogu.tools.connect.DeviceConnectTool
+import com.virogu.tools.connect.DeviceConnectToolImpl
+import com.virogu.tools.log.LogTool
+import com.virogu.tools.log.LogToolImpl
+import com.virogu.tools.scrcpy.ScrcpyTool
+import com.virogu.tools.scrcpy.ScrcpyToolImpl
+import com.virogu.tools.sshd.SSHTool
+import com.virogu.tools.sshd.SSHToolImpl
+
+class ToolImpl : Tools {
+
+    override val progressTool: ProgressTool = ProgressToolsImpl()
+
+    override val sshTool: SSHTool = SSHToolImpl()
+
+    override val configTool: ConfigTool = ConfigToolImpl()
+
+    override val deviceConnectTool: DeviceConnectTool = DeviceConnectToolImpl(
+        configTool = configTool,
+        progressTool = progressTool,
+        sshTool = sshTool
+    )
+
+    override val logTool: LogTool = LogToolImpl()
+
+    override val scrcpyTool: ScrcpyTool = ScrcpyToolImpl(progressTool)
+}
