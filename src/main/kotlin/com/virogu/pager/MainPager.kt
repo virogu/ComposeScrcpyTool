@@ -3,13 +3,10 @@
 package com.virogu.pager
 
 import androidx.compose.animation.*
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
@@ -57,22 +54,35 @@ fun MainView(window: ComposeWindow, windowState: WindowState, tools: Tools) {
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        LazyColumn(
-            Modifier.weight(5f).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                ConnectDeviceView(windowState, tools)
+        Text(modifier = Modifier.align(Alignment.CenterHorizontally), text = "设备连接")
+        Row(modifier = Modifier.weight(5f).fillMaxWidth()) {
+            val listState = rememberLazyListState()
+            val scrollAdapter = rememberScrollbarAdapter(
+                scrollState = listState // TextBox height + Spacer height
+            )
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    ConnectDeviceView(windowState, tools)
+                }
+                item {
+                    DeviceListView(windowState, tools)
+                }
+                item {
+                    DeviceView(tools)
+                }
+                item {
+                    ScrcpyView(window, tools)
+                }
             }
-            item {
-                DeviceListView(windowState, tools)
-            }
-            item {
-                DeviceView(tools)
-            }
-            item {
-                ScrcpyView(tools)
-            }
+            VerticalScrollbar(
+                modifier = Modifier,
+                adapter = scrollAdapter,
+                reverseLayout = false,
+            )
         }
         LogView(tools.logTool)
     }
@@ -141,7 +151,7 @@ fun ConnectDeviceView(
             connectTool.connect(ip.value, port.value)
         }
 
-        val ipModifier = Modifier.onKeyEvent { event ->
+        val ipModifier = Modifier.defaultTextSize().onKeyEvent { event ->
             if (event.key == Key.Enter) {
                 connectAction()
                 true
@@ -171,7 +181,7 @@ fun ConnectDeviceView(
                 label = {
                     Text(text = "IP")
                 },
-                colors = TextFieldDefaults.outlinedTextFieldColors(textColor = contentColorFor(MaterialTheme.colors.background))
+                colors = TextFieldDefaults.outlinedTextFieldColors(textColor = contentColorFor(MaterialTheme.colors.background)),
             )
             OutlinedTextField(
                 value = port.value.toString(),
@@ -292,7 +302,7 @@ fun DeviceListView(
                 TextFieldDefaults.OutlinedTextFieldShape
             ).defaultMinSize(
                 minWidth = TextFieldDefaults.MinWidth,
-                minHeight = TextFieldDefaults.MinHeight
+                minHeight = 10.dp
             ).clickable {
                 expanded.value = true
             }.onPlaced {
@@ -302,7 +312,7 @@ fun DeviceListView(
             SelectionContainer {
                 Text(
                     text = current.value?.showName.orEmpty(),
-                    modifier = Modifier.align(Alignment.CenterStart).padding(16.dp)
+                    modifier = Modifier.defaultTextSize().align(Alignment.CenterStart).padding(16.dp)
                 )
             }
         }
@@ -371,7 +381,7 @@ fun DeviceView(tools: Tools) {
 
         OutlinedTextField(
             value = desc.value,
-            modifier = Modifier.onKeyEvent { event ->
+            modifier = Modifier.defaultTextSize().onKeyEvent { event ->
                 if (event.key == Key.Enter) {
                     updateDescAction()
                     true
@@ -486,3 +496,8 @@ fun LogView(
         )
     }
 }
+
+fun Modifier.defaultTextSize() = this.defaultMinSize(
+    minWidth = 100.dp,
+    minHeight = 10.dp
+)

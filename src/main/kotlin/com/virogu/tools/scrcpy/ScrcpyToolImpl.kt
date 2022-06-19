@@ -1,6 +1,6 @@
 package com.virogu.tools.scrcpy
 
-import com.virogu.bean.Configs
+import com.virogu.bean.ScrcpyConfig
 import com.virogu.tools.adb.ProgressTool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,9 +23,14 @@ class ScrcpyToolImpl(
 
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-    override val activeDevicesFLow: MutableStateFlow<Set<String>> = MutableStateFlow<Set<String>>(emptySet())
+    override val activeDevicesFLow = MutableStateFlow<Set<String>>(emptySet())
 
-    override fun connect(serial: String, config: Configs.ScrcpyConfig) {
+    override fun connect(
+        serial: String,
+        title: String,
+        commonConfig: ScrcpyConfig.CommonConfig,
+        config: ScrcpyConfig.Config
+    ) {
         withLock {
             if (scrcpyMap[serial] != null) {
                 return@withLock
@@ -34,6 +39,9 @@ class ScrcpyToolImpl(
                 "scrcpy",
                 "-s",
                 serial,
+                "--window-title=$title",
+                *commonConfig.args().toTypedArray(),
+                *config.args().toTypedArray()
             ) {
                 logger.info(it)
             } ?: run {

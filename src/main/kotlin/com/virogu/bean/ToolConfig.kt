@@ -16,10 +16,4 @@ data class Configs(
     ) {
         val showName: String get() = "$ip:$port"
     }
-
-    @Serializable
-    data class ScrcpyConfig(
-        val keepInTop: Boolean = false,
-        val enableAudio: Boolean = false,
-    )
 }

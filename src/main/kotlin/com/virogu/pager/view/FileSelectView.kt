@@ -1,18 +1,22 @@
 package com.virogu.pager.view
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.Text
+import androidx.compose.material.TextButton
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.dp
+import com.virogu.pager.defaultTextSize
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
@@ -37,7 +41,6 @@ fun FileSelectView(
     label: String,
     text: String,
     fileChooserType: Int,
-    placeholder: String? = null,
     filesFilter: Array<String> = emptyArray(),
     multiSelectionEnabled: Boolean = false,
     buttonText: String = "选择",
@@ -54,6 +57,10 @@ fun FileSelectView(
         )
     }
     Row(Modifier.fillMaxWidth().wrapContentHeight(), Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = label,
+            modifier = Modifier.width(80.dp).align(Alignment.CenterVertically)
+        )
         DropBoxPanel(Modifier.weight(1f), window = window, onFileDrop = {
             it.filter { f ->
                 val a1 = when (fileChooserType) {
@@ -85,31 +92,21 @@ fun FileSelectView(
                 }
             }
         }) {
-            OutlinedTextField(
-                value = text,
-                onValueChange = {},
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text(text = label)
-                },
-                placeholder = placeholder?.let {
-                    {
-                        Text(text = it)
-                    }
-                },
-                colors = TextFieldDefaults.outlinedTextFieldColors(textColor = contentColorFor(MaterialTheme.colors.background))
-            )
+            val borderStroke = animateBorderStrokeAsState()
+            Box(
+                modifier = Modifier.fillMaxWidth().defaultTextSize()
+                    .border(borderStroke.value, TextFieldDefaults.OutlinedTextFieldShape),
+            ) {
+                SelectionContainer {
+                    Text(text = text, modifier = Modifier.defaultTextSize().align(Alignment.CenterStart).padding(16.dp))
+                }
+            }
         }
-        Button(
+        TextButton(
             onClick = {
                 showFileChooser()
             },
             modifier = Modifier.align(Alignment.CenterVertically),
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = MaterialTheme.colors.primary,
-                //contentColor = contentColorFor(MaterialTheme.colors.primary),
-            ),
         ) {
             Text(buttonText)
         }
@@ -164,7 +161,6 @@ fun showFileChooser(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun DropBoxPanel(
     modifier: Modifier,

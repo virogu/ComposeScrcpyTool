@@ -1,6 +1,7 @@
 package com.virogu.tools.config
 
 import com.virogu.bean.Configs
+import com.virogu.bean.ScrcpyConfig
 import kotlinx.coroutines.flow.StateFlow
 
 interface ConfigTool {
@@ -11,7 +12,7 @@ interface ConfigTool {
 
     val historyDeviceFlow: StateFlow<List<Configs.HistoryDevice>>
 
-    val scrcpyConfigFlow: StateFlow<Map<String, Configs.ScrcpyConfig>>
+    val scrcpyConfigFlow: StateFlow<ScrcpyConfig>
 
     fun updateDesc(device: String, desc: String)
 
@@ -22,5 +23,9 @@ interface ConfigTool {
     fun removeLastConnect(device: Configs.HistoryDevice)
 
     fun clearHistoryConnect()
+
+    fun updateScrcpyConfig(config: ScrcpyConfig.CommonConfig)
+
+    fun updateScrcpyConfig(serial: String, config: ScrcpyConfig.Config)
 
 }

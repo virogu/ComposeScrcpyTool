@@ -74,7 +74,8 @@ abstract class BaseConfigTool : ConfigTool {
                 }
             }
             configsFlow.emit(new)
-            delay(2000)
+            delay(3000)
+            println("start save config to file")
             runCatching {
                 if (!configFile.exists()) {
                     configFile.parentFile.mkdirs()
@@ -82,6 +83,8 @@ abstract class BaseConfigTool : ConfigTool {
                 }
                 val s = json.encodeToString(Configs(new))
                 configFile.writeText(s)
+            }.onSuccess {
+                println("save config to file success")
             }.onFailure {
                 println(it)
             }
