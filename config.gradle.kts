@@ -45,7 +45,7 @@ val myPackageVersion: String by lazy {
 val myPackageVendor: String by project
 val winUpgradeUuid: String by project
 
-val programName = rootProject.name
+val programName = "ScrcpyTool"
 
 project.extra["gitCommitCount"] = gitCommitCount
 project.extra["programName"] = programName
