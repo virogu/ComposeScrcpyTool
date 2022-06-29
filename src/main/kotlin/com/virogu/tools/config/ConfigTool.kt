@@ -14,6 +14,8 @@ interface ConfigTool {
 
     val scrcpyConfigFlow: StateFlow<ScrcpyConfig>
 
+    fun writeConfigNow()
+
     fun updateDesc(device: String, desc: String)
 
     fun updateLastConnect(device: Configs.HistoryDevice)

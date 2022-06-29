@@ -19,7 +19,7 @@ abstract class BaseConfigTool : ConfigTool {
 
     final override val configsFlow: MutableStateFlow<Map<String, String>> = MutableStateFlow(emptyMap())
 
-    protected var updateJob: Job? = null
+    protected var writeConfigJob: Job? = null
 
     init {
         @OptIn(ExperimentalSerializationApi::class)
@@ -65,8 +65,8 @@ abstract class BaseConfigTool : ConfigTool {
     ): T = getConfig(key, defaultValue)!!
 
     protected inline fun <reified T> updateConfig(key: String, value: T) {
-        updateJob?.cancel()
-        updateJob = scope.launch {
+        writeConfigJob?.cancel()
+        writeConfigJob = scope.launch {
             val new = configsFlow.value.toMutableMap().apply {
                 runCatching {
                     val s = json.encodeToString<T>(value)
@@ -76,18 +76,32 @@ abstract class BaseConfigTool : ConfigTool {
             configsFlow.emit(new)
             delay(3000)
             println("start save config to file")
-            runCatching {
-                if (!configFile.exists()) {
-                    configFile.parentFile.mkdirs()
-                    configFile.createNewFile()
-                }
-                val s = json.encodeToString(Configs(new))
-                configFile.writeText(s)
-            }.onSuccess {
-                println("save config to file success")
-            }.onFailure {
-                println(it)
+            writeConfigToFile()
+        }
+    }
+
+    protected suspend fun writeConfigToFile() = withContext(Dispatchers.IO) {
+        runCatching {
+            if (!configFile.exists()) {
+                configFile.parentFile.mkdirs()
+                configFile.createNewFile()
             }
+            val s = json.encodeToString<Configs>(Configs(configsFlow.value))
+            configFile.writeText(s)
+        }.onSuccess {
+            println("save config to file success")
+        }.onFailure {
+            println(it)
+        }
+    }
+
+    final override fun writeConfigNow() {
+        if (writeConfigJob?.isActive != true) {
+            return
+        }
+        writeConfigJob?.cancel()
+        runBlocking {
+            writeConfigToFile()
         }
     }
 

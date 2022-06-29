@@ -14,7 +14,6 @@ import com.virogu.bean.AdbDevice
 import com.virogu.bean.ScrcpyConfig
 import com.virogu.pager.view.FileSelectView
 import com.virogu.tools.Tools
-import com.virogu.tools.config.ConfigTool
 import com.virogu.tools.scrcpy.ScrcpyTool
 import javax.swing.JFileChooser
 
@@ -28,10 +27,15 @@ fun ScrcpyView(window: ComposeWindow, tools: Tools) {
     val currentDevice = connectTool.currentSelectedDevice.collectAsState()
     val isBusy = scrcpyTool.isBusy.collectAsState()
 
-    val commonConfig = remember(scrcpyConfig.value.commonConfig) {
+    val (commonConfig, updateCommonConfig) = remember {
         mutableStateOf(scrcpyConfig.value.commonConfig)
     }
-    val currentConfig = remember(scrcpyConfig.value.configs, currentDevice.value) {
+    LaunchedEffect(commonConfig) {
+        if (commonConfig != configTool.scrcpyConfigFlow.value.commonConfig) {
+            configTool.updateScrcpyConfig(commonConfig)
+        }
+    }
+    val (specialConfig, updateSpecialConfig) = remember(scrcpyConfig.value, currentDevice.value) {
         mutableStateOf(currentDevice.value?.let {
             scrcpyConfig.value.configs[it.serial]
         } ?: ScrcpyConfig.Config())
@@ -41,31 +45,28 @@ fun ScrcpyView(window: ComposeWindow, tools: Tools) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(modifier = Modifier.align(Alignment.CenterHorizontally), text = "启动配置")
-        ScrcpyConfigView(window, configTool, commonConfig, currentConfig)
-        ScrcpOptionView(scrcpyTool, isBusy, commonConfig, currentDevice, currentConfig)
+        ScrcpyConfigView(window, commonConfig, updateCommonConfig, specialConfig)
+        ScrcpOptionView(scrcpyTool, isBusy, commonConfig, currentDevice, specialConfig)
     }
 }
 
 @Composable
 private fun ScrcpyConfigView(
     window: ComposeWindow,
-    configTool: ConfigTool,
-    commonConfig: MutableState<ScrcpyConfig.CommonConfig>,
-    currentConfig: MutableState<ScrcpyConfig.Config>
+    commonConfig: ScrcpyConfig.CommonConfig,
+    updateCommonConfig: (ScrcpyConfig.CommonConfig) -> Unit,
+    specialConfig: ScrcpyConfig.Config
 ) {
-    LaunchedEffect(commonConfig.value) {
-        configTool.updateScrcpyConfig(commonConfig.value)
-    }
     FileSelectView(
         window = window,
         label = "录像路径",
-        text = commonConfig.value.recordPath,
+        text = commonConfig.recordPath,
         fileChooserType = JFileChooser.DIRECTORIES_ONLY,
-        defaultPath = commonConfig.value.recordPath,
+        defaultPath = commonConfig.recordPath,
         multiSelectionEnabled = false
     ) {
         it.firstOrNull()?.path?.also { path ->
-            commonConfig.value = commonConfig.value.copy(recordPath = path)
+            updateCommonConfig(commonConfig.copy(recordPath = path))
         }
     }
     Row(
@@ -73,24 +74,24 @@ private fun ScrcpyConfigView(
     ) {
         CheckBoxView(
             "录制屏幕",
-            checked = commonConfig.value.recordEnable,
+            checked = commonConfig.recordEnable,
             modifier = Modifier.weight(1f)
         ) {
-            commonConfig.value = commonConfig.value.copy(recordEnable = it)
+            updateCommonConfig(commonConfig.copy(recordEnable = it))
         }
         CheckBoxView(
             "开启音频",
-            checked = commonConfig.value.enableAudio,
+            checked = commonConfig.enableAudio,
             modifier = Modifier.weight(1f)
         ) {
-            commonConfig.value = commonConfig.value.copy(enableAudio = it)
+            updateCommonConfig(commonConfig.copy(enableAudio = it))
         }
         CheckBoxView(
             "窗口置顶",
-            checked = commonConfig.value.alwaysOnTop,
+            checked = commonConfig.alwaysOnTop,
             modifier = Modifier.weight(1f)
         ) {
-            commonConfig.value = commonConfig.value.copy(alwaysOnTop = it)
+            updateCommonConfig(commonConfig.copy(alwaysOnTop = it))
         }
         Spacer(Modifier.weight(1f))
     }
@@ -99,31 +100,31 @@ private fun ScrcpyConfigView(
     ) {
         CheckBoxView(
             "设备息屏",
-            checked = commonConfig.value.turnScreenOff,
+            checked = commonConfig.turnScreenOff,
             modifier = Modifier.weight(1f)
         ) {
-            commonConfig.value = commonConfig.value.copy(turnScreenOff = it)
+            updateCommonConfig(commonConfig.copy(turnScreenOff = it))
         }
         CheckBoxView(
             "保持唤醒",
-            checked = commonConfig.value.stayAwake,
+            checked = commonConfig.stayAwake,
             modifier = Modifier.weight(1f)
         ) {
-            commonConfig.value = commonConfig.value.copy(stayAwake = it)
+            updateCommonConfig(commonConfig.copy(stayAwake = it))
         }
         CheckBoxView(
             "显示触摸",
-            checked = commonConfig.value.showTouches,
+            checked = commonConfig.showTouches,
             modifier = Modifier.weight(1f)
         ) {
-            commonConfig.value = commonConfig.value.copy(showTouches = it)
+            updateCommonConfig(commonConfig.copy(showTouches = it))
         }
         CheckBoxView(
             "无边框",
-            checked = commonConfig.value.noWindowBorder,
+            checked = commonConfig.noWindowBorder,
             modifier = Modifier.weight(1f)
         ) {
-            commonConfig.value = commonConfig.value.copy(noWindowBorder = it)
+            updateCommonConfig(commonConfig.copy(noWindowBorder = it))
         }
     }
 
@@ -158,9 +159,9 @@ private fun CheckBoxView(
 private fun ScrcpOptionView(
     scrcpyTool: ScrcpyTool,
     isBusy: State<Boolean>,
-    commonConfig: State<ScrcpyConfig.CommonConfig>,
+    commonConfig: ScrcpyConfig.CommonConfig,
     currentDevice: State<AdbDevice?>,
-    currentConfig: State<ScrcpyConfig.Config>
+    currentConfig: ScrcpyConfig.Config
 ) {
     val activeDevices = scrcpyTool.activeDevicesFLow.collectAsState()
     val currentActive = remember(currentDevice.value, activeDevices.value) {
@@ -173,8 +174,8 @@ private fun ScrcpOptionView(
                 scrcpyTool.connect(
                     device.serial,
                     device.showName,
-                    commonConfig.value,
-                    currentConfig.value
+                    commonConfig,
+                    currentConfig
                 )
             },
             enabled = !isBusy.value && currentDevice.value != null && !currentActive.value,

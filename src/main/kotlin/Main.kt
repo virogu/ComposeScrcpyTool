@@ -1,4 +1,3 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
@@ -11,11 +10,10 @@ import org.kodein.di.conf.global
 import org.kodein.di.instance
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.prefs.Preferences
 
 
-private val preferences = Preferences.userRoot()
-private const val KEY_LAST_WINDOWS_SIZE = "key-last-windows-size"
+//private val preferences = Preferences.userRoot()
+//private const val KEY_LAST_WINDOWS_SIZE = "key-last-windows-size"
 
 val logger: Logger = LoggerFactory.getLogger("MainLogger")
 
@@ -77,10 +75,13 @@ private fun init() {
 private fun ApplicationScope.exit() {
     logger.info("exit app")
     val tools by DI.global.instance<Tools>()
-    tools.sshTool.destroy()
-    tools.scrcpyTool.disConnect()
-    tools.progressTool.destroy()
-    tools.logTool.stop()
-    exitApplication()
+    tools.apply {
+        sshTool.destroy()
+        scrcpyTool.disConnect()
+        progressTool.destroy()
+        logTool.stop()
+        configTool.writeConfigNow()
+    }
     logger.info("exited")
+    exitApplication()
 }
