@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -41,6 +40,7 @@ import com.virogu.pager.view.animateBorderStrokeAsState
 import com.virogu.tools.Tools
 import com.virogu.tools.log.LogTool
 import logger
+import views.defaultTextSize
 
 /**
  * @author Virogu
@@ -151,7 +151,7 @@ fun ConnectDeviceView(
             connectTool.connect(ip.value, port.value)
         }
 
-        val ipModifier = Modifier.defaultTextSize().onKeyEvent { event ->
+        val ipModifier = Modifier.onKeyEvent { event ->
             if (event.key == Key.Enter) {
                 connectAction()
                 true
@@ -300,21 +300,17 @@ fun DeviceListView(
             modifier = Modifier.weight(1f).border(
                 borderStroke.value,
                 TextFieldDefaults.OutlinedTextFieldShape
-            ).defaultMinSize(
-                minWidth = TextFieldDefaults.MinWidth,
-                minHeight = 10.dp
-            ).clickable {
+            ).defaultTextSize().clickable {
                 expanded.value = true
             }.onPlaced {
                 dropMenuWidth.value = it.size.width.dp
-            },
+            }.align(Alignment.CenterVertically),
         ) {
-            SelectionContainer {
-                Text(
-                    text = current.value?.showName.orEmpty(),
-                    modifier = Modifier.defaultTextSize().align(Alignment.CenterStart).padding(16.dp)
-                )
-            }
+            Text(
+                text = current.value?.showName.orEmpty(),
+                maxLines = 1,
+                modifier = Modifier.align(Alignment.CenterStart).padding(horizontal = 16.dp)
+            )
         }
         DropdownMenu(
             expanded = expanded.value,
@@ -370,7 +366,6 @@ fun DeviceView(tools: Tools) {
             mutableStateOf(current.value?.desc.orEmpty())
         }
         Text("设备名称", modifier = Modifier.width(80.dp).align(Alignment.CenterVertically))
-
         val updateDescAction = label@{
             if (isBusy.value) {
                 return@label
@@ -378,10 +373,9 @@ fun DeviceView(tools: Tools) {
             current.value ?: return@label
             connectTool.updateCurrentDesc(desc.value)
         }
-
         OutlinedTextField(
             value = desc.value,
-            modifier = Modifier.defaultTextSize().onKeyEvent { event ->
+            modifier = Modifier.onKeyEvent { event ->
                 if (event.key == Key.Enter) {
                     updateDescAction()
                     true
@@ -497,7 +491,3 @@ fun LogView(
     }
 }
 
-fun Modifier.defaultTextSize() = this.defaultMinSize(
-    minWidth = 100.dp,
-    minHeight = 10.dp
-)

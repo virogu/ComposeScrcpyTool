@@ -1,11 +1,10 @@
 package com.virogu.pager.view
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
-import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -15,8 +14,9 @@ import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.virogu.pager.defaultTextSize
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
@@ -38,12 +38,11 @@ private val projectRootPath = File("./").absoluteFile
 @Composable
 fun FileSelectView(
     window: ComposeWindow,
-    label: String,
     text: String,
     fileChooserType: Int,
+    modifier: Modifier = Modifier.height(40.dp),
     filesFilter: Array<String> = emptyArray(),
     multiSelectionEnabled: Boolean = false,
-    buttonText: String = "选择",
     defaultPath: String = "",
     onFileSelected: (selectedFiles: Array<File>) -> Unit = {}
 ) {
@@ -56,59 +55,65 @@ fun FileSelectView(
             onFileSelected = onFileSelected
         )
     }
-    Row(Modifier.fillMaxWidth().wrapContentHeight(), Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = label,
-            modifier = Modifier.width(80.dp).align(Alignment.CenterVertically)
-        )
-        DropBoxPanel(Modifier.weight(1f), window = window, onFileDrop = {
-            it.filter { f ->
-                val a1 = when (fileChooserType) {
-                    JFileChooser.FILES_ONLY -> {
-                        f.isFile
-                    }
 
-                    JFileChooser.DIRECTORIES_ONLY -> {
-                        f.isDirectory
-                    }
-
-                    else -> {
-                        true
-                    }
+    DropBoxPanel(modifier, window = window, onFileDrop = {
+        val list = it.filter { f ->
+            val a1 = when (fileChooserType) {
+                JFileChooser.FILES_ONLY -> {
+                    f.isFile
                 }
-                val a2 = if (filesFilter.isEmpty()) {
+
+                JFileChooser.DIRECTORIES_ONLY -> {
+                    f.isDirectory
+                }
+
+                else -> {
                     true
-                } else {
-                    f.isDirectory || (f.isFile && f.extension in filesFilter)
-                }
-                a1 && a2
-            }.also { list ->
-                if (multiSelectionEnabled) {
-                    onFileSelected(list.toTypedArray())
-                } else {
-                    if (list.size == 1) {
-                        onFileSelected(list.toTypedArray())
-                    }
                 }
             }
-        }) {
-            val borderStroke = animateBorderStrokeAsState()
-            Box(
-                modifier = Modifier.fillMaxWidth().defaultTextSize()
-                    .border(borderStroke.value, TextFieldDefaults.OutlinedTextFieldShape),
-            ) {
-                SelectionContainer {
-                    Text(text = text, modifier = Modifier.defaultTextSize().align(Alignment.CenterStart).padding(16.dp))
-                }
+            val a2 = if (filesFilter.isEmpty()) {
+                true
+            } else {
+                f.isDirectory || (f.isFile && f.extension in filesFilter)
+            }
+            a1 && a2
+        }
+        if (multiSelectionEnabled) {
+            onFileSelected(list.toTypedArray())
+        } else {
+            if (list.size == 1) {
+                onFileSelected(list.toTypedArray())
             }
         }
-        TextButton(
-            onClick = {
-                showFileChooser()
-            },
-            modifier = Modifier.align(Alignment.CenterVertically),
+    }) {
+        val borderStroke = animateBorderStrokeAsState()
+        Box(
+            modifier = modifier.border(borderStroke.value, TextFieldDefaults.OutlinedTextFieldShape),
         ) {
-            Text(buttonText)
+            SelectionContainer(
+                Modifier.fillMaxSize().align(Alignment.Center)
+            ) {
+                Text(
+                    text = text,
+                    maxLines = 1,
+                    modifier = Modifier.wrapContentHeight().fillMaxWidth().align(Alignment.Center).padding(
+                        start = 8.dp, end = 8.dp
+                    ),
+                    textAlign = TextAlign.Start
+                )
+            }
+            Box(
+                Modifier.fillMaxHeight().clickable {
+                    showFileChooser()
+                }.aspectRatio(1f).padding().align(Alignment.CenterEnd)
+            ) {
+                Icon(
+                    painter = painterResource("icons/ic_folder.xml"),
+                    contentDescription = "选择文件",
+                    modifier = Modifier.fillMaxHeight(0.6f).aspectRatio(1f).align(Alignment.Center),
+                    tint = contentColorFor(MaterialTheme.colors.background)
+                )
+            }
         }
     }
 }
@@ -174,13 +179,17 @@ fun DropBoxPanel(
                 override fun drop(event: DropTargetDropEvent) {
                     event.acceptDrop(DnDConstants.ACTION_REFERENCE)
                     val dataFlavors = event.transferable.transferDataFlavors
+                    val files = mutableListOf<File>()
                     dataFlavors.forEach {
                         if (it == DataFlavor.javaFileListFlavor) {
                             val list = event.transferable.getTransferData(it) as List<*>
-                            list.map { filePath ->
+                            files.addAll(list.map { filePath ->
                                 File(filePath.toString())
-                            }.also(onFileDrop)
+                            })
                         }
+                    }
+                    if (files.isNotEmpty()) {
+                        onFileDrop(files)
                     }
                     event.dropComplete(true)
                 }

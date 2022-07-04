@@ -75,7 +75,6 @@ abstract class BaseConfigTool : ConfigTool {
             }
             configsFlow.emit(new)
             delay(3000)
-            println("start save config to file")
             writeConfigToFile()
         }
     }
@@ -88,8 +87,6 @@ abstract class BaseConfigTool : ConfigTool {
             }
             val s = json.encodeToString<Configs>(Configs(configsFlow.value))
             configFile.writeText(s)
-        }.onSuccess {
-            println("save config to file success")
         }.onFailure {
             println(it)
         }

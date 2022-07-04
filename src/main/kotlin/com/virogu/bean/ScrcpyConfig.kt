@@ -36,7 +36,7 @@ data class ScrcpyConfig(
                     it.exists() && it.isDirectory
                 }
             ) {
-                "--record=${recordPath}/record_${System.currentTimeMillis()}.${recordFormat.value}"
+                "--record=${recordPath}/scrcpy_record_${System.currentTimeMillis()}.${recordFormat.value}"
             } else {
                 null
             },
