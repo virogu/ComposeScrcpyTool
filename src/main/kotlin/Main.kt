@@ -31,7 +31,7 @@ private val size by lazy {
 //    } catch (e: Throwable) {
 //        DpSize(700.dp, 620.dp)
 //    }
-    DpSize(700.dp, 800.dp)
+    DpSize(700.dp, 750.dp)
 }
 
 fun main() = application {
@@ -44,7 +44,7 @@ fun main() = application {
     )
     Window(
         onCloseRequest = ::exit,
-        title = "工具",
+        title = "ScrcpyTool",
         state = state,
         undecorated = false,
         icon = icon,
