@@ -36,7 +36,7 @@ private val size by lazy {
 
 fun main() = application {
     init()
-    val icon = painterResource("icon.ico")
+    val icon = painterResource("logo.svg")
     val state = rememberWindowState(
         placement = WindowPlacement.Floating,
         size = size,

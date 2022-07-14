@@ -8,8 +8,11 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.decodeFromStream
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileInputStream
+import java.io.IOException
 
 abstract class BaseConfigTool : ConfigTool {
 
@@ -89,6 +92,9 @@ abstract class BaseConfigTool : ConfigTool {
             configFile.writeText(s)
         }.onFailure {
             println(it)
+            if (it is IOException) {
+                logger.warn("无法保存配置，请尝试以管理员身份运行")
+            }
         }
     }
 
@@ -100,6 +106,10 @@ abstract class BaseConfigTool : ConfigTool {
         runBlocking {
             writeConfigToFile()
         }
+    }
+
+    companion object {
+        private val logger: Logger = LoggerFactory.getLogger(BaseConfigTool::class.java)
     }
 
 }

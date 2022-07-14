@@ -106,7 +106,7 @@ compose.desktop {
                 shortcut = true
                 perUserInstall = false
                 //menuGroup = myMenuGroup
-                iconFile.set(project.file("src/main/resources/icon.ico"))
+                iconFile.set(project.file("logo/logo.ico"))
                 upgradeUuid = winUpgradeUuid
             }
         }
