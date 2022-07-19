@@ -75,3 +75,21 @@ private fun WindowScope.AppTitleView(
         }
     }
 }
+
+val currentOsName: String by lazy {
+    System.getProperty("os.name")
+}
+
+val currentOsVersion: String by lazy {
+    System.getProperty("os.version")
+}
+
+val pingCommand: Array<String>? by lazy {
+    if (currentOsName.contains("windows", true)) {
+        arrayOf("ping", "-n", "1")
+    } else if (currentOsName.contains("linux", true)) {
+        arrayOf("ping", "-c", "1")
+    } else {
+        null
+    }
+}

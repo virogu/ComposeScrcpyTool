@@ -35,6 +35,7 @@ private val size by lazy {
 }
 
 fun main() = application {
+    println("Current OS [${currentOsName}, version:${currentOsVersion}]")
     init()
     val icon = painterResource("logo.svg")
     val state = rememberWindowState(
