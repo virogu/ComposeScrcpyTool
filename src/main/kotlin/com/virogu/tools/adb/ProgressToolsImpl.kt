@@ -147,6 +147,7 @@ class ProgressToolsImpl : ProgressTool {
             }
             return process
         } catch (e: Throwable) {
+            logger.warn("启动服务失败, ${e.localizedMessage}")
             e.printStackTrace()
             return null
         }
