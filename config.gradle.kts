@@ -29,14 +29,20 @@ val gitCommitShortid: String = with(ByteArrayOutputStream()) {
     }
 }
 
-val packageVersionTriple by lazy {
-    val MAJOR = (gitCommitCount / 1000 / 255).coerceAtLeast(1)
-    val MINOR = (gitCommitCount / 1000 % 255)
-    val PATCH = gitCommitCount % 1000
+val packageVersionTriple: Triple<Int, Int, Int> by lazy {
+    val MAJOR = (gitCommitCount / 100 / 100).coerceAtLeast(1)
+    val MINOR = (gitCommitCount / 100 % 100)
+    val PATCH = gitCommitCount % 100
     Triple(MAJOR, MINOR, PATCH)
 }
 
-val myPackageVersion: String by lazy {
+val msiPackageVersion: String by lazy {
+    with(packageVersionTriple) {
+        "${first}.${second}.${third}"
+    }
+}
+
+val debPackageVersion: String by lazy {
     with(packageVersionTriple) {
         "${first}.${second}.${third}"
     }
@@ -52,7 +58,8 @@ project.extra["programName"] = programName
 project.extra["buildFormatDate"] = buildFormatDate
 project.extra["gitCommitShortid"] = gitCommitShortid
 project.extra["packageVersionTriple"] = packageVersionTriple
-project.extra["myPackageVersion"] = myPackageVersion
+project.extra["myMsiPackageVersion"] = msiPackageVersion
+project.extra["myDebPackageVersion"] = debPackageVersion
 
 tasks.create("packageMsiAndRename") {
     group = "publish"
@@ -62,7 +69,7 @@ tasks.create("packageMsiAndRename") {
         project.rootDir.resolve("out/packages/main/msi").listFiles()?.filter {
             it.name.endsWith(".msi")
         }?.forEach {
-            val newName = "$programName-${myPackageVersion}_${gitCommitShortid}.msi"
+            val newName = "$programName-${msiPackageVersion}_${gitCommitShortid}.msi"
             println("rename [${it.name}] to [$newName]")
             it.renameTo(File(it.parentFile, newName))
         }
@@ -83,7 +90,7 @@ task("zipPackageFiles", Zip::class) {
     }
     // programName-myPackageVersion-gitCommitShortid.zip
     archiveBaseName.set(programName)
-    archiveAppendix.set(myPackageVersion)
+    archiveAppendix.set(msiPackageVersion)
     archiveVersion.set(gitCommitShortid)
     archiveExtension.set("zip")
     destinationDirectory.set(rootProject.rootDir.resolve("out/zip"))

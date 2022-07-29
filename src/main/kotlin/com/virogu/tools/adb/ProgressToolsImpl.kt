@@ -32,8 +32,8 @@ class ProgressToolsImpl : ProgressTool {
     )
 
     private val commandPath = mapOf(
-        "adb" to File(workDir, "app/adb").path,
-        "scrcpy" to File(workDir, "app/scrcpy").path,
+        "adb" to File(workDir, "app/adb").absolutePath,
+        "scrcpy" to File(workDir, "app/scrcpy").absolutePath,
     )
 
     override suspend fun exec(
@@ -112,7 +112,7 @@ class ProgressToolsImpl : ProgressTool {
                     this.add(0, it)
                 }
             }
-            val process = ProcessBuilder(
+            val processBuilder = ProcessBuilder(
                 cmd,
             ).apply {
                 directory(workDir)
@@ -122,21 +122,28 @@ class ProgressToolsImpl : ProgressTool {
                     putAll(env)
                     putAll(environment)
                 }
-            }.start().also {
-                it.onExit().thenApply {
-                    scope.launch {
-                        processMapMutex.withLock {
-                            processList.remove(it.pid())
-                        }
+            }
+            val progress = processBuilder.start()
+            progress.onExit().thenApply {
+                println("process ${it.pid()} exit[${it.exitValue()}]. ")
+                scope.launch {
+                    processMapMutex.withLock {
+                        processList.remove(it.pid())
                     }
                 }
-                processMapMutex.withLock {
-                    processList[it.pid()] = it
-                }
+            }
+            processMapMutex.withLock {
+                processList[progress.pid()] = progress
             }
             scope.launch {
-                BufferedReader(process.inputReader(charset)).use {
-                    while (process.isAlive && isActive) {
+                BufferedReader(progress.inputReader(charset)).use {
+                    runCatching {
+                        val first = it.readLine()
+                        if (first.isNotEmpty()) {
+                            onReadLine(first)
+                        }
+                    }
+                    while (progress.isAlive && isActive) {
                         if (it.ready()) {
                             val s = it.readLine()
                             onReadLine(s)
@@ -145,9 +152,9 @@ class ProgressToolsImpl : ProgressTool {
                     }
                 }
             }
-            return process
+            return progress
         } catch (e: Throwable) {
-            logger.warn("启动服务失败, ${e.localizedMessage}")
+            logger.warn("执行失败, ${e.localizedMessage}")
             e.printStackTrace()
             return null
         }

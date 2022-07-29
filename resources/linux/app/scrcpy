@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Run scrcpy-main generated in the specified BUILDDIR.
+#
+# This provides the same feature as "ninja scrcpy-main", except that it is possible to
+# pass arguments to scrcpy-main.
+#
+# Syntax: ./scrcpy-main <scrcpy-main options ...>
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+SCRCPY_ICON_PATH="$SCRIPT_DIR/logo.svg" \
+SCRCPY_SERVER_PATH="$SCRIPT_DIR/scrcpy-server" \
+ADB_PATH="$SCRIPT_DIR" \
+"$SCRIPT_DIR/scrcpy-main" "$@"

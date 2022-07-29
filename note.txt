@@ -1,0 +1,6 @@
+
+Linux上报错:
+xdg-desktop-menu: No writable system menu directory found.
+
+解决办法:
+sudo mkdir /usr/share/desktop-directories/

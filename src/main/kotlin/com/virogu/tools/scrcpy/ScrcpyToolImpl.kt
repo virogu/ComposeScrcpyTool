@@ -41,7 +41,7 @@ class ScrcpyToolImpl(
                 serial,
                 "--window-title=$title",
                 *commonConfig.args().toTypedArray(),
-                *config.args().toTypedArray()
+                *config.args().toTypedArray(),
             ) {
                 logger.info(it)
             } ?: run {

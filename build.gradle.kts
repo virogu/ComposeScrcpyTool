@@ -7,7 +7,8 @@ val programName: String by project
 val gitCommitCount: Int by project
 val buildFormatDate: String by project
 val gitCommitShortid: String by project
-val myPackageVersion: String by project
+val myMsiPackageVersion: String by project
+val myDebPackageVersion: String by project
 val myPackageVendor: String by project
 val winUpgradeUuid: String by project
 val javaVersion = JavaVersion.VERSION_17
@@ -97,17 +98,30 @@ compose.desktop {
             outputBaseDir.set(project.rootDir.resolve("out/packages"))
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = programName
-            packageVersion = myPackageVersion
             vendor = myPackageVendor
             windows {
+                packageVersion = myMsiPackageVersion
                 //console = true
                 menu = true
                 dirChooser = true
                 shortcut = true
                 perUserInstall = false
-                //menuGroup = myMenuGroup
+                //menuGroup = "Tools"
                 iconFile.set(project.file("logo/logo.ico"))
                 upgradeUuid = winUpgradeUuid
+            }
+            linux {
+                iconFile.set(project.file("logo/logo.png"))
+                packageVersion = myDebPackageVersion
+                // an email of the deb package's maintainer;
+                debMaintainer = "virogu@foxmail.com"
+                // a menu group for the application;
+                menuGroup = "Development"
+                // a release value for the rpm package, or a revision value for the deb package;
+                appRelease = "$gitCommitCount"
+                // a group value for the rpm package, or a section value for the deb package;
+                appCategory = "utils"
+                shortcut = true
             }
         }
         fromFiles(project.fileTree("app/"))
