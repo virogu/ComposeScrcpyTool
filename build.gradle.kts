@@ -10,6 +10,7 @@ val gitCommitShortid: String by project
 val myMsiPackageVersion: String by project
 val myDebPackageVersion: String by project
 val myPackageVendor: String by project
+val myCopyright: String by project
 val winUpgradeUuid: String by project
 val javaVersion = JavaVersion.VERSION_17
 val javaVersionString = "17"
@@ -100,6 +101,7 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = programName
             vendor = myPackageVendor
+            copyright = myCopyright
             windows {
                 packageVersion = myMsiPackageVersion
                 //console = true
