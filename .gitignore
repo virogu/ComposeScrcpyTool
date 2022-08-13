@@ -41,5 +41,4 @@ bin/
 ### Mac OS ###
 .DS_Store
 .idea
-/app/config/
-/log/
+/app/

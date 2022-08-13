@@ -16,10 +16,10 @@
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
         </filter>
-        <file>log/rolling/log.log</file>
+        <file>app/log/rolling/log.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>log/rolling/log.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>app/log/rolling/log.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <!-- each file should be at most 20MB, keep 14 days worth of history, but at most 100MB -->
             <maxFileSize>20MB</maxFileSize>
             <maxHistory>14</maxHistory>
