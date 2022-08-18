@@ -5,9 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
@@ -46,14 +44,17 @@ fun FileSelectView(
     defaultPath: String = "",
     onFileSelected: (selectedFiles: Array<File>) -> Unit = {}
 ) {
+    val currentOnFileSelected by rememberUpdatedState(onFileSelected)
+
     val showFileChooser = {
         showFileChooser(
             defaultPath = defaultPath,
             fileChooserType = fileChooserType,
             filesFilter = filesFilter,
             multiSelectionEnabled = multiSelectionEnabled,
-            onFileSelected = onFileSelected
-        )
+        ) {
+            currentOnFileSelected(it)
+        }
     }
 
     DropBoxPanel(modifier, window = window, onFileDrop = {
@@ -79,10 +80,10 @@ fun FileSelectView(
             a1 && a2
         }
         if (multiSelectionEnabled) {
-            onFileSelected(list.toTypedArray())
+            currentOnFileSelected(list.toTypedArray())
         } else {
             if (list.size == 1) {
-                onFileSelected(list.toTypedArray())
+                currentOnFileSelected(list.toTypedArray())
             }
         }
     }) {

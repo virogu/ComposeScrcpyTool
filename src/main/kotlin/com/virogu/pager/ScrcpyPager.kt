@@ -60,18 +60,17 @@ private fun ScrcpyConfigView(
     config: ScrcpyConfig.CommonConfig,
     updateCommonConfig: (ScrcpyConfig.CommonConfig) -> Unit,
 ) {
+    val currentUpdateCommonConfig by rememberUpdatedState(updateCommonConfig)
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         val modifier = Modifier.height(40.dp).align(Alignment.CenterVertically)
         SelectRecordPathView(modifier.weight(2f), window, config.recordPath) {
-            updateCommonConfig(scrcpyConfig.value.commonConfig.copy(recordPath = it))
-            //不知道为什么这样写的话，拖拽文件触发这个函数时，会变成旧的config
-            //updateCommonConfig(config.copy(recordPath = it))
+            currentUpdateCommonConfig(config.copy(recordPath = it))
         }
         RecordFormatView(modifier.weight(1f), config.recordFormat) {
-            updateCommonConfig(config.copy(recordFormat = it))
+            currentUpdateCommonConfig(config.copy(recordFormat = it))
         }
     }
     Row(
@@ -83,28 +82,28 @@ private fun ScrcpyConfigView(
             checked = config.recordEnable,
             modifier = modifier
         ) {
-            updateCommonConfig(config.copy(recordEnable = it))
+            currentUpdateCommonConfig(config.copy(recordEnable = it))
         }
         CheckBoxView(
             "开启音频",
             checked = config.enableAudio,
             modifier = modifier
         ) {
-            updateCommonConfig(config.copy(enableAudio = it))
+            currentUpdateCommonConfig(config.copy(enableAudio = it))
         }
         CheckBoxView(
             "窗口置顶",
             checked = config.alwaysOnTop,
             modifier = modifier
         ) {
-            updateCommonConfig(config.copy(alwaysOnTop = it))
+            currentUpdateCommonConfig(config.copy(alwaysOnTop = it))
         }
         CheckBoxView(
             "保持唤醒",
             checked = config.stayAwake,
             modifier = modifier
         ) {
-            updateCommonConfig(config.copy(stayAwake = it))
+            currentUpdateCommonConfig(config.copy(stayAwake = it))
         }
 
     }
@@ -117,21 +116,21 @@ private fun ScrcpyConfigView(
             checked = config.showTouches,
             modifier = modifier
         ) {
-            updateCommonConfig(config.copy(showTouches = it))
+            currentUpdateCommonConfig(config.copy(showTouches = it))
         }
         CheckBoxView(
             "设备息屏",
             checked = config.turnScreenOff,
             modifier = modifier
         ) {
-            updateCommonConfig(config.copy(turnScreenOff = it))
+            currentUpdateCommonConfig(config.copy(turnScreenOff = it))
         }
         CheckBoxView(
             "无边框",
             checked = config.noWindowBorder,
             modifier = modifier
         ) {
-            updateCommonConfig(config.copy(noWindowBorder = it))
+            currentUpdateCommonConfig(config.copy(noWindowBorder = it))
         }
         Spacer(modifier)
     }
@@ -144,6 +143,8 @@ private fun SelectRecordPathView(
     recordPath: String,
     onFileSelected: (String) -> Unit
 ) {
+    val currentOnFileSelected by rememberUpdatedState(onFileSelected)
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -158,7 +159,7 @@ private fun SelectRecordPathView(
             multiSelectionEnabled = false
         ) {
             it.firstOrNull()?.path?.also { path ->
-                onFileSelected(path)
+                currentOnFileSelected(path)
             }
         }
     }
