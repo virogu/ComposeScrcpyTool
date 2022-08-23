@@ -5,6 +5,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.virogu.di.initDi
 import com.virogu.tools.Tools
+import com.virogu.tools.currentOsName
+import com.virogu.tools.currentOsVersion
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance

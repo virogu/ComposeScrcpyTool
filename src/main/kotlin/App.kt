@@ -8,6 +8,9 @@ import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
@@ -17,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.WindowScope
 import androidx.compose.ui.window.WindowState
+import com.virogu.pager.InitPager
 import com.virogu.pager.MainView
 import com.virogu.tools.Tools
 import theme.MainTheme
@@ -34,11 +38,19 @@ fun WindowScope.App(
     state: WindowState,
     tools: Tools
 ) {
+    val initState = tools.initTool.initStateFlow.collectAsState()
     MainTheme {
         Surface {
             Column {
                 //AppTitleView(applicationScope, state)
-                MainView(window, state, tools)
+                val (initStateSuccess, _) = remember(initState.value) {
+                    mutableStateOf(initState.value.success)
+                }
+                if (initStateSuccess) {
+                    MainView(window, state, tools)
+                } else {
+                    InitPager(initState)
+                }
             }
         }
     }
@@ -73,23 +85,5 @@ private fun WindowScope.AppTitleView(
                 }
             }
         }
-    }
-}
-
-val currentOsName: String by lazy {
-    System.getProperty("os.name")
-}
-
-val currentOsVersion: String by lazy {
-    System.getProperty("os.version")
-}
-
-val pingCommand: Array<String>? by lazy {
-    if (currentOsName.contains("windows", true)) {
-        arrayOf("ping", "-n", "1")
-    } else if (currentOsName.contains("linux", true)) {
-        arrayOf("ping", "-c", "1")
-    } else {
-        null
     }
 }

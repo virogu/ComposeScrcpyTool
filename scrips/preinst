@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# for error xdg-desktop-menu: No writable system menu directory found.
+mkdir /usr/share/desktop-directories/
+
+exit 0

@@ -1,5 +1,6 @@
 package com.virogu.tools.adb
 
+import com.virogu.tools.commonWorkDir
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -20,11 +21,7 @@ class ProgressToolsImpl : ProgressTool {
     private val processList: HashMap<Long, Process> = HashMap()
 
     private val workDir: File by lazy {
-        val file = File(System.getProperty("compose.application.resources.dir")).also {
-            logger.info("resourcesDir: ${it.absolutePath}")
-        }
-        //logger.info("workFile: ${file.absolutePath}")
-        file.absoluteFile
+        commonWorkDir
     }
 
     private val env = mapOf(

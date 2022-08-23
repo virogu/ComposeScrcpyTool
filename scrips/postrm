@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# get the installation path
+install_path=$(dpkg-query -W --showformat='${Installed-Size}\t${Package}\n' | grep "^$1" | cut -f 1 | xargs dpkg-query -W --showformat='${Installed-Files}\n' | sed "s|/.*||" | sort -u)
+
+# remove the log directory and its contents
+rm -rf "$install_path/bin/log"
+rm -rf "$install_path/bin/app"
+
+exit 0

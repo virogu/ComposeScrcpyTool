@@ -124,9 +124,10 @@ compose.desktop {
                 appRelease = "$gitCommitCount"
                 // a group value for the rpm package, or a section value for the deb package;
                 appCategory = "utils"
+                //installationPath = "/data/opt/apps"
                 shortcut = true
             }
         }
-        fromFiles(project.fileTree("app/"))
+        //fromFiles(project.fileTree("app/"))
     }
 }

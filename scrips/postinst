@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# get the installation path
+install_path=$2
+
+# set ownership and permissions of the adb file
+# chown root:root "$install_path/lib/app/resources/app/adb"
+chmod +x "$install_path/lib/app/resources/app/adb"
+chmod +x "$install_path/lib/app/resources/app/scrcpy"
+chmod +x "$install_path/lib/app/resources/app/scrcpy-main"
+
+# create the log directory and set permissions
+mkdir -p "$install_path/bin/log/rolling"
+chmod -R a+rw "$install_path/bin/log"
+
+mkdir -p "$install_path/bin/app"
+chmod -R a+rw "$install_path/bin/app"
+
+exit 0
