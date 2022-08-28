@@ -19,7 +19,6 @@ abstract class ScrcpyConfigTool : HistoryDeviceConfigTool() {
     override fun updateScrcpyConfig(config: ScrcpyConfig.CommonConfig) {
         val current = scrcpyConfigFlow.value
         if (config == current.commonConfig) {
-            println("new common config is same as before, return.")
             return
         }
         val new = current.copy(

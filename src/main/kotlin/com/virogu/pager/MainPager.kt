@@ -51,7 +51,7 @@ fun MainView(window: ComposeWindow, windowState: WindowState, tools: Tools) {
     //val stateHorizontal = rememberScrollState(0)
     //val coroutineScope = rememberCoroutineScope()
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(modifier = Modifier.align(Alignment.CenterHorizontally), text = "设备连接")
@@ -61,7 +61,7 @@ fun MainView(window: ComposeWindow, windowState: WindowState, tools: Tools) {
                 scrollState = listState // TextBox height + Spacer height
             )
             LazyColumn(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -483,7 +483,7 @@ fun LogView(
         }
     ) { targetState ->
         LogListView(
-            modifier = Modifier.height(if (targetState) 200.dp else 60.dp),
+            modifier = Modifier.height(if (targetState) 200.dp else 40.dp),
             logList = logList,
             state = logState,
             adapter = logAdapter,

@@ -2,14 +2,25 @@
 
 package com.virogu.pager
 
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,16 +50,31 @@ fun ScrcpyView(window: ComposeWindow, tools: Tools) {
             scrcpyConfig.value.configs[it.serial]
         } ?: ScrcpyConfig.Config())
     }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(modifier = Modifier.align(Alignment.CenterHorizontally), text = "启动配置")
-        ScrcpyConfigView(window, scrcpyConfig, commonConfig) {
-            if (it != scrcpyConfig.value.commonConfig) {
+        ScrcpyConfigView(
+            window = window,
+            specialConfig = specialConfig,
+            commonConfig = commonConfig,
+            specialConfigEnable = currentDevice.value != null,
+            updateCommonConfig = label@{
+                if (it == commonConfig) {
+                    return@label
+                }
                 configTool.updateScrcpyConfig(it)
+            },
+            updateSpecialConfig = label@{
+                val device = currentDevice.value ?: return@label
+                if (it == specialConfig) {
+                    return@label
+                }
+                configTool.updateScrcpyConfig(device.serial, it)
             }
-        }
+        )
         ScrcpyOptionView(scrcpyTool, isBusy.value, commonConfig, currentDevice.value, specialConfig)
     }
 }
@@ -56,54 +82,138 @@ fun ScrcpyView(window: ComposeWindow, tools: Tools) {
 @Composable
 private fun ScrcpyConfigView(
     window: ComposeWindow,
-    scrcpyConfig: State<ScrcpyConfig>,
-    config: ScrcpyConfig.CommonConfig,
+    specialConfig: ScrcpyConfig.Config,
+    commonConfig: ScrcpyConfig.CommonConfig,
+    specialConfigEnable: Boolean,
     updateCommonConfig: (ScrcpyConfig.CommonConfig) -> Unit,
+    updateSpecialConfig: (ScrcpyConfig.Config) -> Unit,
 ) {
     val currentUpdateCommonConfig by rememberUpdatedState(updateCommonConfig)
-
+    val currentUpdateSpecialConfig by rememberUpdatedState(updateSpecialConfig)
     Row(
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         val modifier = Modifier.height(40.dp).align(Alignment.CenterVertically)
-        SelectRecordPathView(modifier.weight(2f), window, config.recordPath) {
-            currentUpdateCommonConfig(config.copy(recordPath = it))
-        }
-        RecordFormatView(modifier.weight(1f), config.recordFormat) {
-            currentUpdateCommonConfig(config.copy(recordFormat = it))
+        SelectRecordPathView(modifier.weight(2f), window, commonConfig.recordPath) {
+            currentUpdateCommonConfig(commonConfig.copy(recordPath = it))
         }
     }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        val modifier = Modifier.height(40.dp).weight(1f).align(Alignment.CenterVertically)
+        DropMenuConfigView(
+            modifier,
+            label = {
+                Text("录像格式", Modifier.width(80.dp).align(Alignment.CenterVertically))
+            },
+            currentValue = commonConfig.recordFormat,
+            menuList = ScrcpyConfig.RecordFormat.values().toList(),
+            valueFormat = { it.value },
+        ) {
+            currentUpdateCommonConfig(commonConfig.copy(recordFormat = it))
+        }
+        DropMenuConfigView(
+            modifier,
+            label = {
+                Text("视频编码", Modifier.width(80.dp).align(Alignment.CenterVertically))
+            },
+            currentValue = specialConfig.videoCodec,
+            menuList = ScrcpyConfig.VideoCodec.values().toList(),
+            valueFormat = { it.value },
+            enabled = specialConfigEnable,
+        ) {
+            currentUpdateSpecialConfig(specialConfig.copy(videoCodec = it))
+        }
+        DropMenuConfigView(
+            modifier,
+            label = {
+                Text("比特率", Modifier.width(80.dp).align(Alignment.CenterVertically))
+            },
+            currentValue = specialConfig.bitRate,
+            menuList = ScrcpyConfig.VideoBiteRate.values().toList(),
+            valueFormat = { it.value },
+            enabled = specialConfigEnable,
+        ) {
+            currentUpdateSpecialConfig(specialConfig.copy(bitRate = it))
+        }
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        val modifier = Modifier.height(40.dp).weight(1f).align(Alignment.CenterVertically)
+        DropMenuConfigView(
+            modifier,
+            label = {
+                Text("最大尺寸", Modifier.width(80.dp).align(Alignment.CenterVertically))
+            },
+            currentValue = specialConfig.maxSize,
+            menuList = ScrcpyConfig.MaxSize.values().toList(),
+            valueFormat = { it.value },
+            enabled = specialConfigEnable,
+        ) {
+            currentUpdateSpecialConfig(specialConfig.copy(maxSize = it))
+        }
+
+        DropMenuConfigView(
+            modifier,
+            label = {
+                Text("视频方向", Modifier.width(80.dp).align(Alignment.CenterVertically))
+            },
+            currentValue = specialConfig.videoRotation,
+            menuList = ScrcpyConfig.VideoRotation.values().toList(),
+            valueFormat = { it.desc },
+            enabled = specialConfigEnable,
+        ) {
+            currentUpdateSpecialConfig(specialConfig.copy(videoRotation = it))
+        }
+        DropMenuConfigView(
+            modifier,
+            label = {
+                Text("窗口方向", Modifier.width(80.dp).align(Alignment.CenterVertically))
+            },
+            currentValue = specialConfig.windowRotation,
+            menuList = ScrcpyConfig.WindowRotation.values().toList(),
+            valueFormat = { it.desc },
+            enabled = specialConfigEnable,
+        ) {
+            currentUpdateSpecialConfig(specialConfig.copy(windowRotation = it))
+        }
+    }
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         val modifier = Modifier.weight(1f)
         CheckBoxView(
             "录制屏幕",
-            checked = config.recordEnable,
+            checked = commonConfig.recordEnable,
             modifier = modifier
         ) {
-            currentUpdateCommonConfig(config.copy(recordEnable = it))
+            currentUpdateCommonConfig(commonConfig.copy(recordEnable = it))
         }
         CheckBoxView(
             "开启音频",
-            checked = config.enableAudio,
+            checked = commonConfig.enableAudio,
             modifier = modifier
         ) {
-            currentUpdateCommonConfig(config.copy(enableAudio = it))
+            currentUpdateCommonConfig(commonConfig.copy(enableAudio = it))
         }
         CheckBoxView(
             "窗口置顶",
-            checked = config.alwaysOnTop,
+            checked = commonConfig.alwaysOnTop,
             modifier = modifier
         ) {
-            currentUpdateCommonConfig(config.copy(alwaysOnTop = it))
+            currentUpdateCommonConfig(commonConfig.copy(alwaysOnTop = it))
         }
         CheckBoxView(
             "保持唤醒",
-            checked = config.stayAwake,
+            checked = commonConfig.stayAwake,
             modifier = modifier
         ) {
-            currentUpdateCommonConfig(config.copy(stayAwake = it))
+            currentUpdateCommonConfig(commonConfig.copy(stayAwake = it))
         }
 
     }
@@ -113,27 +223,28 @@ private fun ScrcpyConfigView(
         val modifier = Modifier.weight(1f)
         CheckBoxView(
             "显示触摸",
-            checked = config.showTouches,
+            checked = commonConfig.showTouches,
             modifier = modifier
         ) {
-            currentUpdateCommonConfig(config.copy(showTouches = it))
+            currentUpdateCommonConfig(commonConfig.copy(showTouches = it))
         }
         CheckBoxView(
             "设备息屏",
-            checked = config.turnScreenOff,
+            checked = commonConfig.turnScreenOff,
             modifier = modifier
         ) {
-            currentUpdateCommonConfig(config.copy(turnScreenOff = it))
+            currentUpdateCommonConfig(commonConfig.copy(turnScreenOff = it))
         }
         CheckBoxView(
             "无边框",
-            checked = config.noWindowBorder,
+            checked = commonConfig.noWindowBorder,
             modifier = modifier
         ) {
-            currentUpdateCommonConfig(config.copy(noWindowBorder = it))
+            currentUpdateCommonConfig(commonConfig.copy(noWindowBorder = it))
         }
         Spacer(modifier)
     }
+
 }
 
 @Composable
@@ -166,11 +277,18 @@ private fun SelectRecordPathView(
 }
 
 @Composable
-private fun RecordFormatView(
+private fun <T> DropMenuConfigView(
     modifier: Modifier = Modifier,
-    recordFormat: ScrcpyConfig.RecordFormat,
-    onFormatChanged: (ScrcpyConfig.RecordFormat) -> Unit
+    label: @Composable RowScope.() -> Unit,
+    currentValue: T,
+    menuList: Collection<T>,
+    valueFormat: (T) -> String,
+    enabled: Boolean = true,
+    onMenuSelected: (T) -> Unit
 ) {
+    val currentOnMenuSelected by rememberUpdatedState(onMenuSelected)
+    val currentValueFormat by rememberUpdatedState(valueFormat)
+
     val expanded = remember { mutableStateOf(false) }
     val borderStroke = com.virogu.pager.view.animateBorderStrokeAsState()
 
@@ -181,11 +299,18 @@ private fun RecordFormatView(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text("录制格式", Modifier.width(80.dp).align(Alignment.CenterVertically))
+        label()
         Box(
-            modifier = Modifier.clickable {
+            modifier = Modifier.clickable(enabled) {
                 expanded.value = true
-            }.weight(1f).fillMaxHeight().border(
+            }.weight(1f).background(
+                if (enabled) {
+                    Color.Transparent
+                } else {
+                    MaterialTheme.colors.onSurface.copy(alpha = 0.1f)
+                },
+                TextFieldDefaults.OutlinedTextFieldShape
+            ).fillMaxHeight().border(
                 borderStroke.value,
                 TextFieldDefaults.OutlinedTextFieldShape
             ).onPlaced {
@@ -193,7 +318,7 @@ private fun RecordFormatView(
             },
         ) {
             Text(
-                text = recordFormat.value,
+                text = currentValueFormat(currentValue),
                 modifier = Modifier.align(Alignment.Center).padding(0.dp),
                 textAlign = TextAlign.Center
             )
@@ -204,16 +329,18 @@ private fun RecordFormatView(
                 },
                 modifier = Modifier.width(dropMenuWidth.value),
             ) {
-                ScrcpyConfig.RecordFormat.values().forEach {
-                    Text(text = it.value, modifier = Modifier.fillMaxWidth().clickable {
-                        onFormatChanged(it)
-                        expanded.value = false
-                    }.padding(16.dp, 10.dp, 16.dp, 10.dp))
+                menuList.forEach {
+                    Text(
+                        text = currentValueFormat(it),
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            currentOnMenuSelected(it)
+                            expanded.value = false
+                        }.padding(16.dp, 10.dp, 16.dp, 10.dp)
+                    )
                 }
             }
         }
     }
-
 }
 
 @Composable
@@ -242,7 +369,7 @@ private fun CheckBoxView(
 }
 
 @Composable
-private fun ScrcpyOptionView(
+private fun ColumnScope.ScrcpyOptionView(
     scrcpyTool: ScrcpyTool,
     isBusy: Boolean,
     commonConfig: ScrcpyConfig.CommonConfig,
@@ -253,31 +380,42 @@ private fun ScrcpyOptionView(
     val currentActive = remember(currentDevice, activeDevices.value) {
         mutableStateOf(currentDevice != null && activeDevices.value.contains(currentDevice.serial))
     }
-    Row {
-        TextButton(
-            onClick = {
-                val device = currentDevice ?: return@TextButton
-                scrcpyTool.connect(
-                    device.serial,
-                    device.showName,
-                    commonConfig,
-                    specialConfig
-                )
-            },
-            enabled = !isBusy && currentDevice != null && !currentActive.value,
-            modifier = Modifier.align(Alignment.CenterVertically)
-        ) {
-            Text("启动服务")
-        }
-        TextButton(
-            onClick = {
-                val device = currentDevice ?: return@TextButton
+    Button(
+        onClick = label@{
+            val device = currentDevice ?: return@label
+            if (currentActive.value) {
                 scrcpyTool.disConnect(device.serial)
-            },
-            enabled = !isBusy && currentDevice != null && currentActive.value,
-            modifier = Modifier.align(Alignment.CenterVertically)
+            } else {
+                scrcpyTool.connect(device.serial, device.showName, commonConfig, specialConfig)
+            }
+        },
+        modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally),
+        enabled = !isBusy && currentDevice != null,
+        shape = AbsoluteRoundedCornerShape(100.dp),
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = MaterialTheme.colors.primary,
+            contentColor = Color.White,
+        ),
+        contentPadding = PaddingValues(8.dp)
+    ) {
+        val rotationAngle by updateTransition(currentActive.value).animateFloat(
+            transitionSpec = { tween(durationMillis = 200) }
         ) {
-            Text("断开服务")
+            if (it) 360f else 0f
         }
+        val imageVector = if (currentActive.value) {
+            Icons.Filled.Close
+        } else {
+            Icons.Filled.ArrowForward
+        }
+        Icon(
+            imageVector = imageVector,
+            contentDescription = if (currentActive.value) "断开服务" else "启动服务",
+            modifier = Modifier.graphicsLayer(
+                rotationZ = rotationAngle,
+                transformOrigin = TransformOrigin.Center
+            ),
+            tint = contentColorFor(MaterialTheme.colors.primary)
+        )
     }
 }

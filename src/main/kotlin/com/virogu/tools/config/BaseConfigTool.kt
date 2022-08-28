@@ -90,6 +90,7 @@ abstract class BaseConfigTool : ConfigTool {
             }
             val s = json.encodeToString<Configs>(Configs(configsFlow.value))
             configFile.writeText(s)
+            println("config updated")
         }.onFailure {
             println(it)
             if (it is IOException) {

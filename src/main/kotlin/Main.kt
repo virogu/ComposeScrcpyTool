@@ -33,7 +33,7 @@ private val size by lazy {
 //    } catch (e: Throwable) {
 //        DpSize(700.dp, 620.dp)
 //    }
-    DpSize(700.dp, 750.dp)
+    DpSize(700.dp, 820.dp)
 }
 
 fun main() = application {

@@ -3,6 +3,9 @@ package com.virogu.bean
 import kotlinx.serialization.Serializable
 import java.io.File
 
+/**
+ * [ConfigDoc](https://github.com/Genymobile/scrcpy/blob/master/doc/video.md)
+ */
 @Serializable
 data class ScrcpyConfig(
     val commonConfig: CommonConfig = CommonConfig(),
@@ -48,18 +51,71 @@ data class ScrcpyConfig(
         )
     }
 
+    @Serializable
+    data class Config(
+        //--max-size=1024  -m 1024
+        val maxSize: MaxSize = MaxSize.Default,
+        //--video-bit-rate=2M -b 2M
+        val bitRate: VideoBiteRate = VideoBiteRate.M8,
+        //--video-codec=h264
+        val videoCodec: VideoCodec = VideoCodec.H264,
+        //--lock-video-orientation
+        val videoRotation: VideoRotation = VideoRotation.Default,
+        //--rotation=0
+        val windowRotation: WindowRotation = WindowRotation.R0
+    ) {
+        fun args() = listOfNotNull(
+            "--max-size=${maxSize.value}".takeIf { maxSize != MaxSize.Default },
+            "--video-bit-rate=${bitRate.value}",
+            "--video-codec=${videoCodec.value}",
+            "--lock-video-orientation=${videoRotation.value}".takeIf { videoRotation != VideoRotation.Default },
+            "--rotation=${windowRotation.value}"
+        )
+    }
+
+    enum class MaxSize(val value: String) {
+        Default("原始"),
+        W640("640"),
+        W720("720"),
+        W1080("1080"),
+        W1280("1280"),
+        W1920("1920"),
+    }
+
+    enum class VideoBiteRate(val value: String) {
+        M1("1M"),
+        M2("2M"),
+        M4("4M"),
+        M8("8M"),
+        M20("20M"),
+        M50("50M"),
+        M100("100M"),
+    }
+
+    enum class VideoCodec(val value: String) {
+        H264("h264"),
+        H265("h265"),
+        AV1("av1"),
+    }
+
     enum class RecordFormat(val value: String) {
         MP4("mp4"),
         MKV("mkv"),
     }
 
-    @Serializable
-    class Config(
+    enum class VideoRotation(val value: String, val desc: String) {
+        Default("0", "默认"),
+        R0("0", "0°"),
+        R1("1", "90°"),
+        R2("2", "180°"),
+        R3("3", "270°"),
+    }
 
-    ) {
-        fun args() = listOfNotNull<String>(
-
-        )
+    enum class WindowRotation(val value: String, val desc: String) {
+        R0("0", "默认"),
+        R1("1", "90°"),
+        R2("2", "180°"),
+        R3("3", "270°"),
     }
 
 }
