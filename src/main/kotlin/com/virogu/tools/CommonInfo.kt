@@ -40,9 +40,39 @@ val pingCommand: Array<String>? by lazy {
     }
 }
 
-val commonWorkDir: File by lazy {
-    val file = File(System.getProperty("compose.application.resources.dir")).also {
+val commonResourceDir: File by lazy {
+    File(System.getProperty("compose.application.resources.dir")).also {
         logger.info("workFile: ${it.absolutePath}")
+    }.absoluteFile
+}
+
+val commonWorkDir: File by lazy {
+    val file = when (currentPlateForm) {
+        is PlateForm.Windows -> commonResourceDir
+
+        is PlateForm.Linux -> File(projectDataDir, "app").also {
+            it.runCatching {
+                if (!exists()) {
+                    mkdirs()
+                }
+            }
+        }
+
+        else -> commonResourceDir
     }
     file.absoluteFile
+}
+
+val userRootConfigDir: File by lazy {
+    val userDir = System.getProperty("user.home")
+    val file = when (currentPlateForm) {
+        is PlateForm.Windows -> File(userDir, "AppData/Roaming")
+        is PlateForm.Linux -> File(userDir, ".config")
+        else -> File(userDir, "config")
+    }
+    file
+}
+
+val projectDataDir: File by lazy {
+    File(userRootConfigDir, "scrcpy-tool")
 }

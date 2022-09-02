@@ -1,6 +1,7 @@
 package com.virogu.tools.init
 
 import com.virogu.tools.adb.ProgressTool
+import com.virogu.tools.commonResourceDir
 import com.virogu.tools.commonWorkDir
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +13,7 @@ class LinuxInitTool(
     private val progressTool: ProgressTool
 ) : InitTool {
 
-    override val initStateFlow: MutableStateFlow<InitState> = MutableStateFlow(InitState(true))
+    override val initStateFlow: MutableStateFlow<InitState> = MutableStateFlow(InitState(false))
 
     override fun init() {
         runBlocking {
@@ -23,8 +24,20 @@ class LinuxInitTool(
     }
 
     private suspend fun innerInit() = runCatching {
-        val cannotRunFiles = mutableListOf<File>()
-        val cannotWriteFiles = mutableListOf<File>()
+        File(commonResourceDir, "app").listFiles()?.forEach {
+            val f = File(commonWorkDir, "app/${it.name}")
+            if (!f.exists()) {
+                it.copyTo(f, true)
+                println("copy [$it] to [$f]")
+            }
+        }
+        File(commonResourceDir, "files").listFiles()?.forEach {
+            val f = File(commonWorkDir, "files/${it.name}")
+            if (!f.exists()) {
+                it.copyTo(f, true)
+                println("copy [$it] to [$f]")
+            }
+        }
         listOf(
             File(commonWorkDir, "app/adb"),
             File(commonWorkDir, "app/scrcpy"),
@@ -39,35 +52,18 @@ class LinuxInitTool(
                 println("[$it]")
                 false
             })
-            if (!runnable) {
-                println("${f.absolutePath} can not run")
-                cannotRunFiles.add(f)
+            if (runnable) {
+                return@forEach
+            }
+            progressTool.exec(
+                "chmod", "+x", f.absolutePath
+            ).onSuccess {
+                println("chmod +x ${f.absolutePath}, result: [$it]")
+            }.onFailure {
+                println("chmod +x ${f.absolutePath}, result: [$it]")
             }
         }
-        listOf(
-            File("app"),
-        ).forEach { f ->
-            if (!f.canWrite() || !f.canRead()) {
-                cannotWriteFiles.add(f.absoluteFile)
-            }
-        }
-        if (cannotRunFiles.isEmpty() && cannotWriteFiles.isEmpty()) {
-            initStateFlow.emit(InitState(true))
-        } else {
-            val msg = buildString {
-                appendLine("程序相关文件无法执行/写入，请复制以下命令到终端里面执行，然后再重启程序")
-            }
-            val subMsg = buildString {
-                cannotRunFiles.forEach { f ->
-                    appendLine("sudo chmod +x ${f.absolutePath}")
-                }
-                cannotWriteFiles.forEach { f ->
-                    appendLine("sudo mkdir ${f.absolutePath}")
-                    appendLine("sudo chmod -R a+rwX ${f.absolutePath}")
-                }
-            }
-            initStateFlow.emit(InitState(false, msg, subMsg))
-        }
+        initStateFlow.emit(InitState(true))
     }
 
 }

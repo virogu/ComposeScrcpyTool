@@ -2,6 +2,7 @@ package com.virogu.tools.config
 
 import com.virogu.bean.Configs
 import com.virogu.tools.json
+import com.virogu.tools.projectDataDir
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -16,7 +17,7 @@ import java.io.IOException
 
 abstract class BaseConfigTool : ConfigTool {
 
-    protected open val configFile: File = File("app/config", "app_preferences")
+    protected open val configFile: File = File(projectDataDir, "config/app_preferences")
 
     protected val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
