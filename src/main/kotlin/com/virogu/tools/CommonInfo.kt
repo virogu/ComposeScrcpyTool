@@ -50,7 +50,7 @@ val commonWorkDir: File by lazy {
     val file = when (currentPlateForm) {
         is PlateForm.Windows -> commonResourceDir
 
-        is PlateForm.Linux -> File(projectDataDir, "app").also {
+        is PlateForm.Linux -> projectDataDir.also {
             it.runCatching {
                 if (!exists()) {
                     mkdirs()
