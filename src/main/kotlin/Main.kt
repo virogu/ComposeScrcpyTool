@@ -5,8 +5,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.virogu.di.initDi
 import com.virogu.tools.Tools
-import com.virogu.tools.currentOsName
-import com.virogu.tools.currentOsVersion
+import com.virogu.tools.currentPlateForm
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
@@ -37,7 +36,7 @@ private val size by lazy {
 }
 
 fun main() = application {
-    println("Current OS [${currentOsName}, version:${currentOsVersion}]")
+    println("Current OS [${currentPlateForm.info}, version:${currentPlateForm.version}]")
     init()
     val icon = painterResource("logo.svg")
     val state = rememberWindowState(

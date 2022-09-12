@@ -1,5 +1,6 @@
 package com.virogu.tools.adb
 
+import com.virogu.tools.appendCommonEnvironment
 import com.virogu.tools.commonWorkDir
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -23,10 +24,6 @@ class ProgressToolsImpl : ProgressTool {
     private val workDir: File by lazy {
         commonWorkDir
     }
-
-    private val env = mapOf(
-        "LANG" to "en_US.UTF-8",
-    )
 
     private val commandPath = mapOf(
         "adb" to File(workDir, "app/adb").absolutePath,
@@ -57,7 +54,7 @@ class ProgressToolsImpl : ProgressTool {
                 redirectErrorStream(true)
                 val ev = environment()
                 ev.apply {
-                    putAll(env)
+                    appendCommonEnvironment()
                     putAll(environment)
                 }
             }.start().also {
@@ -116,7 +113,7 @@ class ProgressToolsImpl : ProgressTool {
                 redirectErrorStream(true)
                 val ev = environment()
                 ev.apply {
-                    putAll(env)
+                    appendCommonEnvironment()
                     putAll(environment)
                 }
             }

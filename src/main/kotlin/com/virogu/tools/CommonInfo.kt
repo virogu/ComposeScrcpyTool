@@ -8,11 +8,11 @@ val logger: Logger by lazy {
     LoggerFactory.getLogger("CommonLogger")
 }
 
-sealed class PlateForm(info: String, version: String) {
-    data class Windows(val info: String, val version: String) : PlateForm(info, version)
-    data class Linux(val info: String, val version: String) : PlateForm(info, version)
-    data class MacOs(val info: String, val version: String) : PlateForm(info, version)
-    data class Unknown(val info: String, val version: String) : PlateForm(info, version)
+sealed class PlateForm(open val info: String, open val version: String) {
+    data class Windows(override val info: String, override val version: String) : PlateForm(info, version)
+    data class Linux(override val info: String, override val version: String) : PlateForm(info, version)
+    data class MacOs(override val info: String, override val version: String) : PlateForm(info, version)
+    data class Unknown(override val info: String, override val version: String) : PlateForm(info, version)
 }
 
 val currentOsName: String by lazy {
@@ -75,4 +75,21 @@ val userRootConfigDir: File by lazy {
 
 val projectDataDir: File by lazy {
     File(userRootConfigDir, "scrcpy-tool")
+}
+
+fun MutableMap<String, String>.appendCommonEnvironment(): MutableMap<String, String> {
+    val path = buildString {
+        append(File(commonWorkDir, "app").absolutePath)
+        get("PATH")?.let {
+            when (currentPlateForm) {
+                is PlateForm.Windows -> append(";")
+                is PlateForm.Linux -> append(":")
+                else -> append(";")
+            }
+            append(it)
+        }
+    }
+    put("PATH", path)
+    put("LANG", "en_US.UTF-8")
+    return this
 }
