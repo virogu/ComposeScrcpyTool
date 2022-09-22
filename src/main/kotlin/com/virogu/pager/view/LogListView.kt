@@ -16,6 +16,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.spi.ILoggingEvent
 import java.text.SimpleDateFormat
@@ -42,7 +43,7 @@ fun LogListView(
     Box(modifier = modifier) {
         SelectionContainer {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
                 state = state,
                 reverseLayout = reverseLayout,
                 verticalArrangement = verticalArrangement,

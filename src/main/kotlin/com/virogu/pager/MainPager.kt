@@ -3,6 +3,7 @@
 package com.virogu.pager
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,10 +15,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -40,6 +38,7 @@ import com.virogu.pager.view.animateBorderStrokeAsState
 import com.virogu.tools.Tools
 import com.virogu.tools.log.LogTool
 import logger
+import theme.Red_500
 import views.defaultTextSize
 
 /**
@@ -103,11 +102,12 @@ fun ConnectDeviceView(
         val isBusy = connectTool.isBusy.collectAsState()
         val history = configTool.historyDeviceFlow.collectAsState()
 
+        val lastConnectedDevice = history.value.firstOrNull()
         val ip = remember {
-            mutableStateOf("")
+            mutableStateOf(lastConnectedDevice?.ip.orEmpty())
         }
         val port = remember {
-            mutableStateOf(5555)
+            mutableStateOf(lastConnectedDevice?.port ?: 5555)
         }
 
         //for drop menu
@@ -403,6 +403,7 @@ fun DeviceView(tools: Tools) {
                 }
             },
             enabled = !isBusy.value && current.value != null,
+            colors = ButtonDefaults.textButtonColors(contentColor = Red_500),
             modifier = Modifier.align(Alignment.CenterVertically)
         ) {
             Text("断开连接")
@@ -412,6 +413,7 @@ fun DeviceView(tools: Tools) {
                 connectTool.disconnectAll()
             },
             enabled = !isBusy.value,
+            colors = ButtonDefaults.textButtonColors(contentColor = Red_500),
             modifier = Modifier.align(Alignment.CenterVertically)
         ) {
             Text("全部断开")
@@ -434,6 +436,11 @@ fun LogView(
     val (showLogView, showLogViewSet) = remember {
         mutableStateOf(false)
     }
+
+    val logViewHeight by remember(showLogView) {
+        mutableStateOf(if (showLogView) 200 else 40)
+    }
+
     Box(Modifier.fillMaxWidth()) {
         Row(Modifier.align(Alignment.CenterStart)) {
             TextButton(
@@ -471,19 +478,29 @@ fun LogView(
         }
     }
     AnimatedContent(
-        targetState = showLogView,
+        targetState = logViewHeight,
         transitionSpec = {
-            if (targetState) {
-                slideInVertically(initialOffsetY = { it }) + expandVertically() with
-                        slideOutVertically(targetOffsetY = { it }) + shrinkVertically()
+            if (targetState > initialState) {
+                slideInVertically(
+                    animationSpec = tween(200),
+                    initialOffsetY = { it - initialState }
+                ) with slideOutVertically(
+                    animationSpec = tween(200),
+                    targetOffsetY = { -initialState }
+                )
             } else {
-                slideInVertically(initialOffsetY = { -it }) + expandVertically() with
-                        slideOutVertically(targetOffsetY = { -it }) + shrinkVertically()
+                slideInVertically(
+                    animationSpec = tween(200),
+                    initialOffsetY = { targetState - initialState }
+                ) with slideOutVertically(
+                    animationSpec = tween(200),
+                    targetOffsetY = { initialState }
+                )
             }
         }
     ) { targetState ->
         LogListView(
-            modifier = Modifier.height(if (targetState) 200.dp else 40.dp),
+            modifier = Modifier.height(targetState.dp).fillMaxWidth(),
             logList = logList,
             state = logState,
             adapter = logAdapter,

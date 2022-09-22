@@ -2,14 +2,13 @@
 
 package com.virogu.pager
 
-import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
@@ -19,8 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,6 +26,7 @@ import com.virogu.bean.ScrcpyConfig
 import com.virogu.pager.view.FileSelectView
 import com.virogu.tools.Tools
 import com.virogu.tools.scrcpy.ScrcpyTool
+import theme.materialColors
 import javax.swing.JFileChooser
 
 @Composable
@@ -368,6 +366,7 @@ private fun CheckBoxView(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun ColumnScope.ScrcpyOptionView(
     scrcpyTool: ScrcpyTool,
@@ -380,6 +379,26 @@ private fun ColumnScope.ScrcpyOptionView(
     val currentActive = remember(currentDevice, activeDevices.value) {
         mutableStateOf(currentDevice != null && activeDevices.value.contains(currentDevice.serial))
     }
+    val colors = materialColors
+
+    val buttonEnabled by remember(isBusy, currentDevice) {
+        mutableStateOf(!isBusy && currentDevice != null)
+    }
+
+    val buttonColor by animateColorAsState(
+        targetValue = remember(currentDevice, currentActive.value) {
+            val color = if (currentDevice == null) {
+                colors.onSurface.copy(alpha = 0.12f)
+            } else {
+                if (currentActive.value) {
+                    Color.Red
+                } else {
+                    colors.primary
+                }
+            }
+            mutableStateOf(color)
+        }.value
+    )
     Button(
         onClick = label@{
             val device = currentDevice ?: return@label
@@ -390,32 +409,26 @@ private fun ColumnScope.ScrcpyOptionView(
             }
         },
         modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally),
-        enabled = !isBusy && currentDevice != null,
-        shape = AbsoluteRoundedCornerShape(100.dp),
-        colors = ButtonDefaults.buttonColors(
-            backgroundColor = MaterialTheme.colors.primary,
-            contentColor = Color.White,
-        ),
+        enabled = buttonEnabled,
+        shape = CircleShape,
+        colors = ButtonDefaults.buttonColors(backgroundColor = buttonColor),
         contentPadding = PaddingValues(8.dp)
     ) {
-        val rotationAngle by updateTransition(currentActive.value).animateFloat(
-            transitionSpec = { tween(durationMillis = 200) }
-        ) {
-            if (it) 360f else 0f
+        AnimatedContent(
+            targetState = currentActive.value,
+            transitionSpec = {
+                slideInHorizontally(tween(200)) { -it } with slideOutHorizontally(tween(200)) { it }
+            }
+        ) { active ->
+            Icon(
+                imageVector = if (active) {
+                    Icons.Filled.Close
+                } else {
+                    Icons.Filled.ArrowForward
+                },
+                contentDescription = if (active) "断开服务" else "启动服务",
+                tint = contentColorFor(buttonColor)
+            )
         }
-        val imageVector = if (currentActive.value) {
-            Icons.Filled.Close
-        } else {
-            Icons.Filled.ArrowForward
-        }
-        Icon(
-            imageVector = imageVector,
-            contentDescription = if (currentActive.value) "断开服务" else "启动服务",
-            modifier = Modifier.graphicsLayer(
-                rotationZ = rotationAngle,
-                transformOrigin = TransformOrigin.Center
-            ),
-            tint = contentColorFor(MaterialTheme.colors.primary)
-        )
     }
 }
