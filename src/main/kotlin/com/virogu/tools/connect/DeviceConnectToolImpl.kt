@@ -119,10 +119,13 @@ class DeviceConnectToolImpl(
                         "start adbd"
                     ).onSuccess {
                         logger.info("open device adbd success")
-                    }.onFailure {
-                        logger.info("open device adbd fail.", it)
+                    }.onFailure { e ->
+                        logger.info("open device adbd fail.", e)
                     }
+                }.onFailure { e ->
+                    logger.info("ssh failed to connect [$ip].", e)
                 }
+                logger.info("重新连接 [$ip:$port]")
                 connectTo(ip, port).getOrNull()?.also {
                     logger.info(it)
                 }
