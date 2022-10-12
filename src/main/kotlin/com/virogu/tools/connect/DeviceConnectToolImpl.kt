@@ -109,7 +109,10 @@ class DeviceConnectToolImpl(
             logger.info(r)
             // cannot connect to 192.168: 由于目标计算机积极拒绝，无法连接。 (10061)
             // 尝试通过SSH连接到设备再打开ADB
-            if (r.contains("cannot connect to")) {
+            if (r.contains("cannot connect to", true) ||
+                r.contains("unable to connect", true) ||
+                r.contains("connection refused", true)
+            ) {
                 logger.info("try open device adbd")
                 sshTool.connect(ip, "root", SSHVerifyTools.commonSShPwd) {
                     exec(
@@ -120,10 +123,10 @@ class DeviceConnectToolImpl(
                     ).onSuccess {
                         logger.info("open device adbd success")
                     }.onFailure { e ->
-                        logger.info("open device adbd fail.", e)
+                        logger.info("open device adbd fail. $e")
                     }
                 }.onFailure { e ->
-                    logger.info("ssh failed to connect [$ip].", e)
+                    logger.info("ssh failed to connect [$ip]. $e")
                 }
                 logger.info("重新连接 [$ip:$port]")
                 connectTo(ip, port).getOrNull()?.also {
