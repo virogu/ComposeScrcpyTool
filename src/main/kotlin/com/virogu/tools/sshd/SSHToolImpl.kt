@@ -14,18 +14,13 @@ import java.util.stream.Collectors
 
 class SSHToolImpl : SSHTool {
 
-    private val client by lazy {
-        SshClient.setUpDefaultClient().apply {
-            signatureFactories = BuiltinSignatures.VALUES.toList()
-            keyExchangeFactories = BuiltinDHFactories.VALUES.stream()
-                .map(ClientBuilder.DH2KEX)
-                .collect(Collectors.toList())
-            serverKeyVerifier = AcceptAllServerKeyVerifier.INSTANCE
-        }
-    }
-
-    init {
-        client.start()
+    private fun createClient() = SshClient.setUpDefaultClient().apply {
+        signatureFactories = BuiltinSignatures.VALUES.toList()
+        keyExchangeFactories = BuiltinDHFactories.VALUES.stream()
+            .map(ClientBuilder.DH2KEX)
+            .collect(Collectors.toList())
+        SSHVerifyTools.keyPairs.forEach(::addPublicKeyIdentity)
+        serverKeyVerifier = AcceptAllServerKeyVerifier.INSTANCE
     }
 
     override suspend fun connect(
@@ -36,17 +31,20 @@ class SSHToolImpl : SSHTool {
         timeout: Long,
         doOnConnected: suspend SSHTool.(ClientSession) -> Unit
     ): Result<Unit> = runCatching {
-        val session = client.connect(user, host, port).also {
-            it.await(timeout)
-        }.session
-        session.apply {
-            addPasswordIdentity(password)
-            SSHVerifyTools.keyPairs.forEach(::addPublicKeyIdentity)
-        }.also {
-            it.auth().verify(timeout)
-        }
-        session.use {
-            doOnConnected(it)
+        createClient().use { client ->
+            client.open()
+            val session = client.connect(
+                user, host, port
+            ).verify(timeout).session
+            session.apply {
+                addPasswordIdentity(password)
+            }.also {
+                it.auth().verify(timeout)
+            }
+            session.use {
+                doOnConnected(it)
+            }
+            client.close()
         }
     }
 
@@ -91,9 +89,7 @@ class SSHToolImpl : SSHTool {
     }
 
     override fun destroy() {
-        runCatching {
-            client.close()
-        }
+
     }
 
     internal inner class ConsoleOutputStream : ByteArrayOutputStream() {

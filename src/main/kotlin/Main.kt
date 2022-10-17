@@ -36,7 +36,10 @@ private val size by lazy {
 }
 
 fun main() = application {
-    println("Current OS [${currentPlateForm.info}, version:${currentPlateForm.version}]")
+    """Current OS [${currentPlateForm.info}, version:${currentPlateForm.version}]
+        |Java Version: [${System.getProperty("java.version")}]
+        |Java Path: [${System.getProperty("java.home")}]
+    """.trimMargin().also(::println)
     init()
     val icon = painterResource("logo.svg")
     val state = rememberWindowState(

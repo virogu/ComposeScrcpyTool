@@ -5,13 +5,19 @@
               value="%yellow(%d{yyyy-MM-dd HH:mm:ss.SSS}) [%thread] %highlight(%-5level) %green(%logger{50}) - %highlight(%msg) %n"/><!-- 控制台输出-高亮 -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>DEBUG</level>
+            <level>ALL</level>
         </filter>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>${HIGHLIGHT_PATTERN}</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
+    <Loggers>
+        <Logger name="org.apache.sshd" level="trace"/>
+        <Root level="info">
+            <AppenderRef ref="STDOUT"/>
+        </Root>
+    </Loggers>
     <appender name="RollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
@@ -32,6 +38,6 @@
     </appender>
     <root>
         <appender-ref ref="STDOUT"/>
-<!--        <appender-ref ref="RollingFile"/>-->
+        <!--        <appender-ref ref="RollingFile"/>-->
     </root>
 </configuration>
