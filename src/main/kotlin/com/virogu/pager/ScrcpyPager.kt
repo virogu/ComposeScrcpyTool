@@ -417,7 +417,8 @@ private fun ColumnScope.ScrcpyOptionView(
         AnimatedContent(
             targetState = currentActive.value,
             transitionSpec = {
-                slideInHorizontally(tween(200)) { -it } with slideOutHorizontally(tween(200)) { it }
+                scaleIn(tween(200, 200)) with scaleOut(tween(200))
+                //slideInHorizontally(tween(200)) { -it } with slideOutHorizontally(tween(200)) { it }
             }
         ) { active ->
             Icon(
