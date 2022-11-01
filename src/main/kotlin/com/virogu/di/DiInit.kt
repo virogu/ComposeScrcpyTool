@@ -7,7 +7,6 @@ import com.virogu.tools.config.ConfigTool
 import com.virogu.tools.connect.DeviceConnectTool
 import com.virogu.tools.log.LogTool
 import com.virogu.tools.scrcpy.ScrcpyTool
-import com.virogu.tools.sshd.SSHTool
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton
 import org.kodein.di.conf.global
@@ -22,9 +21,6 @@ fun initDi(
         }
         bindSingleton<ProgressTool> {
             tools.progressTool
-        }
-        bindSingleton<SSHTool> {
-            tools.sshTool
         }
         bindSingleton<ConfigTool> {
             tools.configTool

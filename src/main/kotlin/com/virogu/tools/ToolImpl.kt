@@ -14,14 +14,10 @@ import com.virogu.tools.log.LogTool
 import com.virogu.tools.log.LogToolImpl
 import com.virogu.tools.scrcpy.ScrcpyTool
 import com.virogu.tools.scrcpy.ScrcpyToolImpl
-import com.virogu.tools.sshd.SSHTool
-import com.virogu.tools.sshd.SSHToolImpl
 
 class ToolImpl : Tools {
 
     override val progressTool: ProgressTool = ProgressToolsImpl()
-
-    override val sshTool: SSHTool = SSHToolImpl()
 
     override val configTool: ConfigTool = ConfigToolImpl()
 
@@ -41,7 +37,6 @@ class ToolImpl : Tools {
         initTool = initTool,
         configTool = configTool,
         progressTool = progressTool,
-        sshTool = sshTool
     )
 
     init {

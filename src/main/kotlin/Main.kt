@@ -81,7 +81,6 @@ private fun ApplicationScope.exit() {
     logger.info("exit app")
     val tools by DI.global.instance<Tools>()
     tools.apply {
-        sshTool.destroy()
         scrcpyTool.disConnect()
         progressTool.destroy()
         logTool.stop()

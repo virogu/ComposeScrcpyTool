@@ -5,8 +5,6 @@ import com.virogu.tools.adb.ProgressTool
 import com.virogu.tools.config.ConfigTool
 import com.virogu.tools.init.InitTool
 import com.virogu.tools.pingCommand
-import com.virogu.tools.sshd.SSHTool
-import com.virogu.tools.sshd.SSHVerifyTools
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -20,8 +18,7 @@ class DeviceConnectToolImpl(
     private val initTool: InitTool,
     private val configTool: ConfigTool,
     private val progressTool: ProgressTool,
-    private val sshTool: SSHTool,
-) : DeviceConnectTool {
+) : BaseDeviceConnectTool() {
 
     private val mutex = Mutex()
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -114,18 +111,7 @@ class DeviceConnectToolImpl(
                 r.contains("connection refused", true)
             ) {
                 logger.info("try open device adbd")
-                sshTool.connect(ip, "root", SSHVerifyTools.commonSShPwd) {
-                    exec(
-                        it,
-                        "setprop service.adb.tcp.port 5555",
-                        "stop adbd",
-                        "start adbd"
-                    ).onSuccess {
-                        logger.info("open device adbd success")
-                    }.onFailure { e ->
-                        logger.info("open device adbd fail. $e")
-                    }
-                }.onFailure { e ->
+                openDeviceAdb(ip).onFailure { e ->
                     logger.info("ssh failed to connect [$ip]. $e")
                 }
                 logger.info("重新连接 [$ip:$port]")
