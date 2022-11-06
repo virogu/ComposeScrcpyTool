@@ -215,6 +215,7 @@ class DeviceConnectToolImpl(
                 isBusy.emit(true)
                 try {
                     block()
+                } catch (_: Throwable) {
                 } finally {
                     isBusy.emit(false)
                 }
