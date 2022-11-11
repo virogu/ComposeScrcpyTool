@@ -18,7 +18,7 @@ val buildFormatDate: String = with(SimpleDateFormat("yyMMdd")) {
     format(Date())
 }
 
-val gitCommitShortid: String = with(ByteArrayOutputStream()) {
+val gitCommitShortId: String = with(ByteArrayOutputStream()) {
     use { os ->
         exec {
             executable = "git"
@@ -56,7 +56,7 @@ val programName = "ScrcpyTool"
 project.extra["gitCommitCount"] = gitCommitCount
 project.extra["programName"] = programName
 project.extra["buildFormatDate"] = buildFormatDate
-project.extra["gitCommitShortid"] = gitCommitShortid
+project.extra["gitCommitShortId"] = gitCommitShortId
 project.extra["packageVersionTriple"] = packageVersionTriple
 project.extra["myMsiPackageVersion"] = msiPackageVersion
 project.extra["myDebPackageVersion"] = debPackageVersion
@@ -69,7 +69,7 @@ tasks.create("packageMsiAndRename") {
         project.rootDir.resolve("out/packages/main/msi").listFiles()?.filter {
             it.name.endsWith(".msi")
         }?.forEach {
-            val newName = "$programName-${msiPackageVersion}_${gitCommitShortid}.msi"
+            val newName = "$programName-${msiPackageVersion}_${gitCommitShortId}.msi"
             println("rename [${it.name}] to [$newName]")
             it.renameTo(File(it.parentFile, newName))
         }
@@ -91,7 +91,7 @@ task("zipPackageFiles", Zip::class) {
     // programName-myPackageVersion-gitCommitShortid.zip
     archiveBaseName.set(programName)
     archiveAppendix.set(msiPackageVersion)
-    archiveVersion.set(gitCommitShortid)
+    archiveVersion.set(gitCommitShortId)
     archiveExtension.set("zip")
     destinationDirectory.set(rootProject.rootDir.resolve("out/zip"))
     doLast {

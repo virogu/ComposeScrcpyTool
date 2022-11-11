@@ -6,7 +6,7 @@ val kotlinVersion = "1.8.20"
 val programName: String by project
 val gitCommitCount: Int by project
 val buildFormatDate: String by project
-val gitCommitShortid: String by project
+val gitCommitShortId: String by project
 val myMsiPackageVersion: String by project
 val myDebPackageVersion: String by project
 val myPackageVendor: String by project
