@@ -11,7 +11,7 @@ val gitCommitCount: Int = with(ByteArrayOutputStream()) {
             standardOutput = os
         }
         val revision = os.toString().trim()
-        return@with revision.toInt()
+        return@with 30 + revision.toInt()
     }
 }
 val buildFormatDate: String = with(SimpleDateFormat("yyMMdd")) {
