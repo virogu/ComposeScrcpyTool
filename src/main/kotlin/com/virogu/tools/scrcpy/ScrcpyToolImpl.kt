@@ -1,7 +1,10 @@
 package com.virogu.tools.scrcpy
 
 import com.virogu.bean.ScrcpyConfig
+import com.virogu.tools.PlateForm
 import com.virogu.tools.adb.ProgressTool
+import com.virogu.tools.commonWorkDir
+import com.virogu.tools.currentPlateForm
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -11,6 +14,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 
 class ScrcpyToolImpl(
     private val progressTool: ProgressTool
@@ -20,6 +24,22 @@ class ScrcpyToolImpl(
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val scrcpyMap = HashMap<String, Process>()
+
+    private val workDir: File by lazy {
+        File(commonWorkDir, "app")
+    }
+
+    private val scrcpyEnvironment: Map<String, String> by lazy {
+        when (currentPlateForm) {
+            is PlateForm.Linux -> mapOf(
+                "SCRCPY_ICON_PATH" to File(workDir, "logo.svg").absolutePath,
+                "SCRCPY_SERVER_PATH" to File(workDir, "scrcpy-server").absolutePath,
+                "ADB_PATH" to workDir.absolutePath,
+            )
+
+            else -> emptyMap()
+        }
+    }
 
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
@@ -42,6 +62,7 @@ class ScrcpyToolImpl(
                 "--window-title=$title",
                 *commonConfig.args().toTypedArray(),
                 *config.args().toTypedArray(),
+                environment = scrcpyEnvironment
             ) {
                 logger.info(it)
             } ?: run {
@@ -74,7 +95,7 @@ class ScrcpyToolImpl(
                     return@withLock
                 }
                 scrcpyMap.remove(serial)?.also {
-                    it.destroy()
+                    it.destroyForcibly()
                 }
             }
             activeDevicesFLow.emit(scrcpyMap.keys.toSet())

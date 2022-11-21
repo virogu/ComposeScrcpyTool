@@ -158,7 +158,7 @@ class ProgressToolsImpl : ProgressTool {
         processMapMutex.withLock {
             processList.onEach {
                 runCatching {
-                    it.value.destroy()
+                    it.value.destroyForcibly()
                 }
                 logger.info("stop process: $it")
             }
