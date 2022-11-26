@@ -95,7 +95,7 @@ class ScrcpyToolImpl(
                     return@withLock
                 }
                 scrcpyMap.remove(serial)?.also {
-                    it.destroyForcibly()
+                    it.destroy()
                 }
             }
             activeDevicesFLow.emit(scrcpyMap.keys.toSet())
