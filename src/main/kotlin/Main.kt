@@ -1,4 +1,6 @@
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -35,39 +37,97 @@ private val size by lazy {
     DpSize(700.dp, 820.dp)
 }
 
-fun main() = application {
+fun main() {
     """Current OS [${currentPlateForm.info}, version:${currentPlateForm.version}]
         |Java Version: [${System.getProperty("java.version")}]
         |Java Path: [${System.getProperty("java.home")}]
     """.trimMargin().also(::println)
     init()
+    startApplication()
+}
+
+private fun startApplication() = application {
     val icon = painterResource("logo.svg")
     val state = rememberWindowState(
         placement = WindowPlacement.Floating,
         size = size,
         position = WindowPosition.Aligned(Alignment.Center),
     )
+    val (alwaysOnTop, setAlwaysOnTop) = remember {
+        mutableStateOf(false)
+    }
+
     Window(
         onCloseRequest = ::exit,
         title = "ScrcpyTool",
         state = state,
         undecorated = false,
+        alwaysOnTop = alwaysOnTop,
         icon = icon,
     ) {
-        Tray(icon = icon, menu = {
-            if (state.isMinimized) {
-                Item("显示主窗口", onClick = {
-                    state.isMinimized = false
-                })
-            } else {
-                Item("隐藏主窗口", onClick = {
-                    state.isMinimized = true
-                })
-            }
-            Item("退出", onClick = ::exit)
-        })
         App(window, this@application, state, tools)
     }
+    TrayView(icon, tools, state, alwaysOnTop) {
+        setAlwaysOnTop(it)
+    }
+}
+
+@Composable
+private fun ApplicationScope.TrayView(
+    icon: Painter,
+    tools: Tools,
+    state: WindowState,
+    alwaysOnTop: Boolean,
+    onAlwaysOnTopChanged: (Boolean) -> Unit
+) {
+    val connectedDevice = tools.deviceConnectTool.connectedDevice.collectAsState()
+    val currentDevice = tools.deviceConnectTool.currentSelectedDevice.collectAsState()
+    val startedDevice = tools.scrcpyTool.activeDevicesFLow.collectAsState()
+    val connectedSize = remember(connectedDevice.value.size) {
+        mutableStateOf(connectedDevice.value.size)
+    }
+    val startedSize = remember(startedDevice.value.size) {
+        mutableStateOf(startedDevice.value.size)
+    }
+
+    val onTopChanged by rememberUpdatedState(onAlwaysOnTopChanged)
+
+    Tray(
+        icon = icon,
+        tooltip = """ScrcpyTool
+            |已连接设备: ${connectedSize.value}
+            |已启动设备: ${startedSize.value}
+        """.trimMargin(),
+        onAction = {
+            if (state.isMinimized) {
+                state.isMinimized = false
+            }
+        },
+        menu = {
+            CheckboxItem("窗口置顶", alwaysOnTop) {
+                onTopChanged(it)
+            }
+            Item(if (state.isMinimized) "显示主窗口" else "隐藏主窗口", onClick = {
+                state.isMinimized = !state.isMinimized
+            })
+            Separator()
+            Menu("设备列表") {
+                if (connectedDevice.value.isEmpty()) {
+                    Item("（空）") {}
+                }
+                connectedDevice.value.forEach { device ->
+                    CheckboxItem(
+                        device.showName,
+                        device.serial == currentDevice.value?.serial
+                    ) {
+                        tools.deviceConnectTool.selectDevice(device)
+                    }
+                }
+            }
+            Separator()
+            Item("退出", onClick = ::exit)
+        }
+    )
 }
 
 private fun init() {
