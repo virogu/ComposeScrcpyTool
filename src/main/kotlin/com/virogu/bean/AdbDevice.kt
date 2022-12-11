@@ -5,7 +5,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AdbDevice(
     val serial: String,
+    val isOnline: Boolean,
     val desc: String = "Phone",
 ) {
-    val showName get() = "${desc}-${serial}"
+    val showName
+        get() = if (isOnline) {
+            "${desc}-${serial}"
+        } else {
+            "${desc}-${serial} (离线)"
+        }
 }

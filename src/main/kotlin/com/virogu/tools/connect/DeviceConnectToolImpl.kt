@@ -29,23 +29,25 @@ class DeviceConnectToolImpl(
         devices
     ) { deviceDesc, device ->
         device.map {
-            it.copy(
-                desc = deviceDesc[it.serial].orEmpty().ifEmpty { "Phone" }
-            )
+            it.copy(desc = deviceDesc[it.serial].orEmpty().ifEmpty { "Phone" })
         }
     }.distinctUntilChanged().onEach { list ->
-        if (currentSelectedDevice.value == null) {
-            list.firstOrNull()?.also {
+        val current = currentSelectedDevice.value
+        if (current == null) {
+            list.firstOrNull {
+                it.isOnline
+            }?.also {
                 currentSelectedDevice.emit(it)
             }
         } else {
-            currentSelectedDevice.value?.serial?.also { name ->
-                val needClean = list.find {
-                    it.serial == name
-                } == null
-                if (needClean) {
-                    currentSelectedDevice.emit(list.firstOrNull())
-                }
+            //已选择的设备已经断开了的话自动选择第一个已连接的设备
+            val find = list.find {
+                it.serial == current.serial
+            }
+            if (find == null) {
+                currentSelectedDevice.emit(list.firstOrNull { it.isOnline })
+            } else if (find != current) {
+                currentSelectedDevice.emit(find)
             }
         }
     }.stateIn(scope, SharingStarted.Eagerly, emptyList())
@@ -108,6 +110,7 @@ class DeviceConnectToolImpl(
             // 尝试通过SSH连接到设备再打开ADB
             if (r.contains("cannot connect to", true) ||
                 r.contains("unable to connect", true) ||
+                r.contains("failed to connect", true) ||
                 r.contains("connection refused", true)
             ) {
                 logger.info("try open device adbd")
@@ -167,21 +170,26 @@ class DeviceConnectToolImpl(
                 //("未获取到任何设备，请检查设备连接")
                 for (i in 1 until result.size) {
                     val item = result[i].trim()
-                    if (!item.endsWith("device")) {
-                        continue
+                    val (online, tag) = when {
+                        item.endsWith("device") -> true to "device"
+                        item.endsWith("offline") -> false to "offline"
+                        else -> continue
                     }
-                    val device = item.split("device")
+                    val device = item.split(tag)
                     if (device.isEmpty()) {
                         continue
                     }
                     val deviceId = device[0].trim()
                     if (deviceId.isNotEmpty()) {
-                        list.add(AdbDevice(serial = deviceId))
+                        list.add(AdbDevice(serial = deviceId, isOnline = online))
                     }
                 }
             }
         } catch (e: Throwable) {
             e.printStackTrace()
+        }
+        list.sortedByDescending {
+            it.isOnline
         }
         devices.emit(list)
         jobActiveFlow.emit(System.currentTimeMillis())

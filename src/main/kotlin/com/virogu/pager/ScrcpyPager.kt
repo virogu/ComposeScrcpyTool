@@ -382,7 +382,7 @@ private fun ColumnScope.ScrcpyOptionView(
     val colors = materialColors
 
     val buttonEnabled by remember(isBusy, currentDevice) {
-        mutableStateOf(!isBusy && currentDevice != null)
+        mutableStateOf(!isBusy && currentDevice != null && currentDevice.isOnline)
     }
 
     val buttonColor by animateColorAsState(
