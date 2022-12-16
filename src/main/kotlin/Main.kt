@@ -92,11 +92,17 @@ private fun ApplicationScope.TrayView(
 
     val onTopChanged by rememberUpdatedState(onAlwaysOnTopChanged)
 
+    val simpleConfig = tools.configTool.simpleConfig.collectAsState()
+    val autoRefresh by remember(simpleConfig.value.autoRefreshAdbDevice) {
+        mutableStateOf(simpleConfig.value.autoRefreshAdbDevice)
+    }
+
     Tray(
         icon = icon,
         tooltip = """ScrcpyTool
-            |已连接设备: ${connectedSize.value}
-            |已启动设备: ${startedSize.value}
+            |已连接设备：${connectedSize.value}
+            |已启动设备：${startedSize.value}
+            |自动刷新：${if (autoRefresh) "开" else "关"}
         """.trimMargin(),
         onAction = {
             if (state.isMinimized) {
@@ -123,6 +129,9 @@ private fun ApplicationScope.TrayView(
                         tools.deviceConnectTool.selectDevice(device)
                     }
                 }
+            }
+            CheckboxItem("自动刷新", autoRefresh) {
+                tools.configTool.updateSimpleConfig(simpleConfig.value.copy(autoRefreshAdbDevice = !autoRefresh))
             }
             Separator()
             Item("退出", onClick = ::exit)

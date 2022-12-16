@@ -14,6 +14,8 @@ interface ConfigTool {
 
     val scrcpyConfigFlow: StateFlow<ScrcpyConfig>
 
+    val simpleConfig: StateFlow<Configs.SimpleConfig>
+
     fun writeConfigNow()
 
     fun updateDesc(device: String, desc: String)
@@ -29,5 +31,7 @@ interface ConfigTool {
     fun updateScrcpyConfig(config: ScrcpyConfig.CommonConfig)
 
     fun updateScrcpyConfig(serial: String, config: ScrcpyConfig.Config)
+
+    fun updateSimpleConfig(config: Configs.SimpleConfig)
 
 }

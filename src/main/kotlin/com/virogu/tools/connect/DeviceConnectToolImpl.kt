@@ -24,6 +24,10 @@ class DeviceConnectToolImpl(
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val devices: MutableStateFlow<List<AdbDevice>> = MutableStateFlow(emptyList())
 
+    private val autoRefresh = configTool.simpleConfig.map {
+        it.autoRefreshAdbDevice
+    }.stateIn(scope, SharingStarted.Eagerly, true)
+
     override val connectedDevice: StateFlow<List<AdbDevice>> = combine(
         configTool.deviceDescFlow,
         devices
@@ -57,7 +61,7 @@ class DeviceConnectToolImpl(
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     private var queryJob: Job? = null
-    private val jobActiveFlow = MutableSharedFlow<Any>()
+    private val activeRefreshFlow = MutableSharedFlow<Any>()
 
     init {
         start()
@@ -66,14 +70,10 @@ class DeviceConnectToolImpl(
     @OptIn(FlowPreview::class)
     override fun start() {
         queryJob?.cancel()
-        queryJob = jobActiveFlow.debounce(5000).buffer(
+        queryJob = activeRefreshFlow.debounce(5000).buffer(
             onBufferOverflow = BufferOverflow.DROP_LATEST
         ).onEach {
-            if (initTool.initStateFlow.value.success) {
-                autoRefresh()
-            } else {
-                jobActiveFlow.emit(System.currentTimeMillis())
-            }
+            autoRefresh()
         }.launchIn(scope)
         scope.launch {
             logger.info("等待程序初始化")
@@ -82,7 +82,9 @@ class DeviceConnectToolImpl(
             }
             logger.info("初始化成功")
             delay(500)
-            autoRefresh()
+            autoRefresh.onEach {
+                activeRefresh()
+            }.launchIn(this)
         }
     }
 
@@ -155,7 +157,18 @@ class DeviceConnectToolImpl(
         }
     }
 
+    private suspend fun activeRefresh() {
+        activeRefreshFlow.emit(System.currentTimeMillis())
+    }
+
     private suspend fun autoRefresh() {
+        if (!autoRefresh.value) {
+            return
+        }
+        if (!initTool.initStateFlow.value.success) {
+            activeRefresh()
+            return
+        }
         mutex.withLock {
             innerRefreshDevices()
         }
@@ -192,7 +205,7 @@ class DeviceConnectToolImpl(
             it.isOnline
         }
         devices.emit(list)
-        jobActiveFlow.emit(System.currentTimeMillis())
+        activeRefresh()
     }
 
     override fun updateCurrentDesc(desc: String) {

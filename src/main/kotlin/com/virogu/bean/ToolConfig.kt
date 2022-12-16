@@ -16,4 +16,10 @@ data class Configs(
     ) {
         val showName: String get() = "$ip:$port"
     }
+
+    @Serializable
+    data class SimpleConfig(
+        val autoRefreshAdbDevice: Boolean = true
+    )
+
 }
