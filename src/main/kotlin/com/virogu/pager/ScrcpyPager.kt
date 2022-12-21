@@ -33,7 +33,7 @@ import javax.swing.JFileChooser
 fun ScrcpyView(window: ComposeWindow, tools: Tools) {
     val connectTool = tools.deviceConnectTool
     val scrcpyTool = tools.scrcpyTool
-    val configTool = tools.configTool
+    val configTool = tools.configStores.scrcpyConfigStore
 
     val scrcpyConfig = configTool.scrcpyConfigFlow.collectAsState()
     val currentDevice = connectTool.currentSelectedDevice.collectAsState()

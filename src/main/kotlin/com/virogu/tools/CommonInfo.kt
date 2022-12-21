@@ -68,6 +68,7 @@ val userRootConfigDir: File by lazy {
     val file = when (currentPlateForm) {
         is PlateForm.Windows -> File(userDir, "AppData/Roaming")
         is PlateForm.Linux -> File(userDir, ".config")
+        is PlateForm.MacOs -> File(userDir, "Library/Application Support")
         else -> File(userDir, "config")
     }
     file

@@ -1,17 +1,23 @@
-package com.virogu.tools.config
+package com.virogu.tools.config.impl
 
-import com.virogu.bean.Configs
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.stringPreferencesKey
+import com.virogu.bean.HistoryDevice
+import com.virogu.tools.config.BaseConfigStore
+import com.virogu.tools.config.HistoryDevicesStore
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-abstract class HistoryDeviceConfigTool : DescConfigTool() {
+class HistoryDeviceConfigImpl(
+    dataStore: DataStore<Preferences>
+) : BaseConfigStore(dataStore), HistoryDevicesStore {
     companion object {
-        private const val KEY = "KEY_HISTORY_DEVICE"
+        private val KEY = stringPreferencesKey("KEY_HISTORY_DEVICE")
     }
 
-    private val deviceListCompare = Comparator<Configs.HistoryDevice> { o1, o2 ->
+    private val deviceListCompare = Comparator<HistoryDevice> { o1, o2 ->
         if (o1.tagged == o2.tagged) {
             o2.timeMs.compareTo(o1.timeMs)
         } else if (o1.tagged) {
@@ -21,14 +27,11 @@ abstract class HistoryDeviceConfigTool : DescConfigTool() {
         }
     }
 
-    override val historyDeviceFlow: StateFlow<List<Configs.HistoryDevice>> = configsFlow.map {
-        it.getConfigNotNull(
-            KEY,
-            emptyList<Configs.HistoryDevice>()
-        ).sortedWith(deviceListCompare)
-    }.stateIn(scope, SharingStarted.Eagerly, emptyList())
+    override val historyDeviceFlow: StateFlow<List<HistoryDevice>> = getSerializableConfig(
+        KEY, emptyList<HistoryDevice>()
+    ).stateIn(scope, SharingStarted.Eagerly, emptyList())
 
-    override fun updateLastConnect(device: Configs.HistoryDevice) {
+    override fun updateLastConnect(device: HistoryDevice) {
         val history = historyDeviceFlow.value
         val new = history.toMutableList().apply {
             val current = this.find {
@@ -43,10 +46,10 @@ abstract class HistoryDeviceConfigTool : DescConfigTool() {
                 add(0, device)
             }
         }
-        updateConfig(KEY, new)
+        updateSerializableConfig(KEY, new)
     }
 
-    override fun updateLastConnectTagged(device: Configs.HistoryDevice, tagged: Boolean) {
+    override fun updateLastConnectTagged(device: HistoryDevice, tagged: Boolean) {
         val history = historyDeviceFlow.value
         val new = history.toMutableList().apply {
             val index = this.indexOfFirst {
@@ -58,10 +61,10 @@ abstract class HistoryDeviceConfigTool : DescConfigTool() {
             val current = this.removeAt(index)
             add(index, current.copy(tagged = tagged))
         }
-        updateConfig(KEY, new)
+        updateSerializableConfig(KEY, new)
     }
 
-    override fun removeLastConnect(device: Configs.HistoryDevice) {
+    override fun removeLastConnect(device: HistoryDevice) {
         val history = historyDeviceFlow.value
         val new = history.toMutableList().apply {
             val r = removeIf {
@@ -71,11 +74,11 @@ abstract class HistoryDeviceConfigTool : DescConfigTool() {
                 return
             }
         }
-        updateConfig(KEY, new)
+        updateSerializableConfig(KEY, new)
     }
 
     override fun clearHistoryConnect() {
-        updateConfig(KEY, emptyList<Configs.HistoryDevice>())
+        clearConfig(KEY)
     }
 
 }

@@ -2,8 +2,8 @@ package com.virogu.tools
 
 import com.virogu.tools.adb.ProgressTool
 import com.virogu.tools.adb.ProgressToolsImpl
-import com.virogu.tools.config.ConfigTool
-import com.virogu.tools.config.ConfigToolImpl
+import com.virogu.tools.config.ConfigStores
+import com.virogu.tools.config.impl.ConfigStoreImpl
 import com.virogu.tools.connect.DeviceConnectTool
 import com.virogu.tools.connect.DeviceConnectToolImpl
 import com.virogu.tools.init.DefaultInitTool
@@ -19,7 +19,7 @@ class ToolImpl : Tools {
 
     override val progressTool: ProgressTool = ProgressToolsImpl()
 
-    override val configTool: ConfigTool = ConfigToolImpl()
+    override val configStores: ConfigStores = ConfigStoreImpl()
 
     override val logTool: LogTool = LogToolImpl()
 
@@ -35,12 +35,22 @@ class ToolImpl : Tools {
 
     override val deviceConnectTool: DeviceConnectTool = DeviceConnectToolImpl(
         initTool = initTool,
-        configTool = configTool,
+        configStores = configStores,
         progressTool = progressTool,
     )
 
     init {
         initTool.init()
+    }
+
+    override fun start() {
+        logTool.start()
+    }
+
+    override fun stop() {
+        scrcpyTool.disConnect()
+        progressTool.destroy()
+        logTool.stop()
     }
 
 }

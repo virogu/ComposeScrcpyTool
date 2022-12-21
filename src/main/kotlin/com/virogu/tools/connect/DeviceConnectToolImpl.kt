@@ -2,7 +2,7 @@ package com.virogu.tools.connect
 
 import com.virogu.bean.AdbDevice
 import com.virogu.tools.adb.ProgressTool
-import com.virogu.tools.config.ConfigTool
+import com.virogu.tools.config.ConfigStores
 import com.virogu.tools.init.InitTool
 import com.virogu.tools.pingCommand
 import kotlinx.coroutines.*
@@ -16,7 +16,7 @@ import java.nio.charset.Charset
 
 class DeviceConnectToolImpl(
     private val initTool: InitTool,
-    private val configTool: ConfigTool,
+    private val configStores: ConfigStores,
     private val progressTool: ProgressTool,
 ) : BaseDeviceConnectTool() {
 
@@ -24,12 +24,12 @@ class DeviceConnectToolImpl(
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val devices: MutableStateFlow<List<AdbDevice>> = MutableStateFlow(emptyList())
 
-    private val autoRefresh = configTool.simpleConfig.map {
+    private val autoRefresh = configStores.simpleConfigStore.simpleConfig.map {
         it.autoRefreshAdbDevice
     }.stateIn(scope, SharingStarted.Eagerly, true)
 
     override val connectedDevice: StateFlow<List<AdbDevice>> = combine(
-        configTool.deviceDescFlow,
+        configStores.deviceDescStore.deviceDescFlow,
         devices
     ) { deviceDesc, device ->
         device.map {
@@ -60,31 +60,33 @@ class DeviceConnectToolImpl(
 
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-    private var queryJob: Job? = null
     private val activeRefreshFlow = MutableSharedFlow<Any>()
 
     init {
         start()
     }
 
+    private var mJob: Job? = null
+
     @OptIn(FlowPreview::class)
     override fun start() {
-        queryJob?.cancel()
-        queryJob = activeRefreshFlow.debounce(5000).buffer(
-            onBufferOverflow = BufferOverflow.DROP_LATEST
-        ).onEach {
-            autoRefresh()
-        }.launchIn(scope)
-        scope.launch {
+        mJob?.cancel()
+        mJob = scope.launch {
             logger.info("等待程序初始化")
             initTool.initStateFlow.first {
                 it.success
             }
             logger.info("初始化成功")
-            delay(500)
+            activeRefreshFlow.debounce(5000).buffer(
+                onBufferOverflow = BufferOverflow.DROP_LATEST
+            ).onEach {
+                autoRefresh()
+            }.launchIn(this)
+            delay(100)
             autoRefresh.onEach {
                 activeRefresh()
             }.launchIn(this)
+            autoRefresh()
         }
     }
 
@@ -217,16 +219,13 @@ class DeviceConnectToolImpl(
             val new = current.copy(
                 desc = desc.ifEmpty { "Phone" }
             )
-            configTool.updateDesc(current.serial, desc)
+            configStores.deviceDescStore.updateDesc(current.serial, desc)
             currentSelectedDevice.emit(new)
         }
     }
 
     override fun stop() {
-        queryJob?.apply {
-            cancel()
-            queryJob = null
-        }
+        mJob?.cancel()
         scope.cancel()
     }
 

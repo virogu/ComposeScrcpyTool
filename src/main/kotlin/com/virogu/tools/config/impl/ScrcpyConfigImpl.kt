@@ -1,20 +1,26 @@
-package com.virogu.tools.config
+package com.virogu.tools.config.impl
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.virogu.bean.ScrcpyConfig
+import com.virogu.tools.config.BaseConfigStore
+import com.virogu.tools.config.ScrcpyConfigStore
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-abstract class ScrcpyConfigTool : HistoryDeviceConfigTool() {
+class ScrcpyConfigImpl(
+    dataStore: DataStore<Preferences>
+) : BaseConfigStore(dataStore), ScrcpyConfigStore {
 
     companion object {
-        private const val KEY = "KEY_SCRCPY_CONFIG"
+        private val KEY = stringPreferencesKey("KEY_SCRCPY_CONFIG")
     }
 
-    override val scrcpyConfigFlow: StateFlow<ScrcpyConfig> = configsFlow.map {
-        it.getConfigNotNull(KEY, ScrcpyConfig())
-    }.stateIn(scope, SharingStarted.Eagerly, ScrcpyConfig())
+    override val scrcpyConfigFlow: StateFlow<ScrcpyConfig> = getSerializableConfig(
+        KEY, ScrcpyConfig()
+    ).stateIn(scope, SharingStarted.Eagerly, ScrcpyConfig())
 
     override fun updateScrcpyConfig(config: ScrcpyConfig.CommonConfig) {
         val current = scrcpyConfigFlow.value
@@ -24,7 +30,7 @@ abstract class ScrcpyConfigTool : HistoryDeviceConfigTool() {
         val new = current.copy(
             commonConfig = config
         )
-        updateConfig(KEY, new)
+        updateSerializableConfig(KEY, new)
     }
 
     override fun updateScrcpyConfig(serial: String, config: ScrcpyConfig.Config) {
@@ -39,7 +45,7 @@ abstract class ScrcpyConfigTool : HistoryDeviceConfigTool() {
         val new = current.copy(
             configs = configs
         )
-        updateConfig(KEY, new)
+        updateSerializableConfig(KEY, new)
     }
 
 }

@@ -32,7 +32,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.WindowState
-import com.virogu.bean.Configs
+import com.virogu.bean.HistoryDevice
 import com.virogu.pager.view.LogListView
 import com.virogu.pager.view.animateBorderStrokeAsState
 import com.virogu.tools.Tools
@@ -97,10 +97,10 @@ fun ConnectDeviceView(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        val configTool = tools.configTool
+        val historyDevicesStore = tools.configStores.historyDevicesStore
         val connectTool = tools.deviceConnectTool
         val isBusy = connectTool.isBusy.collectAsState()
-        val history = configTool.historyDeviceFlow.collectAsState()
+        val history = historyDevicesStore.historyDeviceFlow.collectAsState()
 
         val lastConnectedDevice = history.value.firstOrNull()
         val ip = remember {
@@ -141,8 +141,8 @@ fun ConnectDeviceView(
                 logger.info("IP地址[$ipString]无效")
                 return@label
             }
-            configTool.updateLastConnect(
-                Configs.HistoryDevice(
+            historyDevicesStore.updateLastConnect(
+                HistoryDevice(
                     System.currentTimeMillis(),
                     ip.value,
                     port.value
@@ -214,7 +214,7 @@ fun ConnectDeviceView(
         ) {
             if (history.value.isNotEmpty()) {
                 Column(modifier = Modifier.clickable {
-                    configTool.clearHistoryConnect()
+                    historyDevicesStore.clearHistoryConnect()
                 }) {
                     Text(text = "清空连接记录", modifier = Modifier.fillMaxWidth().padding(16.dp, 10.dp, 16.dp, 10.dp))
                 }
@@ -236,7 +236,7 @@ fun ConnectDeviceView(
                         ),
                         contentDescription = if (device.tagged) "取消置顶" else "置顶",
                         modifier = Modifier.size(40.dp).clickable {
-                            configTool.updateLastConnectTagged(device, !device.tagged)
+                            historyDevicesStore.updateLastConnectTagged(device, !device.tagged)
                         }.padding(12.dp).align(Alignment.CenterVertically),
                         tint = contentColorFor(MaterialTheme.colors.background)
                     )
@@ -244,7 +244,7 @@ fun ConnectDeviceView(
                         Icons.Default.Close,
                         "",
                         modifier = Modifier.size(40.dp).clickable {
-                            configTool.removeLastConnect(device)
+                            historyDevicesStore.removeLastConnect(device)
                         }.padding(10.dp).align(Alignment.CenterVertically),
                         tint = contentColorFor(MaterialTheme.colors.background)
                     )

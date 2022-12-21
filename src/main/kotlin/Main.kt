@@ -90,9 +90,10 @@ private fun ApplicationScope.TrayView(
         mutableStateOf(startedDevice.value.size)
     }
 
+    val simpleConfigStore = tools.configStores.simpleConfigStore
     val onTopChanged by rememberUpdatedState(onAlwaysOnTopChanged)
 
-    val simpleConfig = tools.configTool.simpleConfig.collectAsState()
+    val simpleConfig = simpleConfigStore.simpleConfig.collectAsState()
     val autoRefresh by remember(simpleConfig.value.autoRefreshAdbDevice) {
         mutableStateOf(simpleConfig.value.autoRefreshAdbDevice)
     }
@@ -131,7 +132,7 @@ private fun ApplicationScope.TrayView(
                 }
             }
             CheckboxItem("自动刷新", autoRefresh) {
-                tools.configTool.updateSimpleConfig(simpleConfig.value.copy(autoRefreshAdbDevice = !autoRefresh))
+                simpleConfigStore.updateSimpleConfig(simpleConfig.value.copy(autoRefreshAdbDevice = !autoRefresh))
             }
             Separator()
             Item("退出", onClick = ::exit)
@@ -142,19 +143,12 @@ private fun ApplicationScope.TrayView(
 private fun init() {
     logger.info("init")
     initDi()
-    val tools by DI.global.instance<Tools>()
-    tools.logTool.start()
+    tools.start()
 }
 
 private fun ApplicationScope.exit() {
     logger.info("exit app")
-    val tools by DI.global.instance<Tools>()
-    tools.apply {
-        scrcpyTool.disConnect()
-        progressTool.destroy()
-        logTool.stop()
-        configTool.writeConfigNow()
-    }
+    tools.stop()
     logger.info("exited")
     exitApplication()
 }

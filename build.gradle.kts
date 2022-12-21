@@ -78,7 +78,11 @@ dependencies {
     //implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$serializableVersion")
 
     //implementation("androidx.datastore:datastore-core:1.0.0")
-    //implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.datastore:datastore-preferences-core:1.1.0-alpha01")
+
+    //https://github.com/russhwolf/multiplatform-settings
+    //implementation("com.russhwolf:multiplatform-settings-datastore:1.0.0")
+    //implementation("com.russhwolf:multiplatform-settings-serialization:1.0.0")
 
     //https://google.github.io/accompanist/
     //val accompanistVersion = "0.30.1"
