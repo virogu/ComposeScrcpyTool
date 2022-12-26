@@ -83,13 +83,13 @@ data class ScrcpyConfig(
     }
 
     enum class VideoBiteRate(val value: String) {
-        M1("1M"),
-        M2("2M"),
         M4("4M"),
         M8("8M"),
         M20("20M"),
         M50("50M"),
         M100("100M"),
+        M200("200M"),
+        M500("500M"),
     }
 
     enum class VideoCodec(val value: String) {
