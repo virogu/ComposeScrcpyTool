@@ -78,9 +78,7 @@ inline fun <reified T> String.decode(default: T): T {
 
 inline fun <reified T> T.encode(): String {
     return try {
-        json.encodeToString(this).also {
-            println("encode to string: $it")
-        }
+        json.encodeToString(this)
     } catch (e: Throwable) {
         println("encode fail: $e")
         "{}"
