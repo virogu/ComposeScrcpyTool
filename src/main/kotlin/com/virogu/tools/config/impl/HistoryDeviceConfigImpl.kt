@@ -8,6 +8,7 @@ import com.virogu.tools.config.BaseConfigStore
 import com.virogu.tools.config.HistoryDevicesStore
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class HistoryDeviceConfigImpl(
@@ -29,7 +30,9 @@ class HistoryDeviceConfigImpl(
 
     override val historyDeviceFlow: StateFlow<List<HistoryDevice>> = getSerializableConfig(
         KEY, emptyList<HistoryDevice>()
-    ).stateIn(scope, SharingStarted.Eagerly, emptyList())
+    ).map {
+        it.sortedWith(deviceListCompare)
+    }.stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     override fun updateLastConnect(device: HistoryDevice) {
         val history = historyDeviceFlow.value
