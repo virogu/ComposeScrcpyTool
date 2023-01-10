@@ -99,7 +99,7 @@ compose.desktop {
         mainClass = "MainKt"
         nativeDistributions {
             modules(
-                "java.naming",
+                "java.naming", "jdk.unsupported"
                 //"java.rmi",
                 //"java.management",
             )
