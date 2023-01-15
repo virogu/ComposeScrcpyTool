@@ -21,7 +21,7 @@ class DeviceConnectToolImpl(
 ) : BaseDeviceConnectTool() {
 
     private val mutex = Mutex()
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val devices: MutableStateFlow<List<AdbDevice>> = MutableStateFlow(emptyList())
 
     private val autoRefresh = configStores.simpleConfigStore.simpleConfig.map {

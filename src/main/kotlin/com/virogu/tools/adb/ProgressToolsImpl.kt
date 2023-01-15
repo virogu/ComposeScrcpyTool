@@ -9,6 +9,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.File
+import java.io.InputStreamReader
 import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
 
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit
 class ProgressToolsImpl : ProgressTool {
 
     private val processMapMutex = Mutex()
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     //private val runtime = Runtime.getRuntime()
 
     private val processList: HashMap<Long, Process> = HashMap()
@@ -36,10 +37,10 @@ class ProgressToolsImpl : ProgressTool {
         showLog: Boolean,
         timeout: Long,
         charset: Charset
-    ): Result<String> {
+    ): Result<String> = withContext(Dispatchers.IO) {
         try {
             if (command.isEmpty()) {
-                return Result.failure(IllegalArgumentException("command is empty!"))
+                return@withContext Result.failure(IllegalArgumentException("command is empty!"))
             }
             val cmd = command.toMutableList().apply {
                 commandPath[first()]?.also {
@@ -72,21 +73,30 @@ class ProgressToolsImpl : ProgressTool {
             if (showLog) {
                 logger.info("exec [$cmd], waitFor result")
             }
+            val s = async {
+                BufferedReader(InputStreamReader(process.inputStream, charset)).use {
+                    buildString {
+                        it.lineSequence().forEach { s ->
+                            appendLine(s)
+                        }
+                    }.trim()
+                }
+            }
             if (timeout > 0) {
                 process.waitFor(timeout, TimeUnit.SECONDS)
             } else {
                 process.waitFor()
             }
             //val inputStreamReader = InputStreamReader(process.inputStream, charset)
-            val result = process.inputReader(charset).readText().trim()
+            val result = s.await()
             if (showLog) {
                 logger.info("exec [$cmd], result: [$result]")
             }
-            return Result.success(result)
+            return@withContext Result.success(result)
         } catch (e: Throwable) {
             //e.printStackTrace()
             logger.error("run error. $e")
-            return Result.failure(e)
+            return@withContext Result.failure(e)
         }
     }
 
@@ -95,10 +105,10 @@ class ProgressToolsImpl : ProgressTool {
         environment: Map<String, String>,
         charset: Charset,
         onReadLine: suspend (String) -> Unit,
-    ): Process? {
+    ): Process? = withContext(Dispatchers.IO) {
         try {
             if (command.isEmpty()) {
-                return null
+                return@withContext null
             }
             val cmd = command.toMutableList().apply {
                 commandPath[first()]?.also {
@@ -131,26 +141,17 @@ class ProgressToolsImpl : ProgressTool {
             }
             scope.launch {
                 BufferedReader(progress.inputReader(charset)).use {
-                    runCatching {
-                        val first = it.readLine()
-                        if (first.isNotEmpty()) {
-                            onReadLine(first)
-                        }
+                    it.lineSequence().forEach { s ->
+                        onReadLine(s)
                     }
-                    while (progress.isAlive && isActive) {
-                        if (it.ready()) {
-                            val s = it.readLine()
-                            onReadLine(s)
-                        }
-                        delay(100)
-                    }
+                    println("read end")
                 }
             }
-            return progress
+            return@withContext progress
         } catch (e: Throwable) {
             logger.warn("执行失败, ${e.localizedMessage}")
             e.printStackTrace()
-            return null
+            return@withContext null
         }
     }
 
