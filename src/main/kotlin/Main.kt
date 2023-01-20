@@ -6,6 +6,8 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.virogu.di.initDi
+import com.virogu.pager.Pager
+import com.virogu.pager.rememberPagerController
 import com.virogu.tools.Tools
 import com.virogu.tools.currentPlateForm
 import org.kodein.di.DI
@@ -57,6 +59,15 @@ private fun startApplication() = application {
         mutableStateOf(false)
     }
 
+    val pagerController by rememberPagerController<Pager>(
+        listOf(
+            Pager.DeviceConnection,
+            Pager.DeviceExplorer,
+            Pager.DeviceProcess,
+        ),
+        Pager.DeviceConnection
+    )
+
     Window(
         onCloseRequest = ::exit,
         title = "ScrcpyTool",
@@ -65,7 +76,7 @@ private fun startApplication() = application {
         alwaysOnTop = alwaysOnTop,
         icon = icon,
     ) {
-        App(window, this@application, state, tools)
+        App(window, this@application, state, pagerController, tools)
     }
     TrayView(icon, tools, state, alwaysOnTop) {
         setAlwaysOnTop(it)

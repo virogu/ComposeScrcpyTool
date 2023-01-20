@@ -21,7 +21,9 @@ import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.WindowScope
 import androidx.compose.ui.window.WindowState
 import com.virogu.pager.InitPager
-import com.virogu.pager.MainView
+import com.virogu.pager.MainPager
+import com.virogu.pager.Pager
+import com.virogu.pager.PagerNavController
 import com.virogu.tools.Tools
 import theme.MainTheme
 
@@ -36,6 +38,7 @@ fun WindowScope.App(
     window: ComposeWindow,
     applicationScope: ApplicationScope,
     state: WindowState,
+    pagerController: PagerNavController<Pager>,
     tools: Tools
 ) {
     val initState = tools.initTool.initStateFlow.collectAsState()
@@ -47,7 +50,7 @@ fun WindowScope.App(
                     mutableStateOf(initState.value.success)
                 }
                 if (initStateSuccess) {
-                    MainView(window, state, tools)
+                    MainPager(window, state, pagerController, tools)
                 } else {
                     InitPager(initState)
                 }
