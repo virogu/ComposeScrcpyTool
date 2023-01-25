@@ -7,27 +7,25 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.virogu.bean.FileInfo
 import com.virogu.bean.FileType
 import com.virogu.tools.Tools
-import com.virogu.tools.explorer.FileExplorerImpl
+import theme.Purple200
 import theme.materialColors
 
 @Composable
@@ -35,52 +33,180 @@ fun FileExplorerPager(
     tools: Tools,
     fileListState: LazyListState,
 ) {
-    Column {
-        Row(Modifier.fillMaxSize().padding(8.dp)) {
-            val fileExplorer = tools.fileExplorer
-            val scrollAdapter = rememberScrollbarAdapter(fileListState)
-            val currentSelect = remember(tools.deviceConnectTool.currentSelectedDevice.value) {
-                mutableStateOf(FileInfo.ROOT)
+    Box {
+        val fileExplorer = tools.fileExplorer
+        val scrollAdapter = rememberScrollbarAdapter(fileListState)
+        var currentSelect: FileInfo? by remember(tools.deviceConnectTool.currentSelectedDevice.value) {
+            mutableStateOf(null)
+        }
+        val selectFile by rememberUpdatedState { file: FileInfo ->
+            currentSelect = file
+        }
+        val getExpended by rememberUpdatedState { file: FileInfo ->
+            fileExplorer.expandedMap[file.path] ?: false
+        }
+        val setExpended by rememberUpdatedState { file: FileInfo, expand: Boolean ->
+            fileExplorer.expandedMap[file.path] = expand
+        }
+        val getChildFiles by rememberUpdatedState { file: FileInfo ->
+            fileExplorer.getChild(file)
+        }
+
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SelectDeviceView(tools, Modifier.padding(horizontal = 16.dp).height(40.dp))
+            ToolBarView(tools, currentSelect)
+            Row {
+                LazyColumn(
+                    Modifier.fillMaxHeight().weight(1f),
+                    state = fileListState,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    getChildFiles(FileInfo.ROOT).forEach {
+                        FileView(
+                            fileInfo = it,
+                            currentSelect = currentSelect,
+                            level = 0,
+                            getChildFiles = getChildFiles,
+                            selectFile = selectFile,
+                            getExpended = getExpended,
+                            setExpended = setExpended,
+                        )
+                    }
+                }
+                VerticalScrollbar(
+                    modifier = Modifier,
+                    adapter = scrollAdapter,
+                    reverseLayout = false,
+                )
             }
-            LazyColumn(
-                Modifier.fillMaxHeight().weight(1f).padding(8.dp),
-                state = fileListState,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.SelectDeviceView(
+    tools: Tools,
+    modifier: Modifier = Modifier
+) {
+    val connectTool = tools.deviceConnectTool
+
+    val current = connectTool.currentSelectedDevice.collectAsState()
+    val devices = connectTool.connectedDevice.collectAsState()
+
+    val expanded = remember { mutableStateOf(false) }
+    val borderStroke by com.virogu.pager.view.animateBorderStrokeAsState()
+    val dropMenuWidth = remember {
+        mutableStateOf(0.dp)
+    }
+    val dropMenuOffset = remember {
+        mutableStateOf(0.dp)
+    }
+    Box(
+        modifier = modifier.border(
+            borderStroke,
+            TextFieldDefaults.OutlinedTextFieldShape
+        ).clickable {
+            expanded.value = true
+        }.onPlaced {
+            dropMenuWidth.value = it.size.width.dp
+        }.align(Alignment.CenterHorizontally),
+    ) {
+        Row {
+            Text(
+                text = current.value?.showName.orEmpty(),
+                maxLines = 1,
+                modifier = Modifier.align(Alignment.CenterVertically).weight(1f).padding(horizontal = 16.dp)
+            )
+            Button(
+                onClick = {
+                    expanded.value = !expanded.value
+                },
+                modifier = Modifier.fillMaxHeight().aspectRatio(1f).align(Alignment.CenterVertically),
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0, 0, 0, alpha = 0)),
+                contentPadding = PaddingValues(4.dp),
+                elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
             ) {
-                fileExplorer.getChild(FileInfo.ROOT).forEach {
-                    FileView(
-                        fileInfo = it,
-                        fileExplorer = fileExplorer,
-                        currentSelect = currentSelect,
-                        expanded = fileExplorer.expandedMap,
-                        level = 0
-                    )
+                Icon(Icons.Default.ArrowDropDown, "", tint = contentColorFor(MaterialTheme.colors.background))
+            }
+        }
+        DropdownMenu(
+            expanded = expanded.value,
+            onDismissRequest = {
+                expanded.value = false
+            },
+            modifier = Modifier.width(dropMenuWidth.value),
+            offset = DpOffset(dropMenuOffset.value, 0.dp)
+        ) {
+            devices.value.forEach {
+                Column(modifier = Modifier.clickable {
+                    connectTool.selectDevice(it)
+                    expanded.value = false
+                }) {
+                    Text(text = it.showName, modifier = Modifier.fillMaxWidth().padding(16.dp, 10.dp, 16.dp, 10.dp))
+                    //Box(modifier = Modifier.fillMaxWidth().padding(16.dp).height(0.5.dp).background(Color.LightGray))
                 }
             }
-            VerticalScrollbar(
-                modifier = Modifier,
-                adapter = scrollAdapter,
-                reverseLayout = false,
-            )
+        }
+    }
+}
+
+@Composable
+private fun ToolBarView(tools: Tools, currentSelect: FileInfo?) {
+    Box(modifier = Modifier.fillMaxWidth().padding(16.dp, 8.dp).height(35.dp)) {
+        Row(Modifier.align(Alignment.CenterStart), Arrangement.spacedBy(8.dp)) {
+            val modifier = Modifier.fillMaxHeight().aspectRatio(1f)
+            val shape = RoundedCornerShape(8.dp)
+            val colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
+            val contentPadding = PaddingValues(6.dp)
+            val iconModifier = Modifier
+            Button(
+                onClick = {
+                },
+                enabled = currentSelect != null && currentSelect.type == FileType.DIR,
+                modifier = modifier, shape = shape, colors = colors, contentPadding = contentPadding
+            ) {
+                Icon(
+                    modifier = iconModifier,
+                    painter = painterResource("icons/icon_new_folder.svg"),
+                    contentDescription = "新建文件夹",
+                )
+            }
+            Button(
+                onClick = {
+                },
+                enabled = currentSelect != null && currentSelect.type == FileType.DIR,
+                modifier = modifier, shape = shape, colors = colors, contentPadding = contentPadding
+            ) {
+                Icon(
+                    modifier = iconModifier,
+                    painter = painterResource("icons/ic_new_file.svg"),
+                    contentDescription = "新建文件",
+                )
+            }
         }
     }
 }
 
 private val ERROR_COLOR = Color(0xFFDA4C3F)
-private val TIPS_COLOR = Color(0XFF5B9027)
+private val TIPS_COLOR = Purple200.copy(alpha = 0.8f)
 
 @OptIn(ExperimentalFoundationApi::class)
 private fun LazyListScope.FileView(
     fileInfo: FileInfo,
-    fileExplorer: FileExplorerImpl,
-    currentSelect: MutableState<FileInfo>,
-    expanded: SnapshotStateMap<String, Boolean>,
+    currentSelect: FileInfo?,
     level: Int,
+    getChildFiles: (FileInfo) -> List<FileInfo>,
+    selectFile: (FileInfo) -> Unit,
+    getExpended: (FileInfo) -> Boolean,
+    setExpended: (FileInfo, Boolean) -> Unit
 ) {
-    val currentExpanded = expanded[fileInfo.path] ?: false
+    val currentExpanded = getExpended(fileInfo)
     item {
-        val selected = remember(fileInfo.path, currentSelect.value) {
-            mutableStateOf(currentSelect.value == fileInfo)
+        val selected = remember(fileInfo.path, currentSelect) {
+            mutableStateOf(currentSelect == fileInfo)
         }
         val selectedColor = materialColors.primary.copy(alpha = 0.5f)
         val backgroundColor = remember(selected.value) {
@@ -96,16 +222,16 @@ private fun LazyListScope.FileView(
                 when (fileInfo.type) {
                     FileType.DIR -> {
                         onClick(true, onDoubleClick = {
-                            currentSelect.value = fileInfo
-                            expanded[fileInfo.path] = !currentExpanded
+                            selectFile(fileInfo)
+                            setExpended(fileInfo, !currentExpanded)
                         }, onClick = {
-                            currentSelect.value = fileInfo
+                            selectFile(fileInfo)
                         })
                     }
 
                     FileType.FILE -> {
                         clickable {
-                            currentSelect.value = fileInfo
+                            selectFile(fileInfo)
                         }
                     }
 
@@ -127,8 +253,8 @@ private fun LazyListScope.FileView(
                     FileType.DIR -> {
                         Icon(
                             modifier = modifier.size(30.dp).clickable {
-                                currentSelect.value = fileInfo
-                                expanded[fileInfo.path] = !currentExpanded
+                                selectFile(fileInfo)
+                                setExpended(fileInfo, !currentExpanded)
                             }.padding(5.dp),
                             imageVector = if (currentExpanded) {
                                 Icons.Filled.KeyboardArrowDown
@@ -191,8 +317,16 @@ private fun LazyListScope.FileView(
         }
     }
     if (currentExpanded) {
-        fileExplorer.getChild(fileInfo).forEach {
-            FileView(it, fileExplorer, currentSelect, expanded, level + 1)
+        getChildFiles(fileInfo).forEach {
+            FileView(
+                fileInfo = it,
+                currentSelect = currentSelect,
+                level = level + 1,
+                getChildFiles = getChildFiles,
+                selectFile = selectFile,
+                getExpended = getExpended,
+                setExpended = setExpended,
+            )
         }
     }
 }

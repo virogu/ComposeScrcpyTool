@@ -9,10 +9,7 @@ import com.virogu.tools.adb.ProgressTool
 import com.virogu.tools.connect.DeviceConnectTool
 import com.virogu.tools.init.InitTool
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.regex.Pattern
@@ -33,6 +30,7 @@ class FileExplorerImpl(
 
     val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val expandedMap = mutableStateMapOf<String, Boolean>()
+    val tipsFlow = MutableSharedFlow<String>()
 
     init {
         start()
