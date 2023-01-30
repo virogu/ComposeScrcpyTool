@@ -109,7 +109,7 @@ fun FileSelectView(
                 }.aspectRatio(1f).padding().align(Alignment.CenterEnd)
             ) {
                 Icon(
-                    painter = painterResource("icons/ic_folder.xml"),
+                    painter = painterResource("icons/ic_folder_fill.svg"),
                     contentDescription = "选择文件",
                     modifier = Modifier.fillMaxHeight(0.6f).aspectRatio(1f).align(Alignment.Center),
                     tint = contentColorFor(MaterialTheme.colors.background)

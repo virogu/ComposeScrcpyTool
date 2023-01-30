@@ -231,15 +231,15 @@ fun ConnectDeviceView(
                     Icon(
                         painter = painterResource(
                             if (device.tagged) {
-                                "icons/ic_tagged.svg"
+                                "icons/ic_star_fill.svg"
                             } else {
-                                "icons/ic_tagging.svg"
+                                "icons/ic_star.svg"
                             }
                         ),
                         contentDescription = if (device.tagged) "取消置顶" else "置顶",
                         modifier = Modifier.size(40.dp).clickable {
                             historyDevicesStore.updateLastConnectTagged(device, !device.tagged)
-                        }.padding(12.dp).align(Alignment.CenterVertically),
+                        }.padding(10.dp).align(Alignment.CenterVertically),
                         tint = contentColorFor(MaterialTheme.colors.background)
                     )
                     Icon(
@@ -247,7 +247,7 @@ fun ConnectDeviceView(
                         "",
                         modifier = Modifier.size(40.dp).clickable {
                             historyDevicesStore.removeLastConnect(device)
-                        }.padding(10.dp).align(Alignment.CenterVertically),
+                        }.padding(8.dp).align(Alignment.CenterVertically),
                         tint = contentColorFor(MaterialTheme.colors.background)
                     )
                 }

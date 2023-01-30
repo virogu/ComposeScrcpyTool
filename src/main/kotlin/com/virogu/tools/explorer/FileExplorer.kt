@@ -1,3 +1,5 @@
+@file:Suppress("GrazieInspection")
+
 package com.virogu.tools.explorer
 
 import androidx.compose.runtime.mutableStateMapOf
@@ -8,13 +10,14 @@ import com.virogu.bean.FileType
 import com.virogu.tools.adb.ProgressTool
 import com.virogu.tools.connect.DeviceConnectTool
 import com.virogu.tools.init.InitTool
+import com.virogu.tools.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.regex.Pattern
 
-class FileExplorerImpl(
+class FileExplorer(
     private val initTool: InitTool,
     private val deviceConnectTool: DeviceConnectTool,
     private val progressTool: ProgressTool,
@@ -44,21 +47,90 @@ class FileExplorerImpl(
             deviceConnectTool.currentSelectedDevice.onEach {
                 expandedMap.clear()
                 cancelAllJob()
-                refresh(it)
+                refresh()
             }.launchIn(scope)
         }
     }
 
-    private fun refresh(device: AdbDevice?) {
+    fun refresh(path: String? = null) {
         fileMapLock {
-            it.clear()
+            if (path == null) {
+                it.clear()
+            } else {
+                it.remove(path)
+            }
         }
-        //withLock(FileInfo.ROOT.path) {
-        //    if (device == null) {
-        //        return@withLock
-        //    }
-        //    refreshFileChild(device, FileInfo.ROOT.path)
-        //}
+    }
+
+    fun createDir(device: AdbDevice, path: String, newFile: String) {
+        val tag = "create dir $newFile in $path for ${device.serial}"
+        println(tag)
+        withLock(tag) {
+            progressTool.exec(
+                "adb", "-s", device.serial, "shell",
+                //"-p",
+                "mkdir ${path}/${newFile}",
+            ).onSuccess {
+                if (it.isNotEmpty()) {
+                    println(it)
+                    tipsFlow.emit(it)
+                } else {
+                    refresh(path)
+                }
+            }.onFailure {
+                it.printStackTrace()
+                tipsFlow.emit("create dir $newFile in $path fail")
+            }
+        }
+    }
+
+    fun createFile(device: AdbDevice, path: String, newFile: String) {
+        val tag = "create file $newFile in $path for ${device.serial}"
+        println(tag)
+        withLock(tag) {
+            progressTool.exec(
+                "adb", "-s", device.serial, "shell",
+                //"-p",
+                "touch ${path}/${newFile}",
+            ).onSuccess {
+                if (it.isNotEmpty()) {
+                    println(it)
+                    tipsFlow.emit(it)
+                } else {
+                    refresh(path)
+                }
+            }.onFailure {
+                it.printStackTrace()
+                tipsFlow.emit("create file $newFile in $path fail")
+            }
+        }
+    }
+
+    fun deleteFile(device: AdbDevice, file: FileInfo, onDeleted: suspend () -> Unit = {}) {
+        val path = file.path
+        if (path.count { it == '/' } <= 1) {
+            logger.warn("are you sure want to rm -r $path? please delete it by yourself")
+            return
+        }
+        val tag = "delete $path for ${device.serial}"
+        println(tag)
+        withLock(tag) {
+            progressTool.exec(
+                "adb", "-s", device.serial, "shell",
+                "rm -r $path",
+            ).onSuccess {
+                if (it.isNotEmpty()) {
+                    println(it)
+                    tipsFlow.emit(it)
+                } else {
+                    refresh(file.parentPath)
+                    onDeleted()
+                }
+            }.onFailure {
+                it.printStackTrace()
+                tipsFlow.emit("delete $path fail")
+            }
+        }
     }
 
     fun getChild(fileInfo: FileInfo): List<FileInfo> {
@@ -86,8 +158,8 @@ class FileExplorerImpl(
             return listOf(FileInfo("Loading...", type = FileType.TIPS))
         }
         withLock(path) {
-            val device = deviceConnectTool.currentSelectedDevice.value ?: return@withLock
-            refreshFileChild(device, path)
+            val d = deviceConnectTool.currentSelectedDevice.value ?: return@withLock
+            refreshFileChild(d, path)
         }
         return listOf(FileInfo("Loading...", type = FileType.TIPS))
     }
@@ -230,7 +302,7 @@ class FileExplorerImpl(
 
     private fun cancelAllJob() {
         jobLock {
-            it.forEach { (k, v) ->
+            it.forEach { (_, v) ->
                 v.cancel()
             }
             it.clear()

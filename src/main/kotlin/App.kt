@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
@@ -43,18 +42,14 @@ fun WindowScope.App(
 ) {
     val initState = tools.initTool.initStateFlow.collectAsState()
     MainTheme {
-        Surface {
-            Column {
-                //AppTitleView(applicationScope, state)
-                val (initStateSuccess, _) = remember(initState.value) {
-                    mutableStateOf(initState.value.success)
-                }
-                if (initStateSuccess) {
-                    MainPager(window, state, pagerController, tools)
-                } else {
-                    InitPager(initState)
-                }
-            }
+        //AppTitleView(applicationScope, state)
+        val (initStateSuccess, _) = remember(initState.value) {
+            mutableStateOf(initState.value.success)
+        }
+        if (initStateSuccess) {
+            MainPager(window, state, pagerController, tools)
+        } else {
+            InitPager(initState)
         }
     }
 }

@@ -6,7 +6,7 @@ import com.virogu.tools.config.ConfigStores
 import com.virogu.tools.config.impl.ConfigStoreImpl
 import com.virogu.tools.connect.DeviceConnectTool
 import com.virogu.tools.connect.DeviceConnectToolImpl
-import com.virogu.tools.explorer.FileExplorerImpl
+import com.virogu.tools.explorer.FileExplorer
 import com.virogu.tools.init.DefaultInitTool
 import com.virogu.tools.init.InitTool
 import com.virogu.tools.init.LinuxInitTool
@@ -41,7 +41,7 @@ class ToolImpl : Tools {
         progressTool = progressTool,
     )
 
-    override val fileExplorer: FileExplorerImpl = FileExplorerImpl(initTool, deviceConnectTool, progressTool)
+    override val fileExplorer: FileExplorer = FileExplorer(initTool, deviceConnectTool, progressTool)
 
     init {
         initTool.init()

@@ -3,6 +3,8 @@
 package theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -31,7 +33,11 @@ private val LightColorPalette = lightColors(
 )
 
 @Composable
-fun MainTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+fun MainTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    modifier: Modifier = Modifier.fillMaxSize(),
+    content: @Composable BoxScope.() -> Unit,
+) {
     val colors = if (darkTheme) {
         DarkColorPalette
         //LightColorPalette
@@ -44,8 +50,9 @@ fun MainTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable (
         shapes = Shapes,
     ) {
         Surface(
-            modifier = Modifier.fillMaxSize(),
-            content = content,
-        )
+            modifier = modifier,
+        ) {
+            Box(Modifier.fillMaxSize(), content = content)
+        }
     }
 }

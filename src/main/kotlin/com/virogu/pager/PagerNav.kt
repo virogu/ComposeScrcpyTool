@@ -21,13 +21,13 @@ sealed class Pager(
 
     object DeviceExplorer : Pager(
         title = "文件管理", imgPainter = {
-            painterResource("icons/ic_folder.svg")
+            painterResource("icons/ic_folder_open.svg")
         }
     )
 
     object DeviceProcess : Pager(
         title = "进程管理", imgPainter = {
-            painterResource("icons/ic_process.svg")
+            painterResource("icons/ic_memory.svg")
         }
     )
 }
