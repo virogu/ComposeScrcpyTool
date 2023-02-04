@@ -8,22 +8,30 @@ enum class FileType(val sortIndex: Int) {
     DIR(0),
     LINK(0),
     FILE(1),
-    OTHER(2),
-    ERROR(3),
-    TIPS(4)
+    OTHER(2)
 }
 
-data class FileInfo(
-    val name: String = "",
+sealed class FileItem(open val name: String = "")
+
+sealed class FileTipsItem(open val msg: String) : FileItem(msg) {
+    data class Info(override val msg: String) : FileTipsItem(msg)
+    data class Error(override val msg: String) : FileTipsItem(msg)
+}
+
+data class FileInfoItem(
+    override val name: String = "",
     val parentPath: String = "",
     val path: String = "",
     val type: FileType = FileType.OTHER,
     val size: String = "",
     val modificationTime: String = "",
     val permissions: String = "",
-) {
+) : FileItem(name) {
+
+    val isDirectory = type == FileType.DIR
+
     companion object {
-        val ROOT = FileInfo(
+        val ROOT = FileInfoItem(
             name = "",
             path = "",
             type = FileType.DIR,

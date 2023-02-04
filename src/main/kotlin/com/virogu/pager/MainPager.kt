@@ -2,16 +2,15 @@
 
 package com.virogu.pager
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -22,6 +21,7 @@ import androidx.compose.ui.window.WindowState
 import com.virogu.tools.Tools
 import theme.materialColors
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainPager(
     window: ComposeWindow,
@@ -40,26 +40,35 @@ fun MainPager(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(pagerController.pagers) {
-                Button(
-                    onClick = {
-                        pagerController.navigate(it)
-                    },
-                    modifier = Modifier.size(45.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = if (currentPager.value == it) {
-                            materialColors.primary.copy(alpha = 0.3f)
-                        } else {
-                            Color.Transparent
+                TooltipArea(
+                    tooltip = {
+                        Card(elevation = 4.dp) {
+                            Text(text = it.title, modifier = Modifier.padding(10.dp))
                         }
-                    ),
-                    contentPadding = PaddingValues(8.dp)
+                    },
+                    delayMillis = 500, // in milliseconds
                 ) {
-                    Icon(
-                        modifier = Modifier.size(28.dp),
-                        painter = it.imgPainter(),
-                        contentDescription = it.title,
-                    )
+                    Button(
+                        onClick = {
+                            pagerController.navigate(it)
+                        },
+                        modifier = Modifier.size(45.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = if (currentPager.value == it) {
+                                materialColors.primary.copy(alpha = 0.3f)
+                            } else {
+                                Color.Transparent
+                            }
+                        ),
+                        contentPadding = PaddingValues(8.dp)
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(28.dp),
+                            painter = it.imgPainter(),
+                            contentDescription = it.title,
+                        )
+                    }
                 }
             }
         }

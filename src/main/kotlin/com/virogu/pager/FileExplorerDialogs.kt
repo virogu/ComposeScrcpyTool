@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.rememberDialogState
 import com.virogu.bean.AdbDevice
-import com.virogu.bean.FileInfo
+import com.virogu.bean.FileInfoItem
 import com.virogu.bean.FileType
 import com.virogu.tools.explorer.FileExplorer
 import theme.MainTheme
@@ -23,7 +23,7 @@ import theme.materialColors
 fun NewFolderDialog(
     show: MutableState<Boolean>,
     currentDevice: AdbDevice?,
-    currentSelect: FileInfo?,
+    currentSelect: FileInfoItem?,
     fileExplore: FileExplorer
 ) {
     if (currentDevice?.isOnline != true) {
@@ -50,7 +50,7 @@ fun NewFolderDialog(
 fun NewFileDialog(
     show: MutableState<Boolean>,
     currentDevice: AdbDevice?,
-    currentSelect: FileInfo?,
+    currentSelect: FileInfoItem?,
     fileExplore: FileExplorer
 ) {
     if (currentDevice?.isOnline != true) {
@@ -77,9 +77,9 @@ fun NewFileDialog(
 fun DeleteFileConfirmDialog(
     show: MutableState<Boolean>,
     currentDevice: AdbDevice?,
-    currentSelect: FileInfo?,
+    currentSelect: FileInfoItem?,
     fileExplore: FileExplorer,
-    selectFile: (FileInfo?) -> Unit
+    selectFile: (FileInfoItem?) -> Unit
 ) {
     if (currentDevice?.isOnline != true) {
         return
@@ -88,18 +88,10 @@ fun DeleteFileConfirmDialog(
         return
     }
     if (show.value) {
-        val tips = when (currentSelect.type) {
-            FileType.DIR -> {
-                "确定删除目录\n${currentSelect.path}\n以及下面所有目录和文件吗"
-            }
-
-            FileType.FILE -> {
-                "确定删除文件\n${currentSelect.path}\n吗"
-            }
-
-            else -> {
-                return
-            }
+        val tips = if (currentSelect.isDirectory) {
+            "确定删除目录\n\n${currentSelect.path}\n\n以及下面所有目录和文件吗"
+        } else {
+            "确定删除文件\n\n${currentSelect.path}\n\n吗"
         }
         CommonConfirmDialog(
             windowTitle = "提示",
@@ -120,7 +112,7 @@ fun DeleteFileConfirmDialog(
 fun FileDownloadDialog(
     show: MutableState<Boolean>,
     currentDevice: AdbDevice?,
-    currentSelect: FileInfo?,
+    currentSelect: FileInfoItem?,
     fileExplore: FileExplorer
 ) {
 
@@ -130,7 +122,7 @@ fun FileDownloadDialog(
 fun FileUploadDialog(
     show: MutableState<Boolean>,
     currentDevice: AdbDevice?,
-    currentSelect: FileInfo?,
+    currentSelect: FileInfoItem?,
     fileExplore: FileExplorer
 ) {
 

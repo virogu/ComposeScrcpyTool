@@ -2,33 +2,34 @@
 
 package com.virogu.pager
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.virogu.bean.AdbDevice
-import com.virogu.bean.FileInfo
-import com.virogu.bean.FileType
+import com.virogu.bean.*
 import com.virogu.tools.Tools
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
@@ -43,20 +44,20 @@ fun FileExplorerPager(
     val fileExplorer = tools.fileExplorer
     val scrollAdapter = rememberScrollbarAdapter(fileListState)
     val currentDevice = tools.deviceConnectTool.currentSelectedDevice.collectAsState()
-    val currentSelect: MutableState<FileInfo?> = remember(currentDevice.value) {
+    val currentSelect: MutableState<FileInfoItem?> = remember(currentDevice.value) {
         mutableStateOf(null)
     }
 
-    val selectFile by rememberUpdatedState { file: FileInfo? ->
+    val selectFile by rememberUpdatedState { file: FileInfoItem? ->
         currentSelect.value = file
     }
-    val getExpended by rememberUpdatedState { file: FileInfo ->
+    val getExpended by rememberUpdatedState { file: FileInfoItem ->
         fileExplorer.expandedMap[file.path] ?: false
     }
-    val setExpended by rememberUpdatedState { file: FileInfo, expand: Boolean ->
+    val setExpended by rememberUpdatedState { file: FileInfoItem, expand: Boolean ->
         fileExplorer.expandedMap[file.path] = expand
     }
-    val getChildFiles by rememberUpdatedState { file: FileInfo ->
+    val getChildFiles by rememberUpdatedState { file: FileInfoItem ->
         fileExplorer.getChild(file)
     }
 
@@ -111,7 +112,7 @@ fun FileExplorerPager(
         showDeleteDialog.value = true
     }
 
-    val refresh: (FileInfo?) -> Unit = label@{
+    val refresh: (FileInfoItem?) -> Unit = label@{
         if (deviceDisconnect()) {
             return@label
         }
@@ -125,7 +126,7 @@ fun FileExplorerPager(
 
     Box {
         Column(
-            modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             SelectDeviceView(
                 Modifier.padding(horizontal = 16.dp).height(40.dp), currentDevice, tools
@@ -147,9 +148,9 @@ fun FileExplorerPager(
                     state = fileListState,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    getChildFiles(FileInfo.ROOT).forEach {
+                    getChildFiles(FileInfoItem.ROOT).forEach {
                         FileView(
-                            fileInfo = it,
+                            fileItem = it,
                             currentSelect = currentSelect.value,
                             level = 0,
                             getChildFiles = getChildFiles,
@@ -159,6 +160,7 @@ fun FileExplorerPager(
                         )
                     }
                 }
+                Spacer(Modifier.width(8.dp))
                 VerticalScrollbar(
                     modifier = Modifier,
                     adapter = scrollAdapter,
@@ -239,14 +241,14 @@ private fun ColumnScope.SelectDeviceView(
 @Composable
 private fun ToolBarView(
     tools: Tools,
-    currentSelect: FileInfo?,
+    currentSelect: FileInfoItem?,
     currentDevice: AdbDevice?,
     createNewFolder: () -> Unit,
     createNewFile: () -> Unit,
     downloadFile: () -> Unit,
     uploadFile: () -> Unit,
     deleteFile: () -> Unit,
-    refresh: (FileInfo?) -> Unit,
+    refresh: (FileInfoItem?) -> Unit,
 ) {
 
     val onCreateNewFolder by rememberUpdatedState(createNewFolder)
@@ -322,6 +324,7 @@ private fun ToolBarView(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun OptionButtonView(
     description: String, enable: Boolean, resourcePath: String, onClick: () -> Unit
@@ -332,15 +335,26 @@ private fun OptionButtonView(
     val colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
     val contentPadding = PaddingValues(6.dp)
     val iconModifier = Modifier
-    Button(
-        onClick = {
-            click()
-        }, enabled = enable, modifier = modifier, shape = shape, colors = colors, contentPadding = contentPadding
+    // wrap button in BoxWithTooltip
+    TooltipArea(
+        tooltip = {
+            Card(elevation = 4.dp) {
+                Text(text = description, modifier = Modifier.padding(10.dp))
+            }
+        },
+        delayMillis = 500, // in milliseconds
     ) {
-        Icon(modifier = iconModifier, painter = painterResource(resourcePath), contentDescription = description)
+        Button(
+            onClick = {
+                click()
+            }, enabled = enable, modifier = modifier, shape = shape, colors = colors, contentPadding = contentPadding
+        ) {
+            Icon(modifier = iconModifier, painter = painterResource(resourcePath), contentDescription = description)
+        }
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun BoxScope.TipsView(
     tipsFlow: SharedFlow<String>
@@ -349,29 +363,45 @@ private fun BoxScope.TipsView(
     var tips by remember(tipsState) {
         mutableStateOf(tipsState)
     }
-    LaunchedEffect(tips) {
-        if (tips.isNotEmpty()) {
+    var mouseEnter by remember { mutableStateOf(false) }
+
+    LaunchedEffect(tips, mouseEnter) {
+        if (!mouseEnter && tips.isNotEmpty()) {
             delay(5000)
             tips = ""
         }
     }
     AnimatedVisibility(
         modifier = Modifier.align(Alignment.BottomCenter),
-        visible = tips.isNotEmpty()
+        visible = tips.isNotEmpty(),
+        enter = fadeIn() + expandIn(initialSize = { IntSize(it.width, 0) }),
+        exit = shrinkOut(targetSize = { IntSize(it.width, 0) }) + fadeOut()
     ) {
-        Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 16.dp).height(50.dp)) {
+        Card(
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 32.dp, vertical = 16.dp)
+                .onPointerEvent(PointerEventType.Enter) { mouseEnter = true }
+                .onPointerEvent(PointerEventType.Exit) { mouseEnter = false }
+        ) {
             Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)
+                modifier = Modifier.fillMaxWidth()
+                    .defaultMinSize(minHeight = 50.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(tips, Modifier.weight(1f).align(Alignment.CenterVertically))
-                Icon(
-                    Icons.Default.Close,
-                    "关闭",
-                    modifier = Modifier.size(30.dp).clickable {
-                        tips = ""
-                    }.align(Alignment.CenterVertically),
-                    tint = contentColorFor(MaterialTheme.colors.background)
-                )
+                Icon(Icons.Filled.Info, "info")
+                Text(tips, Modifier.weight(1f))
+                Button(
+                    onClick = { tips = "" },
+                    modifier = Modifier.size(35.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
+                    contentPadding = PaddingValues(4.dp),
+                    elevation = ButtonDefaults.elevation(defaultElevation = 0.dp)
+                ) {
+                    Icon(Icons.Default.Close, "关闭")
+                }
             }
         }
     }
@@ -380,58 +410,102 @@ private fun BoxScope.TipsView(
 private val ERROR_COLOR = Color(0xFFDA4C3F)
 private val TIPS_COLOR = Purple200.copy(alpha = 0.8f)
 
-@OptIn(ExperimentalFoundationApi::class)
 private fun LazyListScope.FileView(
-    fileInfo: FileInfo,
-    currentSelect: FileInfo?,
+    fileItem: FileItem,
+    currentSelect: FileInfoItem?,
     level: Int,
-    getChildFiles: (FileInfo) -> List<FileInfo>,
-    selectFile: (FileInfo?) -> Unit,
-    getExpended: (FileInfo) -> Boolean,
-    setExpended: (FileInfo, Boolean) -> Unit
+    getChildFiles: (FileInfoItem) -> List<FileItem>,
+    selectFile: (FileInfoItem?) -> Unit,
+    getExpended: (FileInfoItem) -> Boolean,
+    setExpended: (FileInfoItem, Boolean) -> Unit
 ) {
-    val currentExpanded = getExpended(fileInfo)
-    item {
-        val selected = remember(fileInfo.path, currentSelect) {
-            mutableStateOf(currentSelect == fileInfo)
+    when (fileItem) {
+        is FileInfoItem -> {
+            val currentExpanded = getExpended(fileItem)
+            item {
+                FileInfoItemView(
+                    fileInfo = fileItem,
+                    currentSelect = currentSelect,
+                    level = level,
+                    selectFile = selectFile,
+                    currentExpanded = currentExpanded,
+                    setExpended = setExpended,
+                )
+            }
+            if (currentExpanded) {
+                getChildFiles(fileItem).forEach {
+                    FileView(
+                        fileItem = it,
+                        currentSelect = currentSelect,
+                        level = level + 1,
+                        getChildFiles = getChildFiles,
+                        selectFile = selectFile,
+                        getExpended = getExpended,
+                        setExpended = setExpended,
+                    )
+                }
+            }
         }
-        val selectedColor = materialColors.primary.copy(alpha = 0.5f)
-        val backgroundColor = remember(selected.value) {
-            val v = if (selected.value) {
-                selectedColor
+
+        is FileTipsItem -> item {
+            FileTipsItemView(fileItem, level)
+        }
+    }
+}
+
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+@Composable
+private fun FileInfoItemView(
+    fileInfo: FileInfoItem,
+    currentSelect: FileInfoItem?,
+    level: Int,
+    selectFile: (FileInfoItem?) -> Unit,
+    currentExpanded: Boolean,
+    setExpended: (FileInfoItem, Boolean) -> Unit
+) {
+    val selected = remember(fileInfo.path, currentSelect) {
+        mutableStateOf(currentSelect == fileInfo)
+    }
+    val primaryColor = materialColors.primary.copy(alpha = 0.5f)
+    var mouseEnter by remember { mutableStateOf(false) }
+    val backgroundColor by remember(selected.value, mouseEnter) {
+        val c = if (mouseEnter) {
+            primaryColor.copy(alpha = 0.4f)
+        } else {
+            if (selected.value) {
+                primaryColor.copy(alpha = 0.5f)
             } else {
                 Color.Transparent
             }
-            mutableStateOf(v)
         }
-        Card(modifier = Modifier.height(40.dp).clickable { }.run {
-            when (fileInfo.type) {
-                FileType.DIR -> {
-                    onClick(true, onDoubleClick = {
-                        selectFile(fileInfo)
-                        setExpended(fileInfo, !currentExpanded)
-                    }, onClick = {
-                        selectFile(fileInfo)
-                    })
-                }
-
-                FileType.FILE -> {
-                    clickable {
-                        selectFile(fileInfo)
-                    }
-                }
-
-                else -> {
-                    this
-                }
+        mutableStateOf(c)
+    }
+    Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
+        mouseEnter = true
+    }.onPointerEvent(PointerEventType.Exit) {
+        mouseEnter = false
+    }.run {
+        when (fileInfo.type) {
+            FileType.DIR -> {
+                onClick(onDoubleClick = {
+                    setExpended(fileInfo, !currentExpanded)
+                }, onClick = {}).onPointerEvent(PointerEventType.Press) { selectFile(fileInfo) }
             }
-        }, backgroundColor = backgroundColor.value, elevation = 0.dp
+
+            FileType.FILE -> {
+                onPointerEvent(PointerEventType.Press) { selectFile(fileInfo) }
+            }
+
+            else -> this
+        }
+    }, backgroundColor = backgroundColor, elevation = 0.dp) {
+        Row(
+            modifier = Modifier.padding(end = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                val modifier = Modifier.align(Alignment.CenterVertically)
-                val iconModifier = modifier.size(20.dp)
+            val modifier = Modifier.align(Alignment.CenterVertically)
+            val iconModifier = modifier.size(20.dp)
+            Row(modifier = modifier.weight(4f), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Spacer(Modifier.width((level * 8).dp))
                 when (fileInfo.type) {
                     FileType.DIR -> {
@@ -479,32 +553,60 @@ private fun LazyListScope.FileView(
                         )
                     }
 
-                    else -> {
-                        Spacer(iconModifier)
-                        Spacer(iconModifier)
-                    }
                 }
-                Text(
-                    text = fileInfo.name, color = when (fileInfo.type) {
-                        FileType.ERROR -> ERROR_COLOR
-                        FileType.TIPS -> TIPS_COLOR
-                        else -> Color.Unspecified
-                    }, modifier = modifier.weight(1f), overflow = TextOverflow.Ellipsis, maxLines = 1
-                )
+                TooltipArea(
+                    tooltip = {
+                        Card(elevation = 4.dp) {
+                            Text(text = fileInfo.name, modifier = Modifier.padding(4.dp))
+                        }
+                    },
+                    delayMillis = 500, // in milliseconds
+                    modifier = modifier.weight(1f)
+                ) {
+                    Text(
+                        text = fileInfo.name,
+                        color = materialColors.onSurface,
+                        modifier = modifier.weight(1f),
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
+                    )
+                }
             }
-        }
-    }
-    if (currentExpanded) {
-        getChildFiles(fileInfo).forEach {
-            FileView(
-                fileInfo = it,
-                currentSelect = currentSelect,
-                level = level + 1,
-                getChildFiles = getChildFiles,
-                selectFile = selectFile,
-                getExpended = getExpended,
-                setExpended = setExpended,
+            Text(
+                text = fileInfo.permissions,
+                color = materialColors.onSurface.copy(0.8f),
+                modifier = modifier.weight(2f), maxLines = 1,
+            )
+            Text(
+                text = fileInfo.modificationTime,
+                color = materialColors.onSurface.copy(0.8f),
+                modifier = modifier.weight(2f), maxLines = 1,
+            )
+            Text(
+                text = fileInfo.size,
+                color = materialColors.onSurface.copy(0.8f),
+                modifier = modifier.weight(1f), textAlign = TextAlign.End, maxLines = 1,
             )
         }
+    }
+}
+
+@Composable
+private fun FileTipsItemView(
+    fileTipsItem: FileTipsItem,
+    level: Int,
+) {
+    Row(
+        modifier = Modifier.height(40.dp).padding(end = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        val modifier = Modifier.align(Alignment.CenterVertically)
+        Spacer(Modifier.width((level * 8).dp.plus(40.dp)))
+        Text(
+            text = fileTipsItem.name, color = when (fileTipsItem) {
+                is FileTipsItem.Error -> ERROR_COLOR
+                is FileTipsItem.Info -> TIPS_COLOR
+            }, modifier = modifier.weight(1f), overflow = TextOverflow.Ellipsis, maxLines = 1
+        )
     }
 }
