@@ -35,6 +35,7 @@ class ProgressToolsImpl : ProgressTool {
         vararg command: String,
         environment: Map<String, String>,
         showLog: Boolean,
+        consoleLog: Boolean,
         timeout: Long,
         charset: Charset
     ): Result<String> = withContext(Dispatchers.IO) {
@@ -71,7 +72,9 @@ class ProgressToolsImpl : ProgressTool {
                 }
             }
             if (showLog) {
-                logger.info("exec [$cmd], waitFor result")
+                logger.info("$cmd wait")
+            } else if (consoleLog) {
+                println("$cmd wait")
             }
             val s = async {
                 BufferedReader(InputStreamReader(process.inputStream, charset)).use {
@@ -90,7 +93,9 @@ class ProgressToolsImpl : ProgressTool {
             //val inputStreamReader = InputStreamReader(process.inputStream, charset)
             val result = s.await()
             if (showLog) {
-                logger.info("exec [$cmd], result: [$result]")
+                logger.info("$cmd result: [$result]")
+            } else if (consoleLog) {
+                println("$cmd result: [$result]")
             }
             return@withContext Result.success(result)
         } catch (e: Throwable) {

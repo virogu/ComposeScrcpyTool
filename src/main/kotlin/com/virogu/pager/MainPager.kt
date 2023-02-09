@@ -61,6 +61,7 @@ fun MainPager(
                                 Color.Transparent
                             }
                         ),
+                        elevation = null,
                         contentPadding = PaddingValues(8.dp)
                     ) {
                         Icon(

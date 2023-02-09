@@ -8,6 +8,7 @@ interface ProgressTool {
         vararg command: String,
         environment: Map<String, String> = emptyMap(),
         showLog: Boolean = false,
+        consoleLog: Boolean = false,
         timeout: Long = 10L,
         charset: Charset = Charsets.UTF_8
     ): Result<String>

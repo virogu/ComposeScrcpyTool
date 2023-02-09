@@ -15,9 +15,11 @@ import androidx.compose.ui.window.rememberDialogState
 import com.virogu.bean.AdbDevice
 import com.virogu.bean.FileInfoItem
 import com.virogu.bean.FileType
+import com.virogu.pager.view.FileChooser
 import com.virogu.tools.explorer.FileExplorer
 import theme.MainTheme
 import theme.materialColors
+import javax.swing.JFileChooser
 
 @Composable
 fun NewFolderDialog(
@@ -115,7 +117,25 @@ fun FileDownloadDialog(
     currentSelect: FileInfoItem?,
     fileExplore: FileExplorer
 ) {
-
+    if (currentDevice?.isOnline != true) {
+        return
+    }
+    if (currentSelect == null) {
+        return
+    }
+    if (show.value) {
+        FileChooser(
+            title = "选择要导出的目录",
+            fileChooserType = JFileChooser.DIRECTORIES_ONLY,
+            onClose = {
+                show.value = false
+            },
+            multiSelectionEnabled = false
+        ) {
+            val target = it.firstOrNull() ?: return@FileChooser
+            fileExplore.pullFile(listOf(currentSelect), target)
+        }
+    }
 }
 
 @Composable
@@ -125,7 +145,24 @@ fun FileUploadDialog(
     currentSelect: FileInfoItem?,
     fileExplore: FileExplorer
 ) {
-
+    if (currentDevice?.isOnline != true) {
+        return
+    }
+    if (currentSelect == null) {
+        return
+    }
+    if (show.value) {
+        FileChooser(
+            title = "选择要导入的文件或目录",
+            fileChooserType = JFileChooser.FILES_AND_DIRECTORIES,
+            onClose = {
+                show.value = false
+            },
+            multiSelectionEnabled = true
+        ) {
+            fileExplore.pushFile(currentSelect, it.toList())
+        }
+    }
 }
 
 

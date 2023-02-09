@@ -179,7 +179,7 @@ class DeviceConnectToolImpl(
     private suspend fun innerRefreshDevices() {
         val list = mutableListOf<AdbDevice>()
         try {
-            val process = progressTool.exec("adb", "devices", showLog = false).getOrThrow()
+            val process = progressTool.exec("adb", "devices", showLog = false, consoleLog = false).getOrThrow()
             val result = process.split("\n")
             if (result.size >= 2) {
                 //("未获取到任何设备，请检查设备连接")

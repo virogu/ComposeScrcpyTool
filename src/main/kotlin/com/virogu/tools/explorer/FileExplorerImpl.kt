@@ -65,9 +65,8 @@ class FileExplorerImpl(
         println(tag)
         withLock(tag) {
             progressTool.exec(
-                "adb", "-s", device.serial, "shell",
-                //"-p",
-                "mkdir ${path}/${newFile}",
+                "adb", "-s", device.serial, "shell", "mkdir '${path}/${newFile}'",
+                showLog = true
             ).onSuccess {
                 if (it.isNotEmpty()) {
                     println(it)
@@ -89,7 +88,8 @@ class FileExplorerImpl(
             progressTool.exec(
                 "adb", "-s", device.serial, "shell",
                 //"-p",
-                "touch ${path}/${newFile}",
+                "touch '${path}/${newFile}'",
+                showLog = true
             ).onSuccess {
                 if (it.isNotEmpty()) {
                     println(it)
@@ -114,7 +114,8 @@ class FileExplorerImpl(
             }
             progressTool.exec(
                 "adb", "-s", device.serial, "shell",
-                "rm -r $path",
+                "rm -r '$path'",
+                showLog = true
             ).onSuccess {
                 if (it.isNotEmpty()) {
                     println(it)
@@ -175,29 +176,20 @@ class FileExplorerImpl(
                 tipsFlow.emit("[${toLocalFile.absolutePath}]不存在")
                 return@withLock
             }
-            fromFile.forEach { f ->
-                when (f.type) {
-                    FileType.DIR -> progressTool.exec(
-                        "adb", "-s", device.serial, "shell",
-                        "pull", "${File(f.path).path}/.", "${toLocalFile.absolutePath}/."
+            val s = buildString {
+                fromFile.forEach { f ->
+                    progressTool.exec(
+                        "adb", "-s", device.serial,
+                        "pull", f.path, toLocalFile.absolutePath,
+                        showLog = true
                     ).onSuccess {
-                        tipsFlow.emit(it)
+                        appendLine(it)
                     }.onFailure {
-                        tipsFlow.emit("pull file fail, ${it.localizedMessage}")
+                        appendLine("pull file [${f.path}] fail, ${it.localizedMessage}")
                     }
-
-                    FileType.FILE -> progressTool.exec(
-                        "adb", "-s", device.serial, "shell",
-                        "pull", f.path, File(toLocalFile.path, f.name).path
-                    ).onSuccess {
-                        tipsFlow.emit(it)
-                    }.onFailure {
-                        tipsFlow.emit("pull file fail, ${it.localizedMessage}")
-                    }
-
-                    else -> return@forEach
                 }
             }
+            tipsFlow.emit(s)
         }
     }
 
@@ -211,27 +203,21 @@ class FileExplorerImpl(
                 tipsFlow.emit("[${toFile.path}]不是目录")
                 return@withLock
             }
-            fromLocalFiles.forEach { f ->
-                when {
-                    f.isDirectory -> progressTool.exec(
-                        "adb", "-s", device.serial, "shell",
-                        "push", "${f.absolutePath}/.", "${File(toFile.path).path}/."
+            val s = buildString {
+                fromLocalFiles.forEach { f ->
+                    progressTool.exec(
+                        "adb", "-s", device.serial,
+                        "push", f.absolutePath, "${toFile.path}/${f.name}",
+                        showLog = true
                     ).onSuccess {
-                        tipsFlow.emit(it)
+                        appendLine(it)
                     }.onFailure {
-                        tipsFlow.emit("push file fail, ${it.localizedMessage}")
-                    }
-
-                    else -> progressTool.exec(
-                        "adb", "-s", device.serial, "shell",
-                        "push", f.absolutePath, File(toFile.path, f.name).path
-                    ).onSuccess {
-                        tipsFlow.emit(it)
-                    }.onFailure {
-                        tipsFlow.emit("push file fail, ${it.localizedMessage}")
+                        appendLine("push file [${f.absolutePath}] fail, ${it.localizedMessage}")
                     }
                 }
             }
+            tipsFlow.emit(s)
+            refresh(toFile.path)
         }
     }
 

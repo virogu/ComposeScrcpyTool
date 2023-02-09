@@ -15,9 +15,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.*
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -31,10 +29,15 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.virogu.bean.*
 import com.virogu.tools.Tools
+import com.virogu.tools.explorer.FileExplorer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import theme.Purple200
 import theme.materialColors
+import java.net.URI
+import kotlin.io.path.toPath
 
 @Composable
 fun FileExplorerPager(
@@ -150,6 +153,7 @@ fun FileExplorerPager(
                 ) {
                     getChildFiles(FileInfoItem.ROOT).forEach {
                         FileView(
+                            fileExplorer = fileExplorer,
                             fileItem = it,
                             currentSelect = currentSelect.value,
                             level = 0,
@@ -278,14 +282,14 @@ private fun ToolBarView(
                 onCreateNewFile()
             }
             OptionButtonView(
-                "导出",
+                "导出文件",
                 enable = deviceConnected && currentSelect != null,
                 resourcePath = "icons/ic_download.svg"
             ) {
                 onDownloadFile()
             }
             OptionButtonView(
-                "导入",
+                "导入文件",
                 enable = deviceConnected && currentSelect?.type == FileType.DIR,
                 resourcePath = "icons/ic_upload.svg"
             ) {
@@ -347,7 +351,13 @@ private fun OptionButtonView(
         Button(
             onClick = {
                 click()
-            }, enabled = enable, modifier = modifier, shape = shape, colors = colors, contentPadding = contentPadding
+            },
+            enabled = enable,
+            modifier = modifier,
+            shape = shape,
+            colors = colors,
+            contentPadding = contentPadding,
+            elevation = null
         ) {
             Icon(modifier = iconModifier, painter = painterResource(resourcePath), contentDescription = description)
         }
@@ -359,21 +369,30 @@ private fun OptionButtonView(
 private fun BoxScope.TipsView(
     tipsFlow: SharedFlow<String>
 ) {
-    val tipsState by tipsFlow.collectAsState("")
-    var tips by remember(tipsState) {
-        mutableStateOf(tipsState)
+    var tips by remember {
+        mutableStateOf("")
+    }
+    var showTips by remember {
+        mutableStateOf(false)
     }
     var mouseEnter by remember { mutableStateOf(false) }
 
-    LaunchedEffect(tips, mouseEnter) {
-        if (!mouseEnter && tips.isNotEmpty()) {
+    LaunchedEffect(Unit) {
+        tipsFlow.onEach {
+            tips = it.trim()
+            showTips = true
+        }.launchIn(this)
+    }
+
+    LaunchedEffect(showTips, mouseEnter) {
+        if (!mouseEnter && showTips) {
             delay(5000)
-            tips = ""
+            showTips = false
         }
     }
     AnimatedVisibility(
         modifier = Modifier.align(Alignment.BottomCenter),
-        visible = tips.isNotEmpty(),
+        visible = showTips,
         enter = fadeIn() + expandIn(initialSize = { IntSize(it.width, 0) }),
         exit = shrinkOut(targetSize = { IntSize(it.width, 0) }) + fadeOut()
     ) {
@@ -381,7 +400,9 @@ private fun BoxScope.TipsView(
             modifier = Modifier.fillMaxWidth()
                 .padding(horizontal = 32.dp, vertical = 16.dp)
                 .onPointerEvent(PointerEventType.Enter) { mouseEnter = true }
-                .onPointerEvent(PointerEventType.Exit) { mouseEnter = false }
+                .onPointerEvent(PointerEventType.Exit) { mouseEnter = false },
+            border = if (mouseEnter) BorderStroke(1.dp, materialColors.primary) else null,
+            elevation = 8.dp
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth()
@@ -393,7 +414,7 @@ private fun BoxScope.TipsView(
                 Icon(Icons.Filled.Info, "info")
                 Text(tips, Modifier.weight(1f))
                 Button(
-                    onClick = { tips = "" },
+                    onClick = { showTips = false },
                     modifier = Modifier.size(35.dp),
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
@@ -411,6 +432,7 @@ private val ERROR_COLOR = Color(0xFFDA4C3F)
 private val TIPS_COLOR = Purple200.copy(alpha = 0.8f)
 
 private fun LazyListScope.FileView(
+    fileExplorer: FileExplorer,
     fileItem: FileItem,
     currentSelect: FileInfoItem?,
     level: Int,
@@ -424,6 +446,7 @@ private fun LazyListScope.FileView(
             val currentExpanded = getExpended(fileItem)
             item {
                 FileInfoItemView(
+                    fileExplorer,
                     fileInfo = fileItem,
                     currentSelect = currentSelect,
                     level = level,
@@ -435,6 +458,7 @@ private fun LazyListScope.FileView(
             if (currentExpanded) {
                 getChildFiles(fileItem).forEach {
                     FileView(
+                        fileExplorer = fileExplorer,
                         fileItem = it,
                         currentSelect = currentSelect,
                         level = level + 1,
@@ -456,6 +480,7 @@ private fun LazyListScope.FileView(
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun FileInfoItemView(
+    fileExplorer: FileExplorer,
     fileInfo: FileInfoItem,
     currentSelect: FileInfoItem?,
     level: Int,
@@ -487,9 +512,34 @@ private fun FileInfoItemView(
     }.run {
         when (fileInfo.type) {
             FileType.DIR -> {
-                onClick(onDoubleClick = {
-                    setExpended(fileInfo, !currentExpanded)
-                }, onClick = {}).onPointerEvent(PointerEventType.Press) { selectFile(fileInfo) }
+                onClick(
+                    onDoubleClick = {
+                        setExpended(fileInfo, !currentExpanded)
+                    }, onClick = {
+
+                    }
+                ).onPointerEvent(PointerEventType.Press) {
+                    selectFile(fileInfo)
+                }.onExternalDrag(onDrag = {
+                    mouseEnter = true
+                }, onDragExit = {
+                    mouseEnter = false
+                }) {
+                    it.dragData.also { dragData ->
+                        if (dragData !is DragData.FilesList) {
+                            return@also
+                        }
+                        val files = dragData.readFiles().mapNotNull { uri ->
+                            try {
+                                URI.create(uri).toPath().toFile()
+                            } catch (e: Throwable) {
+                                null
+                            }
+                        }
+                        fileExplorer.pushFile(fileInfo, files)
+                        println("onDrop $files")
+                    }
+                }
             }
 
             FileType.FILE -> {

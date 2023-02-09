@@ -15,6 +15,9 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
@@ -46,12 +49,18 @@ fun FileSelectView(
 ) {
     val currentOnFileSelected by rememberUpdatedState(onFileSelected)
 
-    val showFileChooser = {
-        showFileChooser(
+    var showFileChooser by remember {
+        mutableStateOf(false)
+    }
+    if (showFileChooser) {
+        FileChooser(
             defaultPath = defaultPath,
             fileChooserType = fileChooserType,
             filesFilter = filesFilter,
             multiSelectionEnabled = multiSelectionEnabled,
+            onClose = {
+                showFileChooser = false
+            }
         ) {
             currentOnFileSelected(it)
         }
@@ -105,7 +114,7 @@ fun FileSelectView(
             }
             Box(
                 Modifier.fillMaxHeight().clickable {
-                    showFileChooser()
+                    showFileChooser = true
                 }.aspectRatio(1f).padding().align(Alignment.CenterEnd)
             ) {
                 Icon(
@@ -119,50 +128,63 @@ fun FileSelectView(
     }
 }
 
-fun showFileChooser(
+@Composable
+fun FileChooser(
     defaultPath: String = "",
+    title: String = "",
     fileChooserType: Int,
     multiSelectionEnabled: Boolean = false,
     filesFilter: Array<String> = emptyArray(),
+    onClose: () -> Unit = {},
     onFileSelected: (selectedFiles: Array<File>) -> Unit,
 ) {
-    val defaultFile = File(defaultPath)
-    val f = if (defaultPath.isNotEmpty() && defaultFile.exists()) {
-        if (defaultFile.isFile) {
-            defaultFile.parentFile.absoluteFile
-        } else {
-            defaultFile.absoluteFile
-        }
-    } else {
-        projectRootPath
-    }
-    JFileChooser(f).apply {
-        //设置页面风格
-        try {
-            val lookAndFeel = UIManager.getSystemLookAndFeelClassName()
-            UIManager.setLookAndFeel(lookAndFeel)
-            SwingUtilities.updateComponentTreeUI(this)
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
-        fileSelectionMode = fileChooserType
-        isMultiSelectionEnabled = multiSelectionEnabled
-        filesFilter.takeIf {
-            it.isNotEmpty()
-        }?.apply {
-            val description = filesFilter.joinToString(", ")
-            fileFilter = FileNameExtensionFilter(description, *filesFilter)
-        }
-        val status = showOpenDialog(null)
-        if (status == JFileChooser.APPROVE_OPTION) {
-            val files = if (multiSelectionEnabled) {
-                selectedFiles
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.Unconfined) {
+            val defaultFile = File(defaultPath)
+            val f = if (defaultPath.isNotEmpty() && defaultFile.exists()) {
+                if (defaultFile.isFile) {
+                    defaultFile.parentFile.absoluteFile
+                } else {
+                    defaultFile.absoluteFile
+                }
             } else {
-                arrayOf(selectedFile)
+                projectRootPath
             }
-            files.takeIf {
-                it.isNotEmpty()
-            }?.also(onFileSelected)
+            val jFileChooser = JFileChooser(f).apply {
+                //设置页面风格
+                try {
+                    val lookAndFeel = UIManager.getSystemLookAndFeelClassName()
+                    UIManager.setLookAndFeel(lookAndFeel)
+                    SwingUtilities.updateComponentTreeUI(this)
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                }
+                dialogTitle = title
+                fileSelectionMode = fileChooserType
+                isMultiSelectionEnabled = multiSelectionEnabled
+                filesFilter.takeIf {
+                    it.isNotEmpty()
+                }?.apply {
+                    val description = filesFilter.joinToString(", ")
+                    fileFilter = FileNameExtensionFilter(description, *filesFilter)
+                }
+            }
+            delay(10)
+            val status = jFileChooser.showOpenDialog(null)
+            delay(10)
+            if (status == JFileChooser.APPROVE_OPTION) {
+                val files = if (multiSelectionEnabled) {
+                    jFileChooser.selectedFiles
+                } else {
+                    arrayOf(jFileChooser.selectedFile)
+                }
+                files.takeIf {
+                    it.isNotEmpty()
+                }?.also(onFileSelected)
+                onClose()
+            } else {
+                onClose()
+            }
         }
     }
 }
