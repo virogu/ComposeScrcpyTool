@@ -80,50 +80,52 @@ fun FileExplorerPager(
         mutableStateOf(false)
     }
 
-    val deviceDisconnect: () -> Boolean = {
+    val deviceDisconnect: () -> Boolean by rememberUpdatedState {
         currentDevice.value?.isOnline != true
     }
 
-    val createNewFolder: () -> Unit = label@{
+    val createNewFolder: () -> Unit by rememberUpdatedState label@{
         if (deviceDisconnect() || currentSelect.value?.type != FileType.DIR) {
             return@label
         }
         showNewFolderDialog.value = true
     }
-    val createNewFile: () -> Unit = label@{
+    val createNewFile: () -> Unit by rememberUpdatedState label@{
         if (deviceDisconnect() || currentSelect.value?.type != FileType.DIR) {
             return@label
         }
         showNewFileDialog.value = true
     }
-    val downloadFile: () -> Unit = label@{
+    val downloadFile: () -> Unit by rememberUpdatedState label@{
         if (deviceDisconnect() || currentSelect.value == null) {
             return@label
         }
         showDownloadFileDialog.value = true
     }
-    val uploadFile: () -> Unit = label@{
+    val uploadFile: () -> Unit by rememberUpdatedState label@{
         if (deviceDisconnect() || currentSelect.value == null) {
             return@label
         }
         showUploadFileDialog.value = true
     }
-    val deleteFile: () -> Unit = label@{
+    val deleteFile: () -> Unit by rememberUpdatedState label@{
         if (deviceDisconnect() || currentSelect.value == null) {
             return@label
         }
         showDeleteDialog.value = true
     }
 
-    val refresh: (FileInfoItem?) -> Unit = label@{
+    val refresh: (FileInfoItem?) -> Unit by rememberUpdatedState label@{
         if (deviceDisconnect()) {
             return@label
         }
         if (it == null) {
             selectFile(null)
-            fileExplorer.refresh()
-        } else {
+            fileExplorer.refresh(null)
+        } else if (it.isDirectory) {
             fileExplorer.refresh(it.path)
+        } else {
+            fileExplorer.refresh(it.parentPath)
         }
     }
 
@@ -161,6 +163,12 @@ fun FileExplorerPager(
                             selectFile = selectFile,
                             getExpended = getExpended,
                             setExpended = setExpended,
+                            createNewFolder = createNewFolder,
+                            createNewFile = createNewFile,
+                            downloadFile = downloadFile,
+                            uploadFile = uploadFile,
+                            refresh = refresh,
+                            deleteFile = deleteFile,
                         )
                     }
                 }
@@ -255,13 +263,6 @@ private fun ToolBarView(
     refresh: (FileInfoItem?) -> Unit,
 ) {
 
-    val onCreateNewFolder by rememberUpdatedState(createNewFolder)
-    val onCreateNewFile by rememberUpdatedState(createNewFile)
-    val onDownloadFile by rememberUpdatedState(downloadFile)
-    val onUploadFile by rememberUpdatedState(uploadFile)
-    val onDeleteFile by rememberUpdatedState(deleteFile)
-    val onRefresh by rememberUpdatedState(refresh)
-
     val deviceConnected = currentDevice?.isOnline == true
     val fileExplorer = tools.fileExplorer
     val isBusy by fileExplorer.isBusy.collectAsState()
@@ -272,42 +273,42 @@ private fun ToolBarView(
                 enable = deviceConnected && currentSelect?.type == FileType.DIR,
                 resourcePath = "icons/ic_new_folder.svg"
             ) {
-                onCreateNewFolder()
+                createNewFolder()
             }
             OptionButtonView(
                 "新建文件",
                 enable = deviceConnected && currentSelect?.type == FileType.DIR,
                 resourcePath = "icons/ic_new_file.svg"
             ) {
-                onCreateNewFile()
+                createNewFile()
             }
             OptionButtonView(
                 "导出文件",
                 enable = deviceConnected && currentSelect != null,
                 resourcePath = "icons/ic_download.svg"
             ) {
-                onDownloadFile()
+                downloadFile()
             }
             OptionButtonView(
                 "导入文件",
                 enable = deviceConnected && currentSelect?.type == FileType.DIR,
                 resourcePath = "icons/ic_upload.svg"
             ) {
-                onUploadFile()
+                uploadFile()
             }
             OptionButtonView(
                 "删除",
                 enable = deviceConnected && currentSelect != null,
                 resourcePath = "icons/ic_delete.svg"
             ) {
-                onDeleteFile()
+                deleteFile()
             }
             OptionButtonView(
                 "刷新",
                 enable = deviceConnected,
                 resourcePath = "icons/ic_sync.svg"
             ) {
-                onRefresh(null)
+                refresh(null)
             }
         }
         if (isBusy) {
@@ -439,7 +440,13 @@ private fun LazyListScope.FileView(
     getChildFiles: (FileInfoItem) -> List<FileItem>,
     selectFile: (FileInfoItem?) -> Unit,
     getExpended: (FileInfoItem) -> Boolean,
-    setExpended: (FileInfoItem, Boolean) -> Unit
+    setExpended: (FileInfoItem, Boolean) -> Unit,
+    createNewFolder: () -> Unit,
+    createNewFile: () -> Unit,
+    downloadFile: () -> Unit,
+    uploadFile: () -> Unit,
+    deleteFile: () -> Unit,
+    refresh: (FileInfoItem?) -> Unit,
 ) {
     when (fileItem) {
         is FileInfoItem -> {
@@ -453,6 +460,12 @@ private fun LazyListScope.FileView(
                     selectFile = selectFile,
                     currentExpanded = currentExpanded,
                     setExpended = setExpended,
+                    createNewFolder = createNewFolder,
+                    createNewFile = createNewFile,
+                    downloadFile = downloadFile,
+                    uploadFile = uploadFile,
+                    refresh = refresh,
+                    deleteFile = deleteFile,
                 )
             }
             if (currentExpanded) {
@@ -466,6 +479,12 @@ private fun LazyListScope.FileView(
                         selectFile = selectFile,
                         getExpended = getExpended,
                         setExpended = setExpended,
+                        createNewFolder = createNewFolder,
+                        createNewFile = createNewFile,
+                        downloadFile = downloadFile,
+                        uploadFile = uploadFile,
+                        refresh = refresh,
+                        deleteFile = deleteFile,
                     )
                 }
             }
@@ -486,7 +505,13 @@ private fun FileInfoItemView(
     level: Int,
     selectFile: (FileInfoItem?) -> Unit,
     currentExpanded: Boolean,
-    setExpended: (FileInfoItem, Boolean) -> Unit
+    setExpended: (FileInfoItem, Boolean) -> Unit,
+    createNewFolder: () -> Unit,
+    createNewFile: () -> Unit,
+    downloadFile: () -> Unit,
+    uploadFile: () -> Unit,
+    deleteFile: () -> Unit,
+    refresh: (FileInfoItem?) -> Unit,
 ) {
     val selected = remember(fileInfo.path, currentSelect) {
         mutableStateOf(currentSelect == fileInfo)
@@ -494,149 +519,190 @@ private fun FileInfoItemView(
     val primaryColor = materialColors.primary.copy(alpha = 0.5f)
     var mouseEnter by remember { mutableStateOf(false) }
     val backgroundColor by remember(selected.value, mouseEnter) {
-        val c = if (mouseEnter) {
-            primaryColor.copy(alpha = 0.4f)
+        val c = if (selected.value) {
+            primaryColor.copy(alpha = 0.5f)
+        } else if (mouseEnter) {
+            primaryColor.copy(alpha = 0.2f)
         } else {
-            if (selected.value) {
-                primaryColor.copy(alpha = 0.5f)
-            } else {
-                Color.Transparent
-            }
+            Color.Transparent
         }
         mutableStateOf(c)
     }
-    Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
-        mouseEnter = true
-    }.onPointerEvent(PointerEventType.Exit) {
-        mouseEnter = false
-    }.run {
-        when (fileInfo.type) {
-            FileType.DIR -> {
-                onClick(
-                    onDoubleClick = {
-                        setExpended(fileInfo, !currentExpanded)
-                    }, onClick = {
+    val contextMenuState = remember { ContextMenuState() }
 
-                    }
-                ).onPointerEvent(PointerEventType.Press) {
-                    selectFile(fileInfo)
-                }.onExternalDrag(onDrag = {
-                    mouseEnter = true
-                }, onDragExit = {
-                    mouseEnter = false
-                }) {
-                    it.dragData.also { dragData ->
-                        if (dragData !is DragData.FilesList) {
-                            return@also
-                        }
-                        val files = dragData.readFiles().mapNotNull { uri ->
-                            try {
-                                URI.create(uri).toPath().toFile()
-                            } catch (e: Throwable) {
-                                null
-                            }
-                        }
-                        fileExplorer.pushFile(fileInfo, files)
-                        println("onDrop $files")
-                    }
-                }
-            }
-
-            FileType.FILE -> {
-                onPointerEvent(PointerEventType.Press) { selectFile(fileInfo) }
-            }
-
-            else -> this
+    LaunchedEffect(contextMenuState.status) {
+        if (contextMenuState.status is ContextMenuState.Status.Open) {
+            selectFile(fileInfo)
         }
-    }, backgroundColor = backgroundColor, elevation = 0.dp) {
-        Row(
-            modifier = Modifier.padding(end = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            val modifier = Modifier.align(Alignment.CenterVertically)
-            val iconModifier = modifier.size(20.dp)
-            Row(modifier = modifier.weight(4f), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Spacer(Modifier.width((level * 8).dp))
-                when (fileInfo.type) {
-                    FileType.DIR -> {
-                        Icon(
-                            modifier = modifier.size(30.dp).clickable {
-                                selectFile(fileInfo)
-                                setExpended(fileInfo, !currentExpanded)
-                            }.padding(5.dp), imageVector = if (currentExpanded) {
-                                Icons.Filled.KeyboardArrowDown
-                            } else {
-                                Icons.Filled.KeyboardArrowRight
-                            }, contentDescription = fileInfo.name
-                        )
-                        Icon(
-                            modifier = iconModifier,
-                            painter = painterResource("icons/ic_folder.svg"),
-                            contentDescription = fileInfo.name
-                        )
-                    }
+    }
+    ContextMenuArea(state = contextMenuState, items = {
+        mutableListOf<ContextMenuItem>().apply {
+            if (fileInfo.isDirectory) {
+                ContextMenuItem("新建文件夹") {
+                    createNewFolder()
+                }.also(::add)
+                ContextMenuItem("新建文件") {
+                    createNewFile()
+                }.also(::add)
+                ContextMenuItem("导入文件") {
+                    uploadFile()
+                }.also(::add)
+            }
+            ContextMenuItem("导出文件") {
+                downloadFile()
+            }.also(::add)
+            ContextMenuItem("删除") {
+                deleteFile()
+            }.also(::add)
+            ContextMenuItem("刷新") {
+                refresh(fileInfo)
+            }.also(::add)
+        }
+    }) {
+        Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
+            mouseEnter = true
+        }.onPointerEvent(PointerEventType.Exit) {
+            mouseEnter = false
+        }.run {
+            when (fileInfo.type) {
+                FileType.DIR -> {
+                    onClick(
+                        onDoubleClick = {
+                            setExpended(fileInfo, !currentExpanded)
+                        }, onClick = {
 
-                    FileType.LINK -> {
-                        Spacer(iconModifier)
-                        Icon(
-                            modifier = iconModifier,
-                            painter = painterResource("icons/ic_file_link.svg"),
-                            contentDescription = fileInfo.name
-                        )
-                    }
-
-                    FileType.FILE -> {
-                        Spacer(iconModifier)
-                        Icon(
-                            modifier = iconModifier,
-                            painter = painterResource("icons/ic_file.svg"),
-                            contentDescription = fileInfo.name
-                        )
-                    }
-
-                    FileType.OTHER -> {
-                        Spacer(iconModifier)
-                        Icon(
-                            modifier = iconModifier,
-                            painter = painterResource("icons/ic_unknown_file.svg"),
-                            contentDescription = fileInfo.name
-                        )
-                    }
-
-                }
-                TooltipArea(
-                    tooltip = {
-                        Card(elevation = 4.dp) {
-                            Text(text = fileInfo.name, modifier = Modifier.padding(4.dp))
                         }
-                    },
-                    delayMillis = 500, // in milliseconds
-                    modifier = modifier.weight(1f)
+                    ).onPointerEvent(PointerEventType.Press) {
+                        selectFile(fileInfo)
+                    }.onExternalDrag(onDrag = {
+                        mouseEnter = true
+                    }, onDragExit = {
+                        mouseEnter = false
+                    }) {
+                        it.dragData.also { dragData ->
+                            if (dragData !is DragData.FilesList) {
+                                return@also
+                            }
+                            val files = dragData.readFiles().mapNotNull { uri ->
+                                try {
+                                    URI.create(uri).toPath().toFile()
+                                } catch (e: Throwable) {
+                                    null
+                                }
+                            }
+                            fileExplorer.pushFile(fileInfo, files)
+                            println("onDrop $files")
+                        }
+                    }
+                }
+
+                FileType.FILE -> {
+                    onPointerEvent(PointerEventType.Press) { selectFile(fileInfo) }
+                }
+
+                else -> this
+            }
+        }, backgroundColor = backgroundColor, elevation = 0.dp) {
+            var nameHasVisualOverflow by remember { mutableStateOf(false) }
+            TooltipArea(
+                tooltip = {
+                    if (nameHasVisualOverflow && contextMenuState.status !is ContextMenuState.Status.Open) {
+                        Card(elevation = 4.dp) {
+                            Text(text = fileInfo.name, modifier = Modifier.padding(8.dp))
+                        }
+                    }
+                },
+                delayMillis = 800,
+            ) {
+                Row(
+                    modifier = Modifier.padding(end = 8.dp).fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val modifier = Modifier.align(Alignment.CenterVertically)
+                    val iconModifier = modifier.size(20.dp)
+                    Row(
+                        modifier = modifier.weight(5f), horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Spacer(Modifier.width((level * 8).dp))
+                        when (fileInfo.type) {
+                            FileType.DIR -> {
+                                Icon(
+                                    modifier = modifier.size(30.dp).clickable {
+                                        selectFile(fileInfo)
+                                        setExpended(fileInfo, !currentExpanded)
+                                    }.padding(5.dp), imageVector = if (currentExpanded) {
+                                        Icons.Filled.KeyboardArrowDown
+                                    } else {
+                                        Icons.Filled.KeyboardArrowRight
+                                    }, contentDescription = fileInfo.name
+                                )
+                                Icon(
+                                    modifier = iconModifier,
+                                    painter = painterResource("icons/ic_folder.svg"),
+                                    contentDescription = fileInfo.name
+                                )
+                            }
+
+                            FileType.LINK -> {
+                                Spacer(iconModifier)
+                                Icon(
+                                    modifier = iconModifier,
+                                    painter = painterResource("icons/ic_file_link.svg"),
+                                    contentDescription = fileInfo.name
+                                )
+                            }
+
+                            FileType.FILE -> {
+                                Spacer(iconModifier)
+                                Icon(
+                                    modifier = iconModifier,
+                                    painter = painterResource("icons/ic_file.svg"),
+                                    contentDescription = fileInfo.name
+                                )
+                            }
+
+                            FileType.OTHER -> {
+                                Spacer(iconModifier)
+                                Icon(
+                                    modifier = iconModifier,
+                                    painter = painterResource("icons/ic_unknown_file.svg"),
+                                    contentDescription = fileInfo.name
+                                )
+                            }
+
+                        }
+                        Text(
+                            text = fileInfo.name,
+                            color = materialColors.onSurface,
+                            modifier = modifier.weight(1f),
+                            overflow = TextOverflow.Ellipsis,
+                            onTextLayout = {
+                                nameHasVisualOverflow = it.hasVisualOverflow
+                            },
+                            maxLines = 1
+                        )
+                    }
                     Text(
-                        text = fileInfo.name,
-                        color = materialColors.onSurface,
-                        modifier = modifier.weight(1f),
+                        text = fileInfo.permissions,
+                        color = materialColors.onSurface.copy(0.8f),
+                        modifier = modifier.weight(2f), maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
+                    )
+                    Text(
+                        text = fileInfo.modificationTime,
+                        color = materialColors.onSurface.copy(0.8f),
+                        modifier = modifier.weight(2f), maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = fileInfo.size,
+                        color = materialColors.onSurface.copy(0.8f),
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = modifier.weight(1f), textAlign = TextAlign.End, maxLines = 1,
                     )
                 }
             }
-            Text(
-                text = fileInfo.permissions,
-                color = materialColors.onSurface.copy(0.8f),
-                modifier = modifier.weight(2f), maxLines = 1,
-            )
-            Text(
-                text = fileInfo.modificationTime,
-                color = materialColors.onSurface.copy(0.8f),
-                modifier = modifier.weight(2f), maxLines = 1,
-            )
-            Text(
-                text = fileInfo.size,
-                color = materialColors.onSurface.copy(0.8f),
-                modifier = modifier.weight(1f), textAlign = TextAlign.End, maxLines = 1,
-            )
         }
     }
 }
