@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.charset.Charset
+import java.util.regex.Pattern
 
 class DeviceConnectToolImpl(
     private val initTool: InitTool,
@@ -33,7 +34,7 @@ class DeviceConnectToolImpl(
         devices
     ) { deviceDesc, device ->
         device.map {
-            it.copy(desc = deviceDesc[it.serial].orEmpty().ifEmpty { "Phone" })
+            it.copy(desc = deviceDesc[it.serial].orEmpty())
         }
     }.distinctUntilChanged().onEach { list ->
         val current = currentSelectedDevice.value
@@ -177,34 +178,40 @@ class DeviceConnectToolImpl(
     }
 
     private suspend fun innerRefreshDevices() {
-        val list = mutableListOf<AdbDevice>()
-        try {
-            val process = progressTool.exec("adb", "devices", showLog = false, consoleLog = false).getOrThrow()
+        val list = try {
+            val process = progressTool.exec(
+                "adb", "devices", "-l",
+                showLog = false, consoleLog = false
+            ).getOrThrow()
+
             val result = process.split("\n")
-            if (result.size >= 2) {
-                //("未获取到任何设备，请检查设备连接")
-                for (i in 1 until result.size) {
-                    val item = result[i].trim()
-                    val (online, tag) = when {
-                        item.endsWith("device") -> true to "device"
-                        item.endsWith("offline") -> false to "offline"
-                        else -> continue
-                    }
-                    val device = item.split(tag)
-                    if (device.isEmpty()) {
-                        continue
-                    }
-                    val deviceId = device[0].trim()
-                    if (deviceId.isNotEmpty()) {
-                        list.add(AdbDevice(serial = deviceId, isOnline = online))
-                    }
+            result.mapNotNull { line ->
+                //127.0.0.1:58526        device product:windows_x86_64 model:Subsystem_for_Android_TM_ device:windows_x86_64 transport_id:5
+                val matcher = Pattern.compile(
+                    "^(\\S+)\\s+(\\S+)\\s+product:(\\S+)\\s+model:(\\S+)\\s+device:(\\S+)\\s+(transport_id:)?(\\S+)?(.*)$"
+                ).matcher(line.trim())
+                if (!matcher.find()) {
+                    return@mapNotNull null
+                } else {
+                    val serial = matcher.group(1) ?: return@mapNotNull null
+                    val status = matcher.group(2) ?: return@mapNotNull null
+                    val product = matcher.group(3) ?: return@mapNotNull null
+                    val model = matcher.group(4) ?: return@mapNotNull null
+                    val device = matcher.group(5) ?: return@mapNotNull null
+                    AdbDevice(
+                        serial = serial,
+                        status = status,
+                        product = product,
+                        model = model,
+                        device = device,
+                    )
                 }
+            }.sortedByDescending {
+                it.isOnline
             }
         } catch (e: Throwable) {
             e.printStackTrace()
-        }
-        list.sortedByDescending {
-            it.isOnline
+            emptyList()
         }
         devices.emit(list)
         activeRefresh()
@@ -216,9 +223,7 @@ class DeviceConnectToolImpl(
             if (desc == current.desc) {
                 return@withLock
             }
-            val new = current.copy(
-                desc = desc.ifEmpty { "Phone" }
-            )
+            val new = current.copy(desc = desc)
             configStores.deviceDescStore.updateDesc(current.serial, desc)
             currentSelectedDevice.emit(new)
         }

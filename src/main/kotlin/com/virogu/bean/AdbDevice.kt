@@ -5,13 +5,24 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AdbDevice(
     val serial: String,
-    val isOnline: Boolean,
-    val desc: String = "Phone",
+    val model: String,
+    val product: String,
+    val device: String,
+    val status: String,
+    val desc: String = model,
 ) {
-    val showName
-        get() = if (isOnline) {
-            "${desc}-${serial}"
+    val isOnline = status == "device"
+
+    val showName = buildString {
+        if (desc.isNotEmpty()) {
+            append(desc)
         } else {
-            "${desc}-${serial} (离线)"
+            append(model)
         }
+        append("-")
+        append(serial)
+        if (!isOnline) {
+            append(" ($status) ")
+        }
+    }
 }
