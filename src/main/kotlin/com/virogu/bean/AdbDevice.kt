@@ -2,6 +2,10 @@ package com.virogu.bean
 
 import kotlinx.serialization.Serializable
 
+val AdbDevice?.isOnline get() = this?.isOnline == true
+
+val AdbDevice?.isOffline get() = this?.isOnline != true
+
 @Serializable
 data class AdbDevice(
     val serial: String,

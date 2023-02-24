@@ -46,13 +46,13 @@ fun FileExplorerPager(
 ) {
     val fileExplorer = tools.fileExplorer
     val scrollAdapter = rememberScrollbarAdapter(fileListState)
-    val currentDevice = tools.deviceConnectTool.currentSelectedDevice.collectAsState()
-    val currentSelect: MutableState<FileInfoItem?> = remember(currentDevice.value) {
+    val currentDevice by tools.deviceConnectTool.currentSelectedDevice.collectAsState()
+    var currentSelect: FileInfoItem? by remember(currentDevice) {
         mutableStateOf(null)
     }
 
     val selectFile by rememberUpdatedState { file: FileInfoItem? ->
-        currentSelect.value = file
+        currentSelect = file
     }
     val getExpended by rememberUpdatedState { file: FileInfoItem ->
         fileExplorer.expandedMap[file.path] ?: false
@@ -64,59 +64,55 @@ fun FileExplorerPager(
         fileExplorer.getChild(file)
     }
 
-    val showNewFolderDialog = remember(currentDevice.value) {
+    val showNewFolderDialog = remember(currentDevice, currentSelect) {
         mutableStateOf(false)
     }
-    val showNewFileDialog = remember(currentDevice.value) {
+    val showNewFileDialog = remember(currentDevice, currentSelect) {
         mutableStateOf(false)
     }
-    val showDownloadFileDialog = remember(currentDevice.value) {
+    val showDownloadFileDialog = remember(currentDevice, currentSelect) {
         mutableStateOf(false)
     }
-    val showUploadFileDialog = remember(currentDevice.value) {
+    val showUploadFileDialog = remember(currentDevice, currentSelect) {
         mutableStateOf(false)
     }
-    val showDeleteDialog = remember(currentDevice.value) {
+    val showDeleteDialog = remember(currentDevice, currentSelect) {
         mutableStateOf(false)
-    }
-
-    val deviceDisconnect: () -> Boolean by rememberUpdatedState {
-        currentDevice.value?.isOnline != true
     }
 
     val createNewFolder: () -> Unit by rememberUpdatedState label@{
-        if (deviceDisconnect() || currentSelect.value?.type != FileType.DIR) {
+        if (currentDevice.isOffline || currentSelect?.type != FileType.DIR) {
             return@label
         }
         showNewFolderDialog.value = true
     }
     val createNewFile: () -> Unit by rememberUpdatedState label@{
-        if (deviceDisconnect() || currentSelect.value?.type != FileType.DIR) {
+        if (currentDevice.isOffline || currentSelect?.type != FileType.DIR) {
             return@label
         }
         showNewFileDialog.value = true
     }
     val downloadFile: () -> Unit by rememberUpdatedState label@{
-        if (deviceDisconnect() || currentSelect.value == null) {
+        if (currentDevice.isOffline || currentSelect == null) {
             return@label
         }
         showDownloadFileDialog.value = true
     }
     val uploadFile: () -> Unit by rememberUpdatedState label@{
-        if (deviceDisconnect() || currentSelect.value == null) {
+        if (currentDevice.isOffline || currentSelect == null) {
             return@label
         }
         showUploadFileDialog.value = true
     }
     val deleteFile: () -> Unit by rememberUpdatedState label@{
-        if (deviceDisconnect() || currentSelect.value == null) {
+        if (currentDevice.isOffline || currentSelect == null) {
             return@label
         }
         showDeleteDialog.value = true
     }
 
     val refresh: (FileInfoItem?) -> Unit by rememberUpdatedState label@{
-        if (deviceDisconnect()) {
+        if (currentDevice.isOffline) {
             return@label
         }
         if (it == null) {
@@ -138,8 +134,8 @@ fun FileExplorerPager(
             )
             ToolBarView(
                 tools = tools,
-                currentSelect = currentSelect.value,
-                currentDevice = currentDevice.value,
+                currentSelect = currentSelect,
+                currentDevice = currentDevice,
                 createNewFolder = createNewFolder,
                 createNewFile = createNewFile,
                 downloadFile = downloadFile,
@@ -157,7 +153,7 @@ fun FileExplorerPager(
                         FileView(
                             fileExplorer = fileExplorer,
                             fileItem = it,
-                            currentSelect = currentSelect.value,
+                            currentSelect = currentSelect,
                             level = 0,
                             getChildFiles = getChildFiles,
                             selectFile = selectFile,
@@ -182,16 +178,16 @@ fun FileExplorerPager(
         }
         TipsView(fileExplorer.tipsFlow)
     }
-    NewFolderDialog(showNewFolderDialog, currentDevice.value, currentSelect.value, fileExplorer)
-    NewFileDialog(showNewFileDialog, currentDevice.value, currentSelect.value, fileExplorer)
-    FileDownloadDialog(showDownloadFileDialog, currentDevice.value, currentSelect.value, fileExplorer)
-    FileUploadDialog(showUploadFileDialog, currentDevice.value, currentSelect.value, fileExplorer)
-    DeleteFileConfirmDialog(showDeleteDialog, currentDevice.value, currentSelect.value, fileExplorer, selectFile)
+    NewFolderDialog(showNewFolderDialog, currentSelect, fileExplorer)
+    NewFileDialog(showNewFileDialog, currentSelect, fileExplorer)
+    FileDownloadDialog(showDownloadFileDialog, currentSelect, fileExplorer)
+    FileUploadDialog(showUploadFileDialog, currentSelect, fileExplorer)
+    DeleteFileConfirmDialog(showDeleteDialog, currentSelect, fileExplorer, selectFile)
 }
 
 @Composable
 private fun ColumnScope.SelectDeviceView(
-    modifier: Modifier = Modifier, currentDevice: State<AdbDevice?>, tools: Tools
+    modifier: Modifier = Modifier, currentDevice: AdbDevice?, tools: Tools
 ) {
     val connectTool = tools.deviceConnectTool
 
@@ -216,7 +212,7 @@ private fun ColumnScope.SelectDeviceView(
     ) {
         Row {
             Text(
-                text = currentDevice.value?.showName.orEmpty(),
+                text = currentDevice?.showName.orEmpty(),
                 maxLines = 1,
                 modifier = Modifier.align(Alignment.CenterVertically).weight(1f).padding(horizontal = 16.dp)
             )

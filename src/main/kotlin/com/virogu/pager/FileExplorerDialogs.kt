@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.rememberDialogState
-import com.virogu.bean.AdbDevice
 import com.virogu.bean.FileInfoItem
 import com.virogu.bean.FileType
 import com.virogu.pager.view.FileChooser
@@ -24,13 +23,9 @@ import javax.swing.JFileChooser
 @Composable
 fun NewFolderDialog(
     show: MutableState<Boolean>,
-    currentDevice: AdbDevice?,
     currentSelect: FileInfoItem?,
     fileExplore: FileExplorer
 ) {
-    if (currentDevice?.isOnline != true) {
-        return
-    }
     if (currentSelect?.type != FileType.DIR) {
         return
     }
@@ -42,7 +37,7 @@ fun NewFolderDialog(
                 show.value = false
             },
             onConfirm = label@{
-                fileExplore.createDir(currentDevice, path = currentSelect.path, newFile = it)
+                fileExplore.createDir(path = currentSelect.path, newFile = it)
             }
         )
     }
@@ -51,13 +46,9 @@ fun NewFolderDialog(
 @Composable
 fun NewFileDialog(
     show: MutableState<Boolean>,
-    currentDevice: AdbDevice?,
     currentSelect: FileInfoItem?,
     fileExplore: FileExplorer
 ) {
-    if (currentDevice?.isOnline != true) {
-        return
-    }
     if (currentSelect?.type != FileType.DIR) {
         return
     }
@@ -69,7 +60,7 @@ fun NewFileDialog(
                 show.value = false
             },
             onConfirm = label@{
-                fileExplore.createFile(currentDevice, path = currentSelect.path, newFile = it)
+                fileExplore.createFile(path = currentSelect.path, newFile = it)
             }
         )
     }
@@ -78,14 +69,10 @@ fun NewFileDialog(
 @Composable
 fun DeleteFileConfirmDialog(
     show: MutableState<Boolean>,
-    currentDevice: AdbDevice?,
     currentSelect: FileInfoItem?,
     fileExplore: FileExplorer,
     selectFile: (FileInfoItem?) -> Unit
 ) {
-    if (currentDevice?.isOnline != true) {
-        return
-    }
     if (currentSelect == null) {
         return
     }
@@ -102,7 +89,7 @@ fun DeleteFileConfirmDialog(
                 show.value = false
             },
             onConfirm = label@{
-                fileExplore.deleteFile(currentDevice, currentSelect, onDeleted = {
+                fileExplore.deleteFile(currentSelect, onDeleted = {
                     selectFile(null)
                 })
             }
@@ -113,13 +100,9 @@ fun DeleteFileConfirmDialog(
 @Composable
 fun FileDownloadDialog(
     show: MutableState<Boolean>,
-    currentDevice: AdbDevice?,
     currentSelect: FileInfoItem?,
     fileExplore: FileExplorer
 ) {
-    if (currentDevice?.isOnline != true) {
-        return
-    }
     if (currentSelect == null) {
         return
     }
@@ -141,13 +124,9 @@ fun FileDownloadDialog(
 @Composable
 fun FileUploadDialog(
     show: MutableState<Boolean>,
-    currentDevice: AdbDevice?,
     currentSelect: FileInfoItem?,
     fileExplore: FileExplorer
 ) {
-    if (currentDevice?.isOnline != true) {
-        return
-    }
     if (currentSelect == null) {
         return
     }

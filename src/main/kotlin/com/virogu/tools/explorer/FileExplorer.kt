@@ -3,7 +3,6 @@
 package com.virogu.tools.explorer
 
 import androidx.compose.runtime.snapshots.SnapshotStateMap
-import com.virogu.bean.AdbDevice
 import com.virogu.bean.FileInfoItem
 import com.virogu.bean.FileItem
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,11 +16,11 @@ interface FileExplorer {
 
     fun refresh(path: String? = null)
 
-    fun createDir(device: AdbDevice, path: String, newFile: String)
+    fun createDir(path: String, newFile: String)
 
-    fun createFile(device: AdbDevice, path: String, newFile: String)
+    fun createFile(path: String, newFile: String)
 
-    fun deleteFile(device: AdbDevice, file: FileInfoItem, onDeleted: suspend () -> Unit = {})
+    fun deleteFile(file: FileInfoItem, onDeleted: suspend () -> Unit = {})
 
     fun getChild(fileInfo: FileInfoItem): List<FileItem>
 

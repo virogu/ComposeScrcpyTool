@@ -17,7 +17,7 @@ import java.util.regex.Pattern
 
 class FileExplorerImpl(
     private val initTool: InitTool,
-    private val deviceConnectTool: DeviceConnectTool,
+    deviceConnectTool: DeviceConnectTool,
     private val progressTool: ProgressTool,
 ) : FileExplorer {
 
@@ -33,6 +33,14 @@ class FileExplorerImpl(
     override val expandedMap = mutableStateMapOf<String, Boolean>()
     override val tipsFlow = MutableSharedFlow<String>()
 
+    private val selectedOnlineDevice = deviceConnectTool.currentSelectedDevice.map {
+        it?.takeIf {
+            it.isOnline
+        }
+    }.stateIn(scope, SharingStarted.Lazily, null)
+
+    private val currentDevice get() = selectedOnlineDevice.value
+
     init {
         start()
     }
@@ -42,7 +50,7 @@ class FileExplorerImpl(
             initTool.initStateFlow.first {
                 it.success
             }
-            deviceConnectTool.currentSelectedDevice.onEach {
+            selectedOnlineDevice.onEach {
                 expandedMap.clear()
                 cancelAllJob()
                 refresh(null)
@@ -60,10 +68,11 @@ class FileExplorerImpl(
         }
     }
 
-    override fun createDir(device: AdbDevice, path: String, newFile: String) {
-        val tag = "create dir $newFile in $path for ${device.serial}"
+    override fun createDir(path: String, newFile: String) {
+        val tag = "create dir $newFile in $path"
         println(tag)
         withLock(tag) {
+            val device = currentDevice ?: return@withLock
             progressTool.exec(
                 "adb", "-s", device.serial, "shell", "mkdir '${path}/${newFile}'",
                 showLog = true
@@ -81,10 +90,11 @@ class FileExplorerImpl(
         }
     }
 
-    override fun createFile(device: AdbDevice, path: String, newFile: String) {
-        val tag = "create file $newFile in $path for ${device.serial}"
+    override fun createFile(path: String, newFile: String) {
+        val tag = "create file $newFile in $path"
         println(tag)
         withLock(tag) {
+            val device = currentDevice ?: return@withLock
             progressTool.exec(
                 "adb", "-s", device.serial, "shell",
                 //"-p",
@@ -104,10 +114,11 @@ class FileExplorerImpl(
         }
     }
 
-    override fun deleteFile(device: AdbDevice, file: FileInfoItem, onDeleted: suspend () -> Unit) {
+    override fun deleteFile(file: FileInfoItem, onDeleted: suspend () -> Unit) {
         val path = file.path
-        val tag = "delete $path for ${device.serial}"
+        val tag = "delete $path"
         withLock(tag) {
+            val device = currentDevice ?: return@withLock
             if (path.count { it == '/' } <= 1) {
                 tipsFlow.emit("Are you sure you want rm -r $path?\nPlease delete it by yourself")
                 return@withLock
@@ -132,11 +143,8 @@ class FileExplorerImpl(
     }
 
     override fun getChild(fileInfo: FileInfoItem): List<FileItem> {
-        val device = deviceConnectTool.currentSelectedDevice.value
-        if (device == null) {
+        if (currentDevice == null) {
             return listOf(FileTipsItem.Error("未连接设备"))
-        } else if (!device.isOnline) {
-            return listOf(FileTipsItem.Error("设备已离线"))
         }
 
         if (!fileInfo.isDirectory) {
@@ -156,18 +164,15 @@ class FileExplorerImpl(
             return listOf(FileTipsItem.Info("Loading..."))
         }
         withLock(path) {
-            val d = deviceConnectTool.currentSelectedDevice.value ?: return@withLock
-            refreshFileChild(d, path)
+            val device = currentDevice ?: return@withLock
+            refreshFileChild(device, path)
         }
         return listOf(FileTipsItem.Info("Loading..."))
     }
 
     override fun pullFile(fromFile: List<FileInfoItem>, toLocalFile: File) {
         withLock("pull file") {
-            val device = deviceConnectTool.currentSelectedDevice.value
-            if (device?.isOnline != true) {
-                return@withLock
-            }
+            val device = currentDevice ?: return@withLock
             if (!toLocalFile.isDirectory) {
                 tipsFlow.emit("[${toLocalFile.absolutePath}]不是目录")
                 return@withLock
@@ -195,10 +200,7 @@ class FileExplorerImpl(
 
     override fun pushFile(toFile: FileInfoItem, fromLocalFiles: List<File>) {
         withLock("push file") {
-            val device = deviceConnectTool.currentSelectedDevice.value
-            if (device?.isOnline != true) {
-                return@withLock
-            }
+            val device = currentDevice ?: return@withLock
             if (!toFile.isDirectory) {
                 tipsFlow.emit("[${toFile.path}]不是目录")
                 return@withLock
@@ -325,12 +327,12 @@ class FileExplorerImpl(
     private fun withLock(tag: String, block: suspend CoroutineScope.() -> Unit) {
         scope.launch {
             mutex.withLock {
-                isBusy.emit(true)
+                //isBusy.emit(true)
                 try {
                     block()
                 } catch (_: Throwable) {
                 } finally {
-                    isBusy.emit(false)
+                    // isBusy.emit(false)
                 }
             }
         }.also { job ->
@@ -348,7 +350,9 @@ class FileExplorerImpl(
 
     private fun <T> jobLock(block: suspend CoroutineScope.(MutableMap<String, Job>) -> T) = runBlocking {
         jobsMutex.withLock {
-            block(loadingJobs)
+            block(loadingJobs).also {
+                isBusy.emit(mutex.isLocked)
+            }
         }
     }
 
