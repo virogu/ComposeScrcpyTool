@@ -14,6 +14,8 @@ import com.virogu.tools.init.LinuxInitTool
 import com.virogu.tools.init.WindowsInitTool
 import com.virogu.tools.log.LogTool
 import com.virogu.tools.log.LogToolImpl
+import com.virogu.tools.process.DeviceProcessTool
+import com.virogu.tools.process.DeviceProcessToolImpl
 import com.virogu.tools.scrcpy.ScrcpyTool
 import com.virogu.tools.scrcpy.ScrcpyToolImpl
 
@@ -43,6 +45,8 @@ class ToolImpl : Tools {
     )
 
     override val fileExplorer: FileExplorer = FileExplorerImpl(initTool, deviceConnectTool, progressTool)
+
+    override val processTool: DeviceProcessTool = DeviceProcessToolImpl(initTool, deviceConnectTool, progressTool)
 
     init {
         initTool.init()

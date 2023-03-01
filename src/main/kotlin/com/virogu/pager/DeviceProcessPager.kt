@@ -1,0 +1,315 @@
+package com.virogu.pager
+
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Card
+import androidx.compose.material.Icon
+import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.virogu.bean.AdbDevice
+import com.virogu.bean.ProcessInfo
+import com.virogu.pager.view.OptionButton
+import com.virogu.pager.view.SelectDeviceView
+import com.virogu.tools.Tools
+import com.virogu.tools.process.DeviceProcessTool
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import theme.materialColors
+
+/**
+ * Created by Virogu
+ * Date 2023/08/03 下午 3:22:21
+ **/
+@Composable
+fun DeviceProcessPager(
+    tools: Tools,
+) {
+    val processTool = tools.processTool
+    val currentDevice by tools.deviceConnectTool.currentSelectedDevice.collectAsState()
+
+    val listState = rememberLazyListState()
+    val scrollAdapter = rememberScrollbarAdapter(listState)
+
+    var currentSelect: ProcessInfo? by remember(currentDevice) {
+        mutableStateOf(null)
+    }
+    val sortBy: MutableState<ProcessInfo.SortBy> = remember {
+        mutableStateOf(ProcessInfo.SortBy.NAME)
+    }
+    val sortDesc = remember {
+        mutableStateOf(false)
+    }
+    var processes by remember {
+        mutableStateOf(emptyList<ProcessInfo>())
+    }
+
+    LaunchedEffect(sortBy.value, sortDesc.value) {
+        processTool.processListFlow.onEach {
+            processes = it.run {
+                if (sortDesc.value) {
+                    sortedByDescending(sortBy.value.selector)
+                } else {
+                    sortedBy(sortBy.value.selector)
+                }
+            }
+        }.launchIn(this)
+    }
+    DisposableEffect("enter") {
+        processTool.active()
+        onDispose {
+            processTool.pause()
+        }
+    }
+
+    Box {
+        Column(
+            modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SelectDeviceView(
+                Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).height(40.dp),
+                currentDevice, tools
+            )
+            ToolBarView(tools.processTool, currentDevice, currentSelect)
+            Row {
+                LazyColumn(
+                    Modifier.fillMaxHeight().weight(1f),
+                    state = listState,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    item {
+                        ProcessItemTitle(sortBy, sortDesc)
+                    }
+                    processes.forEach {
+                        item {
+                            ProcessItemView(it, currentSelect) {
+                                currentSelect = it
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.width(8.dp))
+                VerticalScrollbar(
+                    modifier = Modifier,
+                    adapter = scrollAdapter,
+                    reverseLayout = false,
+                )
+            }
+        }
+        //TipsView(Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+@Composable
+private fun ToolBarView(
+    processTool: DeviceProcessTool,
+    currentDevice: AdbDevice?,
+    currentSelect: ProcessInfo?
+) {
+    val deviceConnected = currentDevice?.isOnline == true
+    val isBusy by processTool.isBusy.collectAsState()
+
+    Box(modifier = Modifier.fillMaxWidth().padding(16.dp, 8.dp).height(35.dp)) {
+        Row(Modifier.align(Alignment.CenterStart), Arrangement.spacedBy(8.dp)) {
+            OptionButton(
+                "停止\nam kill",
+                enable = deviceConnected && currentSelect != null,
+                resourcePath = "icons/ic_dangerous.svg",
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = Color.Transparent,
+                    contentColor = materialColors.error
+                ),
+            ) label@{
+                currentSelect ?: return@label
+                processTool.killProcess(currentSelect.pid)
+            }
+
+            OptionButton(
+                "强行停止\nam force stop",
+                enable = deviceConnected && currentSelect != null,
+                resourcePath = "icons/ic_stop.svg",
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = Color.Transparent,
+                    contentColor = materialColors.error
+                ),
+            ) label@{
+                currentSelect ?: return@label
+                processTool.forceStopProcess(currentSelect.pid)
+            }
+
+            OptionButton(
+                "刷新",
+                enable = deviceConnected,
+                resourcePath = "icons/ic_sync.svg"
+            ) {
+                processTool.refresh()
+            }
+        }
+        if (isBusy) {
+            val infiniteTransition by rememberInfiniteTransition().animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
+                )
+            )
+            Icon(
+                modifier = Modifier.align(Alignment.CenterEnd).size(24.dp).rotate(infiniteTransition),
+                painter = painterResource("icons/ic_clock_loader.svg"),
+                contentDescription = "运行状态"
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProcessItemTitle(
+    sortBy: MutableState<ProcessInfo.SortBy>,
+    sortDesc: MutableState<Boolean>
+) {
+    val borderColor = materialColors.onSurface.copy(alpha = 0.5f)
+    Card(modifier = Modifier.height(40.dp), elevation = 0.dp) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val boxModifier = Modifier.fillMaxHeight().align(Alignment.CenterVertically)
+            val icModifier = boxModifier.size(24.dp)
+            val tabModifier = Modifier.fillMaxHeight().padding(horizontal = 8.dp)
+            val spacerModifier = Modifier.fillMaxHeight().width(1.dp).background(borderColor)
+            val imageVector = remember(sortDesc.value) {
+                if (sortDesc.value) {
+                    Icons.Filled.KeyboardArrowDown
+                } else {
+                    Icons.Filled.KeyboardArrowUp
+                }
+            }
+            Box(boxModifier.weight(5f).clickable {
+                sortBy.value = ProcessInfo.SortBy.NAME
+                sortDesc.value = !sortDesc.value
+            }) {
+                Row(tabModifier.align(Alignment.CenterStart)) {
+                    if (sortBy.value is ProcessInfo.SortBy.NAME) {
+                        Icon(modifier = icModifier, imageVector = imageVector, contentDescription = "排序")
+                    } else {
+                        Spacer(icModifier)
+                    }
+                    Text("进程名", Modifier.align(Alignment.CenterVertically))
+                }
+            }
+            Spacer(spacerModifier)
+            Box(boxModifier.weight(2f).clickable {
+                sortBy.value = ProcessInfo.SortBy.PID
+                sortDesc.value = !sortDesc.value
+            }) {
+                Row(tabModifier.align(Alignment.CenterEnd)) {
+                    if (sortBy.value is ProcessInfo.SortBy.PID) {
+                        Icon(modifier = icModifier, imageVector = imageVector, contentDescription = "排序")
+                    } else {
+                        Spacer(icModifier)
+                    }
+                    Text("PID", Modifier.align(Alignment.CenterVertically))
+                }
+            }
+            Spacer(spacerModifier)
+            Box(boxModifier.weight(2f).clickable {
+                sortBy.value = ProcessInfo.SortBy.CPU
+                sortDesc.value = !sortDesc.value
+            }) {
+                Row(tabModifier.align(Alignment.CenterEnd)) {
+                    if (sortBy.value is ProcessInfo.SortBy.CPU) {
+                        Icon(modifier = icModifier, imageVector = imageVector, contentDescription = "排序")
+                    } else {
+                        Spacer(icModifier)
+                    }
+                    Text("CPU", Modifier.align(Alignment.CenterVertically))
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+private fun ProcessItemView(
+    processInfo: ProcessInfo,
+    currentSelect: ProcessInfo?,
+    selectProcess: (ProcessInfo?) -> Unit,
+) {
+    val selected = remember(processInfo, currentSelect) {
+        mutableStateOf(currentSelect == processInfo)
+    }
+    val primaryColor = materialColors.primary.copy(alpha = 0.5f)
+    var mouseEnter by remember { mutableStateOf(false) }
+    val backgroundColor by remember(selected.value, mouseEnter) {
+        val c = if (selected.value) {
+            primaryColor.copy(alpha = 0.5f)
+        } else if (mouseEnter) {
+            primaryColor.copy(alpha = 0.2f)
+        } else {
+            Color.Transparent
+        }
+        mutableStateOf(c)
+    }
+    Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
+        mouseEnter = true
+    }.onPointerEvent(PointerEventType.Exit) {
+        mouseEnter = false
+    }.onPointerEvent(PointerEventType.Press) {
+        selectProcess(processInfo)
+    }, backgroundColor = backgroundColor, elevation = 0.dp) {
+        Row(
+            modifier = Modifier.padding(8.dp).fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val modifier = Modifier.align(Alignment.CenterVertically).padding(horizontal = 4.dp)
+            val iconModifier = modifier.size(20.dp)
+            Row(
+                modifier = modifier.weight(5f), horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    modifier = iconModifier,
+                    painter = painterResource("icons/ic_smartphone.svg"),
+                    contentDescription = "icon smartphone"
+                )
+                Text(
+                    text = processInfo.name,
+                    modifier = modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                text = processInfo.pid,
+                modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End,
+            )
+            Text(
+                text = processInfo.cpuRate,
+                modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End,
+            )
+        }
+    }
+}

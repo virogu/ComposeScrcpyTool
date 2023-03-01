@@ -6,6 +6,7 @@ import com.virogu.tools.connect.DeviceConnectTool
 import com.virogu.tools.explorer.FileExplorer
 import com.virogu.tools.init.InitTool
 import com.virogu.tools.log.LogTool
+import com.virogu.tools.process.DeviceProcessTool
 import com.virogu.tools.scrcpy.ScrcpyTool
 
 interface Tools {
@@ -16,6 +17,7 @@ interface Tools {
     val logTool: LogTool
     val scrcpyTool: ScrcpyTool
     val fileExplorer: FileExplorer
+    val processTool: DeviceProcessTool
 
     fun start()
     fun stop()

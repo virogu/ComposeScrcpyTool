@@ -2,39 +2,34 @@
 
 package com.virogu.pager
 
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
-import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.virogu.bean.*
+import com.virogu.pager.view.OptionButton
+import com.virogu.pager.view.SelectDeviceView
+import com.virogu.pager.view.TipsView
 import com.virogu.tools.Tools
 import com.virogu.tools.explorer.FileExplorer
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import theme.Purple200
 import theme.materialColors
 import java.net.URI
 import kotlin.io.path.toPath
@@ -130,10 +125,12 @@ fun FileExplorerPager(
             modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             SelectDeviceView(
-                Modifier.padding(horizontal = 16.dp).height(40.dp), currentDevice, tools
+                Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).height(40.dp),
+                currentDevice,
+                tools
             )
             ToolBarView(
-                tools = tools,
+                fileExplorer = tools.fileExplorer,
                 currentSelect = currentSelect,
                 currentDevice = currentDevice,
                 createNewFolder = createNewFolder,
@@ -176,7 +173,7 @@ fun FileExplorerPager(
                 )
             }
         }
-        TipsView(fileExplorer.tipsFlow)
+        TipsView(Modifier.align(Alignment.BottomCenter), fileExplorer.tipsFlow)
     }
     NewFolderDialog(showNewFolderDialog, currentSelect, fileExplorer)
     NewFileDialog(showNewFileDialog, currentSelect, fileExplorer)
@@ -186,69 +183,8 @@ fun FileExplorerPager(
 }
 
 @Composable
-private fun ColumnScope.SelectDeviceView(
-    modifier: Modifier = Modifier, currentDevice: AdbDevice?, tools: Tools
-) {
-    val connectTool = tools.deviceConnectTool
-
-    val devices = connectTool.connectedDevice.collectAsState()
-
-    val expanded = remember { mutableStateOf(false) }
-    val borderStroke by com.virogu.pager.view.animateBorderStrokeAsState()
-    val dropMenuWidth = remember {
-        mutableStateOf(0.dp)
-    }
-    val dropMenuOffset = remember {
-        mutableStateOf(0.dp)
-    }
-    Box(
-        modifier = modifier.border(
-            borderStroke, TextFieldDefaults.OutlinedTextFieldShape
-        ).clickable {
-            expanded.value = true
-        }.onPlaced {
-            dropMenuWidth.value = it.size.width.dp
-        }.align(Alignment.CenterHorizontally),
-    ) {
-        Row {
-            Text(
-                text = currentDevice?.showName.orEmpty(),
-                maxLines = 1,
-                modifier = Modifier.align(Alignment.CenterVertically).weight(1f).padding(horizontal = 16.dp)
-            )
-            Button(
-                onClick = {
-                    expanded.value = !expanded.value
-                },
-                modifier = Modifier.fillMaxHeight().aspectRatio(1f).align(Alignment.CenterVertically),
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
-                contentPadding = PaddingValues(4.dp),
-                elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-            ) {
-                Icon(Icons.Default.ArrowDropDown, "", tint = contentColorFor(MaterialTheme.colors.background))
-            }
-        }
-        DropdownMenu(
-            expanded = expanded.value, onDismissRequest = {
-                expanded.value = false
-            }, modifier = Modifier.width(dropMenuWidth.value), offset = DpOffset(dropMenuOffset.value, 0.dp)
-        ) {
-            devices.value.forEach {
-                Column(modifier = Modifier.clickable {
-                    connectTool.selectDevice(it)
-                    expanded.value = false
-                }) {
-                    Text(text = it.showName, modifier = Modifier.fillMaxWidth().padding(16.dp, 10.dp, 16.dp, 10.dp))
-                    //Box(modifier = Modifier.fillMaxWidth().padding(16.dp).height(0.5.dp).background(Color.LightGray))
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun ToolBarView(
-    tools: Tools,
+    fileExplorer: FileExplorer,
     currentSelect: FileInfoItem?,
     currentDevice: AdbDevice?,
     createNewFolder: () -> Unit,
@@ -258,48 +194,46 @@ private fun ToolBarView(
     deleteFile: () -> Unit,
     refresh: (FileInfoItem?) -> Unit,
 ) {
-
     val deviceConnected = currentDevice?.isOnline == true
-    val fileExplorer = tools.fileExplorer
     val isBusy by fileExplorer.isBusy.collectAsState()
     Box(modifier = Modifier.fillMaxWidth().padding(16.dp, 8.dp).height(35.dp)) {
         Row(Modifier.align(Alignment.CenterStart), Arrangement.spacedBy(8.dp)) {
-            OptionButtonView(
+            OptionButton(
                 "新建文件夹",
                 enable = deviceConnected && currentSelect?.type == FileType.DIR,
                 resourcePath = "icons/ic_new_folder.svg"
             ) {
                 createNewFolder()
             }
-            OptionButtonView(
+            OptionButton(
                 "新建文件",
                 enable = deviceConnected && currentSelect?.type == FileType.DIR,
                 resourcePath = "icons/ic_new_file.svg"
             ) {
                 createNewFile()
             }
-            OptionButtonView(
+            OptionButton(
                 "导出文件",
                 enable = deviceConnected && currentSelect != null,
                 resourcePath = "icons/ic_download.svg"
             ) {
                 downloadFile()
             }
-            OptionButtonView(
+            OptionButton(
                 "导入文件",
                 enable = deviceConnected && currentSelect?.type == FileType.DIR,
                 resourcePath = "icons/ic_upload.svg"
             ) {
                 uploadFile()
             }
-            OptionButtonView(
+            OptionButton(
                 "删除",
                 enable = deviceConnected && currentSelect != null,
                 resourcePath = "icons/ic_delete.svg"
             ) {
                 deleteFile()
             }
-            OptionButtonView(
+            OptionButton(
                 "刷新",
                 enable = deviceConnected,
                 resourcePath = "icons/ic_sync.svg"
@@ -324,109 +258,6 @@ private fun ToolBarView(
         }
     }
 }
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun OptionButtonView(
-    description: String, enable: Boolean, resourcePath: String, onClick: () -> Unit
-) {
-    val click by rememberUpdatedState(onClick)
-    val modifier = Modifier.fillMaxHeight().aspectRatio(1f)
-    val shape = RoundedCornerShape(8.dp)
-    val colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
-    val contentPadding = PaddingValues(6.dp)
-    val iconModifier = Modifier
-    // wrap button in BoxWithTooltip
-    TooltipArea(
-        tooltip = {
-            Card(elevation = 4.dp) {
-                Text(text = description, modifier = Modifier.padding(10.dp))
-            }
-        },
-        delayMillis = 500, // in milliseconds
-    ) {
-        Button(
-            onClick = {
-                click()
-            },
-            enabled = enable,
-            modifier = modifier,
-            shape = shape,
-            colors = colors,
-            contentPadding = contentPadding,
-            elevation = null
-        ) {
-            Icon(modifier = iconModifier, painter = painterResource(resourcePath), contentDescription = description)
-        }
-    }
-}
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-private fun BoxScope.TipsView(
-    tipsFlow: SharedFlow<String>
-) {
-    var tips by remember {
-        mutableStateOf("")
-    }
-    var showTips by remember {
-        mutableStateOf(false)
-    }
-    var mouseEnter by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        tipsFlow.onEach {
-            tips = it.trim()
-            showTips = true
-        }.launchIn(this)
-    }
-
-    LaunchedEffect(showTips, mouseEnter) {
-        if (!mouseEnter && showTips) {
-            delay(5000)
-            showTips = false
-        }
-    }
-    AnimatedVisibility(
-        modifier = Modifier.align(Alignment.BottomCenter),
-        visible = showTips,
-        enter = fadeIn() + expandIn(initialSize = { IntSize(it.width, 0) }),
-        exit = shrinkOut(targetSize = { IntSize(it.width, 0) }) + fadeOut()
-    ) {
-        Card(
-            modifier = Modifier.fillMaxWidth()
-                .padding(horizontal = 32.dp, vertical = 16.dp)
-                .onPointerEvent(PointerEventType.Enter) { mouseEnter = true }
-                .onPointerEvent(PointerEventType.Exit) { mouseEnter = false },
-            border = if (mouseEnter) BorderStroke(1.dp, materialColors.primary) else null,
-            elevation = 8.dp
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth()
-                    .defaultMinSize(minHeight = 50.dp)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Icon(Icons.Filled.Info, "info")
-                Text(tips, Modifier.weight(1f))
-                Button(
-                    onClick = { showTips = false },
-                    modifier = Modifier.size(35.dp),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
-                    contentPadding = PaddingValues(4.dp),
-                    elevation = ButtonDefaults.elevation(defaultElevation = 0.dp)
-                ) {
-                    Icon(Icons.Default.Close, "关闭")
-                }
-            }
-        }
-    }
-}
-
-private val ERROR_COLOR = Color(0xFFDA4C3F)
-private val TIPS_COLOR = Purple200.copy(alpha = 0.8f)
 
 private fun LazyListScope.FileView(
     fileExplorer: FileExplorer,
@@ -716,8 +547,8 @@ private fun FileTipsItemView(
         Spacer(Modifier.width((level * 8).dp.plus(40.dp)))
         Text(
             text = fileTipsItem.name, color = when (fileTipsItem) {
-                is FileTipsItem.Error -> ERROR_COLOR
-                is FileTipsItem.Info -> TIPS_COLOR
+                is FileTipsItem.Error -> materialColors.error
+                is FileTipsItem.Info -> materialColors.primary.copy(alpha = 0.8f)
             }, modifier = modifier.weight(1f), overflow = TextOverflow.Ellipsis, maxLines = 1
         )
     }

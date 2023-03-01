@@ -74,7 +74,7 @@ fun MainPager(
             }
         }
         Spacer(Modifier.fillMaxHeight().width(1.dp).background(materialColors.onSurface.copy(alpha = 0.3f)))
-        when (val pager = currentPager.value) {
+        when (currentPager.value) {
             Pager.DeviceConnection -> DeviceConnectView(
                 window,
                 windowState,
@@ -83,7 +83,7 @@ fun MainPager(
             )
 
             Pager.DeviceExplorer -> FileExplorerPager(tools, fileListState)
-            Pager.DeviceProcess -> Text(pager.title)
+            Pager.DeviceProcess -> DeviceProcessPager(tools)
         }
     }
 }
