@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.regex.Pattern
 
 class DeviceProcessToolImpl(
     private val initTool: InitTool,
@@ -91,53 +90,80 @@ class DeviceProcessToolImpl(
     private suspend fun refreshProcess(device: AdbDevice) {
         progressTool.exec(
             "adb", "-s", device.serial, "shell",
-            "dumpsys", "cpuinfo",
+            "dumpsys activity processes"
         ).onSuccess {
             delay(10)
             //println(it)
-            val lines = it.trim().split("\n")
-            val process = lines.parseToProcess()
+            val process = it.parseToProcess()
             delay(10)
             processListFlow.emit(process)
         }
     }
 
-    private fun List<String>.parseToProcess(): List<ProcessInfo> {
-        if (this.isEmpty()) {
+    private fun String.parseToProcess(): List<ProcessInfo> {
+        val matches = Regex("""(?s)(APP|PERS)\*\s+(.*?)\n\s*?[*\n]""").findAll(this)
+        if (matches.count() <= 0) {
             return emptyList()
         }
         return try {
-            mapNotNull { line ->
-                val matcher = Pattern.compile(
-                    "^(\\S+)\\s+([^/]+)/(\\S+):\\s+(.*)$"
-                ).matcher(line.trim())
-                if (matcher.find()) {
-                    ProcessInfo(
-                        cpuRate = matcher.group(1),
-                        pid = matcher.group(2),
-                        name = matcher.group(3)
-                    )
-                } else {
-                    null
+            matches.mapNotNull { matchesResult ->
+                val process = matchesResult.groupValues[2]
+                val first = process.reader().readLines().firstOrNull()?.trim() ?: return@mapNotNull null
+                //UID 1000 ProcessRecord{a0f6d00 727:com.microsoft.windows.systemapp/u0a48}
+                val baseInfo = Regex("""\S+\s+(\d+)\s+ProcessRecord\{(\S+)\s+(\d+):(\S+)/(\S+)}(.*)""").find(first)
+                    ?: return@mapNotNull null
+                val uid = baseInfo.groupValues.getOrNull(1) ?: return@mapNotNull null
+                val pid = baseInfo.groupValues.getOrNull(3) ?: return@mapNotNull null
+                val processName = baseInfo.groupValues.getOrNull(4) ?: return@mapNotNull null
+                val packageName = processName.split(":").firstOrNull() ?: return@mapNotNull null
+                val user: String = baseInfo.groupValues.getOrNull(5).orEmpty()
+                val maps = Regex("""\s*(\w+)=(\{[^{}]*}|\S+)\s*""").findAll(process).associate { kv ->
+                    kv.groupValues[1] to kv.groupValues[2]
                 }
-            }
+                ProcessInfo(
+                    user = user,
+                    uid = uid,
+                    pid = pid,
+                    processName = processName,
+                    packageName = packageName,
+                    params = maps
+                )
+            }.toList()
         } catch (e: Throwable) {
             e.printStackTrace()
             emptyList()
         }
     }
 
-    override fun killProcess(pid: String) {
-        withLock("kill $pid") {
+    override fun killProcess(packageName: String) {
+        withLock("kill $packageName") {
             val device = currentDevice ?: return@withLock
-            //TODO()
+            progressTool.exec(
+                "adb", "-s", device.serial, "shell", "am",
+                "kill", packageName,
+                consoleLog = true,
+            ).onSuccess {
+                if (it.isNotEmpty()) {
+                    tipsFlow.emit(it)
+                }
+            }
+            refreshProcess(device)
         }
     }
 
-    override fun forceStopProcess(pid: String) {
-        withLock("force stop $pid") {
+    override fun forceStopProcess(packageName: String) {
+        withLock("force stop $packageName") {
             val device = currentDevice ?: return@withLock
-            //TODO()
+            progressTool.exec(
+                "adb", "-s", device.serial, "shell", "am",
+                "force-stop", packageName,
+                consoleLog = true,
+            ).onSuccess {
+                if (it.isNotEmpty()) {
+                    tipsFlow.emit(it)
+                }
+            }
+            refreshProcess(device)
         }
     }
 

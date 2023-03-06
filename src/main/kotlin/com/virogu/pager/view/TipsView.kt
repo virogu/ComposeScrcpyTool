@@ -18,7 +18,7 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import theme.materialColors
@@ -32,7 +32,7 @@ import theme.materialColors
 @Composable
 fun TipsView(
     modifier: Modifier,
-    tipsFlow: SharedFlow<String>
+    tipsFlow: Flow<String>
 ) {
     var tips by remember {
         mutableStateOf("")

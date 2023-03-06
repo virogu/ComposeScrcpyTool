@@ -1,13 +1,10 @@
 package com.virogu.pager
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.VerticalScrollbar
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
@@ -31,6 +28,7 @@ import com.virogu.bean.AdbDevice
 import com.virogu.bean.ProcessInfo
 import com.virogu.pager.view.OptionButton
 import com.virogu.pager.view.SelectDeviceView
+import com.virogu.pager.view.TipsView
 import com.virogu.tools.Tools
 import com.virogu.tools.process.DeviceProcessTool
 import kotlinx.coroutines.flow.launchIn
@@ -51,9 +49,6 @@ fun DeviceProcessPager(
     val listState = rememberLazyListState()
     val scrollAdapter = rememberScrollbarAdapter(listState)
 
-    var currentSelect: ProcessInfo? by remember(currentDevice) {
-        mutableStateOf(null)
-    }
     val sortBy: MutableState<ProcessInfo.SortBy> = remember {
         mutableStateOf(ProcessInfo.SortBy.NAME)
     }
@@ -63,15 +58,20 @@ fun DeviceProcessPager(
     var processes by remember {
         mutableStateOf(emptyList<ProcessInfo>())
     }
-
+    var currentSelect: ProcessInfo? by remember(currentDevice) {
+        mutableStateOf(null)
+    }
     LaunchedEffect(sortBy.value, sortDesc.value) {
-        processTool.processListFlow.onEach {
-            processes = it.run {
+        processTool.processListFlow.onEach { list ->
+            processes = list.run {
                 if (sortDesc.value) {
                     sortedByDescending(sortBy.value.selector)
                 } else {
                     sortedBy(sortBy.value.selector)
                 }
+            }
+            if (list.find { it.pid == currentSelect?.pid } == null) {
+                currentSelect = null
             }
         }.launchIn(this)
     }
@@ -116,7 +116,7 @@ fun DeviceProcessPager(
                 )
             }
         }
-        //TipsView(Modifier.align(Alignment.BottomCenter))
+        TipsView(Modifier.align(Alignment.BottomCenter), processTool.tipsFlow)
     }
 }
 
@@ -141,7 +141,7 @@ private fun ToolBarView(
                 ),
             ) label@{
                 currentSelect ?: return@label
-                processTool.killProcess(currentSelect.pid)
+                processTool.killProcess(currentSelect.packageName)
             }
 
             OptionButton(
@@ -154,7 +154,7 @@ private fun ToolBarView(
                 ),
             ) label@{
                 currentSelect ?: return@label
-                processTool.forceStopProcess(currentSelect.pid)
+                processTool.forceStopProcess(currentSelect.packageName)
             }
 
             OptionButton(
@@ -206,7 +206,7 @@ private fun ProcessItemTitle(
                     Icons.Filled.KeyboardArrowUp
                 }
             }
-            Box(boxModifier.weight(5f).clickable {
+            Box(boxModifier.weight(6f).clickable {
                 sortBy.value = ProcessInfo.SortBy.NAME
                 sortDesc.value = !sortDesc.value
             }) {
@@ -234,24 +234,31 @@ private fun ProcessItemTitle(
                 }
             }
             Spacer(spacerModifier)
-            Box(boxModifier.weight(2f).clickable {
-                sortBy.value = ProcessInfo.SortBy.CPU
-                sortDesc.value = !sortDesc.value
-            }) {
+            Box(boxModifier.weight(2f)) {
                 Row(tabModifier.align(Alignment.CenterEnd)) {
-                    if (sortBy.value is ProcessInfo.SortBy.CPU) {
-                        Icon(modifier = icModifier, imageVector = imageVector, contentDescription = "排序")
-                    } else {
-                        Spacer(icModifier)
-                    }
-                    Text("CPU", Modifier.align(Alignment.CenterVertically))
+                    Spacer(icModifier)
+                    Text("ABI", Modifier.align(Alignment.CenterVertically))
+                }
+            }
+            Spacer(spacerModifier)
+            Box(boxModifier.weight(2f)) {
+                Row(tabModifier.align(Alignment.CenterEnd)) {
+                    Spacer(icModifier)
+                    Text("用户", Modifier.align(Alignment.CenterVertically))
+                }
+            }
+            Spacer(spacerModifier)
+            Box(boxModifier.weight(3f)) {
+                Row(tabModifier.align(Alignment.CenterEnd)) {
+                    Spacer(icModifier)
+                    Text("内存(RSS)", Modifier.align(Alignment.CenterVertically))
                 }
             }
         }
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun ProcessItemView(
     processInfo: ProcessInfo,
@@ -259,7 +266,7 @@ private fun ProcessItemView(
     selectProcess: (ProcessInfo?) -> Unit,
 ) {
     val selected = remember(processInfo, currentSelect) {
-        mutableStateOf(currentSelect == processInfo)
+        mutableStateOf(currentSelect?.pid == processInfo.pid)
     }
     val primaryColor = materialColors.primary.copy(alpha = 0.5f)
     var mouseEnter by remember { mutableStateOf(false) }
@@ -273,43 +280,62 @@ private fun ProcessItemView(
         }
         mutableStateOf(c)
     }
-    Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
-        mouseEnter = true
-    }.onPointerEvent(PointerEventType.Exit) {
-        mouseEnter = false
-    }.onPointerEvent(PointerEventType.Press) {
-        selectProcess(processInfo)
-    }, backgroundColor = backgroundColor, elevation = 0.dp) {
-        Row(
-            modifier = Modifier.padding(8.dp).fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val modifier = Modifier.align(Alignment.CenterVertically).padding(horizontal = 4.dp)
-            val iconModifier = modifier.size(20.dp)
+    TooltipArea(
+        tooltip = {
+            Card(elevation = 4.dp) {
+                Text(text = processInfo.processName, modifier = Modifier.padding(8.dp))
+            }
+        },
+        delayMillis = 800,
+    ) {
+        Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
+            mouseEnter = true
+        }.onPointerEvent(PointerEventType.Exit) {
+            mouseEnter = false
+        }.onPointerEvent(PointerEventType.Press) {
+            selectProcess(processInfo)
+        }, backgroundColor = backgroundColor, elevation = 0.dp) {
             Row(
-                modifier = modifier.weight(5f), horizontalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier.padding(8.dp).fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    modifier = iconModifier,
-                    painter = painterResource("icons/ic_smartphone.svg"),
-                    contentDescription = "icon smartphone"
+                val modifier = Modifier.align(Alignment.CenterVertically).padding(horizontal = 4.dp)
+                val iconModifier = modifier.size(20.dp)
+                Row(
+                    modifier = modifier.weight(6f), horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        modifier = iconModifier,
+                        painter = painterResource("icons/ic_smartphone.svg"),
+                        contentDescription = "icon smartphone"
+                    )
+                    Text(
+                        text = processInfo.processName,
+                        modifier = modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Text(
+                    text = processInfo.pid,
+                    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.End,
                 )
                 Text(
-                    text = processInfo.name,
-                    modifier = modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    text = processInfo.abi,
+                    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.End,
+                )
+                Text(
+                    text = processInfo.user,
+                    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.End,
+                )
+                Text(
+                    text = processInfo.lastRss,
+                    modifier = modifier.weight(3f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.End,
                 )
             }
-            Text(
-                text = processInfo.pid,
-                modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.End,
-            )
-            Text(
-                text = processInfo.cpuRate,
-                modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.End,
-            )
         }
     }
 }
