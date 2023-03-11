@@ -18,6 +18,7 @@ data class ProcessInfo(
     ) {
         object NAME : SortBy({ it.processName })
         object PID : SortBy({ it.pid })
+        object RSS : SortBy({ it.lastRss })
     }
 
 }

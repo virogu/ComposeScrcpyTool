@@ -65,7 +65,7 @@ class DeviceProcessToolImpl(
                 if (active && device != null) {
                     refreshProcess(device)
                 }
-                delay(3000)
+                delay(5000)
             }
         }
     }

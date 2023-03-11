@@ -216,7 +216,7 @@ private fun ProcessItemTitle(
                     } else {
                         Spacer(icModifier)
                     }
-                    Text("进程名", Modifier.align(Alignment.CenterVertically))
+                    Text("Name", Modifier.align(Alignment.CenterVertically))
                 }
             }
             Spacer(spacerModifier)
@@ -224,7 +224,7 @@ private fun ProcessItemTitle(
                 sortBy.value = ProcessInfo.SortBy.PID
                 sortDesc.value = !sortDesc.value
             }) {
-                Row(tabModifier.align(Alignment.CenterEnd)) {
+                Row(tabModifier.align(Alignment.Center)) {
                     if (sortBy.value is ProcessInfo.SortBy.PID) {
                         Icon(modifier = icModifier, imageVector = imageVector, contentDescription = "排序")
                     } else {
@@ -235,25 +235,25 @@ private fun ProcessItemTitle(
             }
             Spacer(spacerModifier)
             Box(boxModifier.weight(2f)) {
-                Row(tabModifier.align(Alignment.CenterEnd)) {
+                Row(tabModifier.align(Alignment.Center)) {
                     Spacer(icModifier)
                     Text("ABI", Modifier.align(Alignment.CenterVertically))
                 }
             }
             Spacer(spacerModifier)
             Box(boxModifier.weight(2f)) {
-                Row(tabModifier.align(Alignment.CenterEnd)) {
+                Row(tabModifier.align(Alignment.Center)) {
                     Spacer(icModifier)
-                    Text("用户", Modifier.align(Alignment.CenterVertically))
+                    Text("User", Modifier.align(Alignment.CenterVertically))
                 }
             }
-            Spacer(spacerModifier)
-            Box(boxModifier.weight(3f)) {
-                Row(tabModifier.align(Alignment.CenterEnd)) {
-                    Spacer(icModifier)
-                    Text("内存(RSS)", Modifier.align(Alignment.CenterVertically))
-                }
-            }
+            //Spacer(spacerModifier)
+            //Box(boxModifier.weight(2f)) {
+            //    Row(tabModifier.align(Alignment.Center)) {
+            //        Spacer(icModifier)
+            //        Text("RSS", Modifier.align(Alignment.CenterVertically))
+            //    }
+            //}
         }
     }
 }
@@ -330,11 +330,11 @@ private fun ProcessItemView(
                     modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.End,
                 )
-                Text(
-                    text = processInfo.lastRss,
-                    modifier = modifier.weight(3f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.End,
-                )
+                //Text(
+                //    text = processInfo.lastRss,
+                //    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                //    textAlign = TextAlign.End,
+                //)
             }
         }
     }
