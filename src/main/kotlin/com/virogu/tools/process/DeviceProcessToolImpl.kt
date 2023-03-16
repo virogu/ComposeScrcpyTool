@@ -101,7 +101,7 @@ class DeviceProcessToolImpl(
     }
 
     private fun String.parseToProcess(): List<ProcessInfo> {
-        val matches = Regex("""(?s)(APP|PERS)\*\s+(.*?)\n\s*?[*\n]""").findAll(this)
+        val matches = Regex("""(?s)(APP|PERS)\*\s+(.*?)(\*|PID mappings:)""").findAll(this)
         if (matches.count() <= 0) {
             return emptyList()
         }
@@ -116,7 +116,14 @@ class DeviceProcessToolImpl(
                 val pid = baseInfo.groupValues.getOrNull(3) ?: return@mapNotNull null
                 val processName = baseInfo.groupValues.getOrNull(4) ?: return@mapNotNull null
                 val packageName = processName.split(":").firstOrNull() ?: return@mapNotNull null
-                val user: String = baseInfo.groupValues.getOrNull(5).orEmpty()
+                val user: String = baseInfo.groupValues.getOrNull(5).orEmpty().let {
+                    if (it.first().isDigit()) {
+                        it.toIntOrNull()?.toString() ?: "0"
+                    } else {
+                        val m = Regex("""(.*?)(\d+)(.*?)""").find(it)
+                        m?.groupValues?.getOrNull(2) ?: "0"
+                    }
+                }
                 val maps = Regex("""\s*(\w+)=(\{[^{}]*}|\S+)\s*""").findAll(process).associate { kv ->
                     kv.groupValues[1] to kv.groupValues[2]
                 }
@@ -135,12 +142,12 @@ class DeviceProcessToolImpl(
         }
     }
 
-    override fun killProcess(packageName: String) {
-        withLock("kill $packageName") {
+    override fun killProcess(user: String, packageName: String) {
+        withLock("kill $packageName $user") {
             val device = currentDevice ?: return@withLock
             progressTool.exec(
                 "adb", "-s", device.serial, "shell", "am",
-                "kill", packageName,
+                "kill", "--user", user, packageName,
                 consoleLog = true,
             ).onSuccess {
                 if (it.isNotEmpty()) {
@@ -151,12 +158,12 @@ class DeviceProcessToolImpl(
         }
     }
 
-    override fun forceStopProcess(packageName: String) {
-        withLock("force stop $packageName") {
+    override fun forceStopProcess(user: String, packageName: String) {
+        withLock("force stop $packageName $user") {
             val device = currentDevice ?: return@withLock
             progressTool.exec(
                 "adb", "-s", device.serial, "shell", "am",
-                "force-stop", packageName,
+                "force-stop", "--user", user, packageName,
                 consoleLog = true,
             ).onSuccess {
                 if (it.isNotEmpty()) {

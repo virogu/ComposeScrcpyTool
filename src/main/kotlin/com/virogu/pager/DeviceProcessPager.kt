@@ -70,7 +70,7 @@ fun DeviceProcessPager(
                     sortedBy(sortBy.value.selector)
                 }
             }
-            if (list.find { it.pid == currentSelect?.pid } == null) {
+            if (currentSelect != null && list.find { it.pid == currentSelect?.pid } == null) {
                 currentSelect = null
             }
         }.launchIn(this)
@@ -90,7 +90,9 @@ fun DeviceProcessPager(
                 Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).height(40.dp),
                 currentDevice, tools
             )
-            ToolBarView(tools.processTool, currentDevice, currentSelect)
+            ToolBarView(tools.processTool, currentDevice, currentSelect) {
+                currentSelect = it
+            }
             Row {
                 LazyColumn(
                     Modifier.fillMaxHeight().weight(1f),
@@ -124,7 +126,8 @@ fun DeviceProcessPager(
 private fun ToolBarView(
     processTool: DeviceProcessTool,
     currentDevice: AdbDevice?,
-    currentSelect: ProcessInfo?
+    currentSelect: ProcessInfo?,
+    selectProcess: (ProcessInfo?) -> Unit,
 ) {
     val deviceConnected = currentDevice?.isOnline == true
     val isBusy by processTool.isBusy.collectAsState()
@@ -141,7 +144,8 @@ private fun ToolBarView(
                 ),
             ) label@{
                 currentSelect ?: return@label
-                processTool.killProcess(currentSelect.packageName)
+                processTool.killProcess(currentSelect.user, currentSelect.packageName)
+                selectProcess(null)
             }
 
             OptionButton(
@@ -154,7 +158,8 @@ private fun ToolBarView(
                 ),
             ) label@{
                 currentSelect ?: return@label
-                processTool.forceStopProcess(currentSelect.packageName)
+                processTool.forceStopProcess(currentSelect.user, currentSelect.packageName)
+                selectProcess(null)
             }
 
             OptionButton(

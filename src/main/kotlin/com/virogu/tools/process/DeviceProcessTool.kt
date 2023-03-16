@@ -16,7 +16,7 @@ interface DeviceProcessTool {
 
     fun refresh()
 
-    fun killProcess(packageName: String)
+    fun killProcess(user: String, packageName: String)
 
-    fun forceStopProcess(packageName: String)
+    fun forceStopProcess(user: String, packageName: String)
 }
