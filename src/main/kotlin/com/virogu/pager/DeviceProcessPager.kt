@@ -285,62 +285,64 @@ private fun ProcessItemView(
         }
         mutableStateOf(c)
     }
-    TooltipArea(
-        tooltip = {
-            Card(elevation = 4.dp) {
-                Text(text = processInfo.processName, modifier = Modifier.padding(8.dp))
-            }
-        },
-        delayMillis = 800,
-    ) {
-        Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
-            mouseEnter = true
-        }.onPointerEvent(PointerEventType.Exit) {
-            mouseEnter = false
-        }.onPointerEvent(PointerEventType.Press) {
-            selectProcess(processInfo)
-        }, backgroundColor = backgroundColor, elevation = 0.dp) {
+
+    Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
+        mouseEnter = true
+    }.onPointerEvent(PointerEventType.Exit) {
+        mouseEnter = false
+    }.onPointerEvent(PointerEventType.Press) {
+        selectProcess(processInfo)
+    }, backgroundColor = backgroundColor, elevation = 0.dp) {
+        Row(
+            modifier = Modifier.padding(8.dp).fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val modifier = Modifier.align(Alignment.CenterVertically).padding(horizontal = 4.dp)
+            val iconModifier = modifier.size(20.dp)
             Row(
-                modifier = Modifier.padding(8.dp).fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = modifier.weight(6f), horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                val modifier = Modifier.align(Alignment.CenterVertically).padding(horizontal = 4.dp)
-                val iconModifier = modifier.size(20.dp)
-                Row(
-                    modifier = modifier.weight(6f), horizontalArrangement = Arrangement.spacedBy(4.dp)
+                Icon(
+                    modifier = iconModifier,
+                    painter = painterResource("icons/ic_smartphone.svg"),
+                    contentDescription = "icon smartphone"
+                )
+                TooltipArea(
+                    tooltip = {
+                        Card(elevation = 4.dp) {
+                            Text(text = processInfo.processName, modifier = Modifier.padding(8.dp))
+                        }
+                    },
+                    modifier = modifier.weight(1f),
+                    delayMillis = 500,
                 ) {
-                    Icon(
-                        modifier = iconModifier,
-                        painter = painterResource("icons/ic_smartphone.svg"),
-                        contentDescription = "icon smartphone"
-                    )
                     Text(
                         text = processInfo.processName,
                         modifier = modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
                 }
-                Text(
-                    text = processInfo.pid,
-                    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.End,
-                )
-                Text(
-                    text = processInfo.abi,
-                    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.End,
-                )
-                Text(
-                    text = processInfo.user,
-                    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.End,
-                )
-                //Text(
-                //    text = processInfo.lastRss,
-                //    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                //    textAlign = TextAlign.End,
-                //)
             }
+            Text(
+                text = processInfo.pid,
+                modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End,
+            )
+            Text(
+                text = processInfo.abi,
+                modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End,
+            )
+            Text(
+                text = processInfo.user,
+                modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End,
+            )
+            //Text(
+            //    text = processInfo.lastRss,
+            //    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+            //    textAlign = TextAlign.End,
+            //)
         }
     }
 }
