@@ -16,6 +16,8 @@ interface FileExplorer {
 
     fun refresh(path: String? = null)
 
+    fun restartWithRoot()
+
     fun createDir(path: String, newFile: String)
 
     fun createFile(path: String, newFile: String)

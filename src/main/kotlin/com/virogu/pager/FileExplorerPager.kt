@@ -234,6 +234,13 @@ private fun ToolBarView(
                 deleteFile()
             }
             OptionButton(
+                "以root模式连接",
+                enable = deviceConnected,
+                resourcePath = "icons/ic_admin_panel_settings.svg"
+            ) {
+                fileExplorer.restartWithRoot()
+            }
+            OptionButton(
                 "刷新",
                 enable = deviceConnected,
                 resourcePath = "icons/ic_sync.svg"

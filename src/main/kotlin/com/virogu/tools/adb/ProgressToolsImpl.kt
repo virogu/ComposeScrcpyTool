@@ -100,7 +100,10 @@ class ProgressToolsImpl : ProgressTool {
             return@withContext Result.success(result)
         } catch (e: Throwable) {
             //e.printStackTrace()
-            logger.error("run error. $e")
+            if (e is CancellationException) {
+                logger.error("run error. $e")
+                return@withContext Result.success("")
+            }
             return@withContext Result.failure(e)
         }
     }

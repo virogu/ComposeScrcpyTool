@@ -68,6 +68,33 @@ class FileExplorerImpl(
         }
     }
 
+    override fun restartWithRoot() {
+        withLock("restartWithRoot") {
+            val device = currentDevice ?: return@withLock
+            val s = buildString {
+                progressTool.exec("adb", "-s", device.serial, "root").onSuccess {
+                    if (it.isNotEmpty()) {
+                        appendLine(it)
+                    }
+                }.onFailure {
+                    it.printStackTrace()
+                    appendLine("restart with root fail")
+                }
+                progressTool.exec("adb", "-s", device.serial, "remount").onSuccess {
+                    if (it.isNotEmpty()) {
+                        appendLine(it)
+                    }
+                }.onFailure {
+                    it.printStackTrace()
+                    appendLine("restart with root fail")
+                }
+            }
+            if (s.isNotEmpty()) {
+                tipsFlow.emit(s)
+            }
+        }
+    }
+
     override fun createDir(path: String, newFile: String) {
         val tag = "create dir $newFile in $path"
         println(tag)
