@@ -93,15 +93,13 @@ fun DeviceProcessPager(
             ToolBarView(tools.processTool, currentDevice, currentSelect) {
                 currentSelect = it
             }
+            ProcessItemTitle(sortBy, sortDesc)
             Row {
                 LazyColumn(
                     Modifier.fillMaxHeight().weight(1f),
                     state = listState,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    item {
-                        ProcessItemTitle(sortBy, sortDesc)
-                    }
                     processes.forEach {
                         item {
                             ProcessItemView(it, currentSelect) {
