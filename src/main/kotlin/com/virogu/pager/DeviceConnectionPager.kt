@@ -36,11 +36,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.WindowState
 import com.virogu.bean.HistoryDevice
 import com.virogu.pager.view.LogListView
-import com.virogu.pager.view.animateBorderStrokeAsState
 import com.virogu.tools.Tools
 import com.virogu.tools.log.LogTool
 import logger
 import theme.Red_500
+import theme.materialColors
 import views.defaultTextSize
 
 /**
@@ -288,7 +288,6 @@ fun DeviceListView(
         val devices = connectTool.connectedDevice.collectAsState()
 
         val expanded = remember { mutableStateOf(false) }
-        val borderStroke = animateBorderStrokeAsState()
 
         val dropMenuWidth = remember {
             mutableStateOf(0.dp)
@@ -301,7 +300,7 @@ fun DeviceListView(
         })
         Box(
             modifier = Modifier.weight(1f).border(
-                borderStroke.value,
+                BorderStroke(1.dp, materialColors.onSurface.copy(alpha = ContentAlpha.disabled)),
                 TextFieldDefaults.OutlinedTextFieldShape
             ).defaultTextSize().clickable {
                 expanded.value = true

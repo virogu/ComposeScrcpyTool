@@ -13,6 +13,8 @@ data class AdbDevice(
     val product: String,
     val device: String,
     val status: String,
+    val androidVersion: String,
+    val apiVersion: String,
     val desc: String = model,
 ) {
     val isOnline = status == "device"
@@ -25,8 +27,13 @@ data class AdbDevice(
         }
         append("-")
         append(serial)
-        if (!isOnline) {
+        if (isOnline) {
+            if (androidVersion.isNotEmpty()) {
+                append(" (A$androidVersion) ")
+            }
+        } else {
             append(" ($status) ")
+
         }
     }
 }

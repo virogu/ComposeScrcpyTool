@@ -1,12 +1,16 @@
 package com.virogu.pager.view
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,6 +19,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.virogu.bean.AdbDevice
 import com.virogu.tools.Tools
+import theme.materialColors
 
 /**
  * Created by Virogu
@@ -30,7 +35,6 @@ fun SelectDeviceView(
     val devices = connectTool.connectedDevice.collectAsState()
 
     val expanded = remember { mutableStateOf(false) }
-    val borderStroke by com.virogu.pager.view.animateBorderStrokeAsState()
     val dropMenuWidth = remember {
         mutableStateOf(0.dp)
     }
@@ -39,7 +43,8 @@ fun SelectDeviceView(
     }
     Box(
         modifier = modifier.border(
-            borderStroke, TextFieldDefaults.OutlinedTextFieldShape
+            BorderStroke(1.dp, materialColors.onSurface.copy(alpha = ContentAlpha.disabled)),
+            TextFieldDefaults.OutlinedTextFieldShape
         ).clickable {
             expanded.value = true
         }.onPlaced {

@@ -14,11 +14,44 @@ data class ProcessInfo(
     val abi: String = params["mRequiredAbi"] ?: params["requiredAbi"].orEmpty()
 
     sealed class SortBy(
-        val selector: (ProcessInfo) -> String
+        val tag: String,
+        val sort: (list: Iterable<ProcessInfo>, desc: Boolean) -> List<ProcessInfo>
     ) {
-        object NAME : SortBy({ it.processName })
-        object PID : SortBy({ it.pid })
-        object RSS : SortBy({ it.lastRss })
+        object NAME : SortBy("NAME", { list, desc ->
+            if (desc) {
+                list.sortedBy {
+                    it.processName
+                }
+            } else {
+                list.sortedByDescending {
+                    it.processName
+                }
+            }
+        })
+
+        object PID : SortBy("PID", { list, desc ->
+            if (desc) {
+                list.sortedBy {
+                    it.pid
+                }
+            } else {
+                list.sortedByDescending {
+                    it.pid
+                }
+            }
+        })
+
+        object RSS : SortBy("RSS", { list, desc ->
+            if (desc) {
+                list.sortedBy {
+                    it.lastRss
+                }
+            } else {
+                list.sortedByDescending {
+                    it.lastRss
+                }
+            }
+        })
     }
 
 }

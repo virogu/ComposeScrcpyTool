@@ -198,11 +198,23 @@ class DeviceConnectToolImpl(
                     val product = matcher.group(3) ?: return@mapNotNull null
                     val model = matcher.group(4) ?: return@mapNotNull null
                     val device = matcher.group(5) ?: return@mapNotNull null
+                    val apiVersion = if (status == "device") {
+                        getProp(serial, "ro.build.version.sdk")
+                    } else {
+                        ""
+                    }
+                    val androidVersion = if (status == "device") {
+                        getProp(serial, "ro.build.version.release")
+                    } else {
+                        ""
+                    }
                     AdbDevice(
                         serial = serial,
                         status = status,
                         product = product,
                         model = model,
+                        androidVersion = androidVersion,
+                        apiVersion = apiVersion,
                         device = device,
                     )
                 }
@@ -232,6 +244,10 @@ class DeviceConnectToolImpl(
     override fun stop() {
         mJob?.cancel()
         scope.cancel()
+    }
+
+    private suspend fun getProp(serial: String, prop: String, default: String = ""): String {
+        return progressTool.exec("adb", "-s", serial, "shell", "getprop", prop).getOrNull() ?: default
     }
 
     private fun withLock(block: suspend CoroutineScope.() -> Unit) {

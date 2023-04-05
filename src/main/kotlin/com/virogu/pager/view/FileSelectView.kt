@@ -1,15 +1,15 @@
 package com.virogu.pager.view
 
-import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.*
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.res.painterResource
@@ -18,15 +18,18 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import theme.materialColors
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
 import java.io.File
+import java.net.URI
 import javax.swing.JFileChooser
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import javax.swing.filechooser.FileNameExtensionFilter
+import kotlin.io.path.toPath
 import kotlin.math.roundToInt
 
 /**
@@ -36,6 +39,7 @@ import kotlin.math.roundToInt
 
 private val projectRootPath = File("./").absoluteFile
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun FileSelectView(
     window: ComposeWindow,
@@ -65,44 +69,68 @@ fun FileSelectView(
             currentOnFileSelected(it)
         }
     }
-
-    DropBoxPanel(modifier, window = window, onFileDrop = {
-        val list = it.filter { f ->
-            val a1 = when (fileChooserType) {
-                JFileChooser.FILES_ONLY -> {
-                    f.isFile
-                }
-
-                JFileChooser.DIRECTORIES_ONLY -> {
-                    f.isDirectory
-                }
-
-                else -> {
-                    true
-                }
-            }
-            val a2 = if (filesFilter.isEmpty()) {
-                true
-            } else {
-                f.isDirectory || (f.isFile && f.extension in filesFilter)
-            }
-            a1 && a2
-        }
-        if (multiSelectionEnabled) {
-            currentOnFileSelected(list.toTypedArray())
-        } else {
-            if (list.size == 1) {
-                currentOnFileSelected(list.toTypedArray())
-            }
-        }
-    }) {
-        val borderStroke = animateBorderStrokeAsState()
-        Box(
-            modifier = modifier.border(borderStroke.value, TextFieldDefaults.OutlinedTextFieldShape),
+    var dragging: Boolean by remember { mutableStateOf(false) }
+    val activeBorderStroke = BorderStroke(1.dp, materialColors.primary)
+    val notActiveBorderStroke = BorderStroke(1.dp, materialColors.onSurface.copy(alpha = ContentAlpha.disabled))
+    Card(
+        modifier.onExternalDrag(
+            onDragStart = {
+                dragging = true
+            },
+            onDragExit = {
+                dragging = false
+            },
         ) {
-            SelectionContainer(
-                Modifier.fillMaxSize().align(Alignment.Center)
-            ) {
+            dragging = false
+            it.dragData.also { dragData ->
+                if (dragData !is DragData.FilesList) {
+                    return@also
+                }
+                val list = dragData.readFiles().mapNotNull { uri ->
+                    try {
+                        URI.create(uri).toPath().toFile()
+                    } catch (e: Throwable) {
+                        null
+                    }
+                }.filter { f ->
+                    val a1 = when (fileChooserType) {
+                        JFileChooser.FILES_ONLY -> {
+                            f.isFile
+                        }
+
+                        JFileChooser.DIRECTORIES_ONLY -> {
+                            f.isDirectory
+                        }
+
+                        else -> {
+                            true
+                        }
+                    }
+                    val a2 = if (filesFilter.isEmpty()) {
+                        true
+                    } else {
+                        f.isDirectory || (f.isFile && f.extension in filesFilter)
+                    }
+                    a1 && a2
+                }
+                if (multiSelectionEnabled) {
+                    currentOnFileSelected(list.toTypedArray())
+                } else {
+                    if (list.size == 1) {
+                        currentOnFileSelected(list.toTypedArray())
+                    }
+                }
+            }
+        },
+        border = if (dragging) {
+            activeBorderStroke
+        } else {
+            notActiveBorderStroke
+        },
+        backgroundColor = Color.Transparent
+    ) {
+        Box {
+            SelectionContainer(Modifier.fillMaxSize().align(Alignment.Center)) {
                 Text(
                     text = text,
                     maxLines = 1,

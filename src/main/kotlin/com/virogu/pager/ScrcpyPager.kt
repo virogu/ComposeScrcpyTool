@@ -4,6 +4,7 @@ package com.virogu.pager
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -288,7 +289,6 @@ private fun <T> DropMenuConfigView(
     val currentValueFormat by rememberUpdatedState(valueFormat)
 
     val expanded = remember { mutableStateOf(false) }
-    val borderStroke = com.virogu.pager.view.animateBorderStrokeAsState()
 
     val dropMenuWidth = remember {
         mutableStateOf(0.dp)
@@ -309,11 +309,11 @@ private fun <T> DropMenuConfigView(
                 },
                 TextFieldDefaults.OutlinedTextFieldShape
             ).fillMaxHeight().border(
-                borderStroke.value,
+                BorderStroke(1.dp, materialColors.onSurface.copy(alpha = ContentAlpha.disabled)),
                 TextFieldDefaults.OutlinedTextFieldShape
             ).onPlaced {
                 dropMenuWidth.value = it.size.width.dp
-            },
+            }
         ) {
             Text(
                 text = currentValueFormat(currentValue),

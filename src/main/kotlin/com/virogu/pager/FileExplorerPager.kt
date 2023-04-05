@@ -408,7 +408,7 @@ private fun FileInfoItemView(
                         }
                     ).onPointerEvent(PointerEventType.Press) {
                         selectFile(fileInfo)
-                    }.onExternalDrag(onDrag = {
+                    }.onExternalDrag(onDragStart = {
                         mouseEnter = true
                     }, onDragExit = {
                         mouseEnter = false

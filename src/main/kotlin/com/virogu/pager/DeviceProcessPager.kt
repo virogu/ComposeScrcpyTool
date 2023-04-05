@@ -52,6 +52,7 @@ fun DeviceProcessPager(
     val sortBy: MutableState<ProcessInfo.SortBy> = remember {
         mutableStateOf(ProcessInfo.SortBy.NAME)
     }
+
     val sortDesc = remember {
         mutableStateOf(false)
     }
@@ -64,11 +65,7 @@ fun DeviceProcessPager(
     LaunchedEffect(sortBy.value, sortDesc.value) {
         processTool.processListFlow.onEach { list ->
             processes = list.run {
-                if (sortDesc.value) {
-                    sortedByDescending(sortBy.value.selector)
-                } else {
-                    sortedBy(sortBy.value.selector)
-                }
+                sortBy.value.sort(this, sortDesc.value)
             }
             if (currentSelect != null && list.find { it.pid == currentSelect?.pid } == null) {
                 currentSelect = null
@@ -214,7 +211,7 @@ private fun ProcessItemTitle(
                 sortDesc.value = !sortDesc.value
             }) {
                 Row(tabModifier.align(Alignment.CenterStart)) {
-                    if (sortBy.value is ProcessInfo.SortBy.NAME) {
+                    if (sortBy.value.tag == ProcessInfo.SortBy.NAME.tag) {
                         Icon(modifier = icModifier, imageVector = imageVector, contentDescription = "排序")
                     } else {
                         Spacer(icModifier)
@@ -228,7 +225,7 @@ private fun ProcessItemTitle(
                 sortDesc.value = !sortDesc.value
             }) {
                 Row(tabModifier.align(Alignment.Center)) {
-                    if (sortBy.value is ProcessInfo.SortBy.PID) {
+                    if (sortBy.value.tag == ProcessInfo.SortBy.PID.tag) {
                         Icon(modifier = icModifier, imageVector = imageVector, contentDescription = "排序")
                     } else {
                         Spacer(icModifier)
