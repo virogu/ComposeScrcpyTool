@@ -127,7 +127,8 @@ fun FileSelectView(
         } else {
             notActiveBorderStroke
         },
-        backgroundColor = Color.Transparent
+        backgroundColor = Color.Transparent,
+        elevation = 0.dp
     ) {
         Box {
             SelectionContainer(Modifier.fillMaxSize().align(Alignment.Center)) {
