@@ -130,7 +130,7 @@ private fun ToolBarView(
     Box(modifier = Modifier.fillMaxWidth().padding(16.dp, 8.dp).height(35.dp)) {
         Row(Modifier.align(Alignment.CenterStart), Arrangement.spacedBy(8.dp)) {
             OptionButton(
-                "停止\nam kill",
+                "停止进程\nkill",
                 enable = deviceConnected && currentSelect != null,
                 resourcePath = "icons/ic_dangerous.svg",
                 colors = ButtonDefaults.buttonColors(
@@ -139,12 +139,12 @@ private fun ToolBarView(
                 ),
             ) label@{
                 currentSelect ?: return@label
-                processTool.killProcess(currentSelect.user, currentSelect.packageName)
+                processTool.killProcess(currentSelect)
                 selectProcess(null)
             }
 
             OptionButton(
-                "强行停止\nam force stop",
+                "强行停止程序\nforce stop",
                 enable = deviceConnected && currentSelect != null,
                 resourcePath = "icons/ic_stop.svg",
                 colors = ButtonDefaults.buttonColors(
@@ -153,7 +153,7 @@ private fun ToolBarView(
                 ),
             ) label@{
                 currentSelect ?: return@label
-                processTool.forceStopProcess(currentSelect.user, currentSelect.packageName)
+                processTool.forceStopProcess(currentSelect)
                 selectProcess(null)
             }
 

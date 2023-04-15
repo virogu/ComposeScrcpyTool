@@ -142,12 +142,14 @@ class DeviceProcessToolImpl(
         }
     }
 
-    override fun killProcess(user: String, packageName: String) {
-        withLock("kill $packageName $user") {
+    override fun killProcess(info: ProcessInfo) {
+        withLock("kill ${info.pid}") {
             val device = currentDevice ?: return@withLock
             progressTool.exec(
                 "adb", "-s", device.serial, "shell", "am",
-                "kill", "--user", user, packageName,
+                "kill",
+                //"--user", user,
+                info.packageName,
                 consoleLog = true,
             ).onSuccess {
                 if (it.isNotEmpty()) {
@@ -158,12 +160,14 @@ class DeviceProcessToolImpl(
         }
     }
 
-    override fun forceStopProcess(user: String, packageName: String) {
-        withLock("force stop $packageName $user") {
+    override fun forceStopProcess(info: ProcessInfo) {
+        withLock("force stop ${info.packageName}") {
             val device = currentDevice ?: return@withLock
             progressTool.exec(
                 "adb", "-s", device.serial, "shell", "am",
-                "force-stop", "--user", user, packageName,
+                "force-stop",
+                //"--user", user,
+                info.packageName,
                 consoleLog = true,
             ).onSuccess {
                 if (it.isNotEmpty()) {
