@@ -234,9 +234,14 @@ class FileExplorerImpl(
             }
             val s = buildString {
                 fromLocalFiles.forEach { f ->
+                    val args = if (f.isDirectory) {
+                        arrayOf("${f.absolutePath}\\.", "${toFile.path}/${f.name}/.")
+                    } else {
+                        arrayOf(f.absolutePath, "${toFile.path}/${f.name}")
+                    }
                     progressTool.exec(
                         "adb", "-s", device.serial,
-                        "push", f.absolutePath, "${toFile.path}/${f.name}",
+                        "push", *args,
                         showLog = true
                     ).onSuccess {
                         appendLine(it)
