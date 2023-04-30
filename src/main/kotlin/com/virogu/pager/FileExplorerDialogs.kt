@@ -78,9 +78,9 @@ fun DeleteFileConfirmDialog(
     }
     if (show.value) {
         val tips = if (currentSelect.isDirectory) {
-            "确定删除目录\n\n${currentSelect.path}\n\n以及下面所有目录和文件"
+            "确定删除目录下的所有目录和文件\n\n${currentSelect.path}"
         } else {
-            "确定删除文件\n\n${currentSelect.path}\n\n"
+            "确定删除文件\n\n${currentSelect.path}"
         }
         CommonConfirmDialog(
             windowTitle = "提示",

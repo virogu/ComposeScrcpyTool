@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.res.painterResource
@@ -34,6 +35,7 @@ import theme.materialColors
 import java.net.URI
 import kotlin.io.path.toPath
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun FileExplorerPager(
     tools: Tools,
@@ -142,7 +144,29 @@ fun FileExplorerPager(
             )
             Row {
                 LazyColumn(
-                    Modifier.fillMaxHeight().weight(1f),
+                    Modifier.fillMaxHeight().weight(1f).onKeyEvent { event ->
+                        if (currentDevice == null) {
+                            return@onKeyEvent false
+                        }
+                        if (event.type != KeyEventType.KeyUp) {
+                            return@onKeyEvent false
+                        }
+                        when (event.key) {
+                            Key.F5 -> {
+                                refresh(currentSelect)
+                                true
+                            }
+
+                            Key.Delete -> {
+                                deleteFile()
+                                true
+                            }
+
+                            else -> {
+                                false
+                            }
+                        }
+                    },
                     state = fileListState,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -350,6 +374,9 @@ private fun FileInfoItemView(
     val selected = remember(fileInfo.path, currentSelect) {
         mutableStateOf(currentSelect == fileInfo)
     }
+    val refreshPath by rememberUpdatedState {
+        refresh(fileInfo)
+    }
     val primaryColor = materialColors.primary.copy(alpha = 0.5f)
     var mouseEnter by remember { mutableStateOf(false) }
     val backgroundColor by remember(selected.value, mouseEnter) {
@@ -372,25 +399,13 @@ private fun FileInfoItemView(
     ContextMenuArea(state = contextMenuState, items = {
         mutableListOf<ContextMenuItem>().apply {
             if (fileInfo.isDirectory) {
-                ContextMenuItem("新建文件夹") {
-                    createNewFolder()
-                }.also(::add)
-                ContextMenuItem("新建文件") {
-                    createNewFile()
-                }.also(::add)
-                ContextMenuItem("导入文件") {
-                    uploadFile()
-                }.also(::add)
+                ContextMenuItem("新建文件夹", createNewFolder).also(::add)
+                ContextMenuItem("新建文件", createNewFile).also(::add)
+                ContextMenuItem("导入文件", uploadFile).also(::add)
             }
-            ContextMenuItem("导出文件") {
-                downloadFile()
-            }.also(::add)
-            ContextMenuItem("删除") {
-                deleteFile()
-            }.also(::add)
-            ContextMenuItem("刷新") {
-                refresh(fileInfo)
-            }.also(::add)
+            ContextMenuItem("导出文件", downloadFile).also(::add)
+            ContextMenuItem("删除", deleteFile).also(::add)
+            ContextMenuItem("刷新", refreshPath).also(::add)
         }
     }) {
         Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {

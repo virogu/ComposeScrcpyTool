@@ -345,9 +345,7 @@ fun DeviceListView(
             Icon(Icons.Default.ArrowDropDown, "", tint = contentColorFor(MaterialTheme.colors.background))
         }
         TextButton(
-            onClick = {
-                connectTool.refresh()
-            },
+            onClick = connectTool::refresh,
             enabled = !isBusy.value,
             modifier = Modifier.align(Alignment.CenterVertically)
         ) {
