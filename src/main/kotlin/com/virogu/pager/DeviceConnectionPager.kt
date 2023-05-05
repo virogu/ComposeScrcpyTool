@@ -105,7 +105,9 @@ fun ConnectDeviceView(
         val isBusy = connectTool.isBusy.collectAsState()
         val history = historyDevicesStore.historyDeviceFlow.collectAsState()
 
-        val lastConnectedDevice = history.value.firstOrNull()
+        val lastConnectedDevice = remember(history.value) {
+            history.value.maxByOrNull { it.timeMs }
+        }
         val ip = remember {
             mutableStateOf(lastConnectedDevice?.ip.orEmpty())
         }
