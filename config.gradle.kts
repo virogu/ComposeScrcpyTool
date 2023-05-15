@@ -5,9 +5,11 @@ import java.util.*
 
 val gitCommitCount: Int = with(ByteArrayOutputStream()) {
     use { os ->
+        // git rev-list --all --count
+        // git rev-list --count HEAD
         exec {
             executable = "git"
-            args = listOf("rev-list", "--all", "--count")
+            args = listOf("rev-list", "--count", "HEAD")
             standardOutput = os
         }
         val revision = os.toString().trim()
@@ -51,6 +53,7 @@ val debPackageVersion: String by lazy {
 val myPackageVendor: String by project
 val winUpgradeUuid: String by project
 val programName: String by project
+val installProgramName: String by project
 
 project.extra["gitCommitCount"] = gitCommitCount
 project.extra["buildFormatDate"] = buildFormatDate
@@ -60,14 +63,29 @@ project.extra["myMsiPackageVersion"] = msiPackageVersion
 project.extra["myDebPackageVersion"] = debPackageVersion
 
 tasks.create("packageMsiAndRename") {
-    group = "publish"
+    group = "package"
     dependsOn("packageMsi")
     doLast {
         println("do rename task")
         project.rootDir.resolve("out/packages/main/msi").listFiles()?.filter {
             it.name.endsWith(".msi")
         }?.forEach {
-            val newName = "$programName-${msiPackageVersion}_${gitCommitShortId}.msi"
+            val newName = "$installProgramName-${msiPackageVersion}_${gitCommitShortId}.msi"
+            println("rename [${it.name}] to [$newName]")
+            it.renameTo(File(it.parentFile, newName))
+        }
+    }
+}
+
+tasks.create("packageDebAndRename") {
+    group = "package"
+    dependsOn("packageDeb")
+    doLast {
+        println("do rename task")
+        project.rootDir.resolve("out/packages/main/deb").listFiles()?.filter {
+            it.name.endsWith(".msi")
+        }?.forEach {
+            val newName = "$installProgramName-${msiPackageVersion}_${gitCommitShortId}.deb"
             println("rename [${it.name}] to [$newName]")
             it.renameTo(File(it.parentFile, newName))
         }
@@ -79,7 +97,7 @@ task("zipPackageFiles", Zip::class) {
         println("clear path:[${this.path}]")
         this.deleteRecursively()
     }
-    group = "publish"
+    group = "package"
     from("C:\\Program Files\\$programName") {
         //include {
         //    println("found file [${it.path}]")
