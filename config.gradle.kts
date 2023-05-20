@@ -83,7 +83,7 @@ tasks.create("packageDebAndRename") {
     doLast {
         println("do rename task")
         project.rootDir.resolve("out/packages/main/deb").listFiles()?.filter {
-            it.name.endsWith(".msi")
+            it.name.endsWith(".deb")
         }?.forEach {
             val newName = "$installProgramName-${msiPackageVersion}_${gitCommitShortId}.deb"
             println("rename [${it.name}] to [$newName]")
