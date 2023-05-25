@@ -48,16 +48,20 @@ fun FileExplorerPager(
         mutableStateOf(null)
     }
 
-    val selectFile by rememberUpdatedState { file: FileInfoItem? ->
+    val selectFile = { file: FileInfoItem? ->
         currentSelect = file
     }
-    val getExpended by rememberUpdatedState { file: FileInfoItem ->
-        fileExplorer.expandedMap[file.path] ?: false
+    val getExpended: (FileInfoItem) -> Boolean = { file: FileInfoItem ->
+        if (file.isDirectory) {
+            fileExplorer.getExpanded(file.path)
+        } else {
+            false
+        }
     }
-    val setExpended by rememberUpdatedState { file: FileInfoItem, expand: Boolean ->
-        fileExplorer.expandedMap[file.path] = expand
+    val setExpended = { file: FileInfoItem, expand: Boolean ->
+        fileExplorer.changeExpanded(file.path, expand)
     }
-    val getChildFiles by rememberUpdatedState { file: FileInfoItem ->
+    val getChildFiles = { file: FileInfoItem ->
         fileExplorer.getChild(file)
     }
 
@@ -77,38 +81,38 @@ fun FileExplorerPager(
         mutableStateOf(false)
     }
 
-    val createNewFolder: () -> Unit by rememberUpdatedState label@{
+    val createNewFolder: () -> Unit = label@{
         if (currentDevice.isOffline || currentSelect?.type != FileType.DIR) {
             return@label
         }
         showNewFolderDialog.value = true
     }
-    val createNewFile: () -> Unit by rememberUpdatedState label@{
+    val createNewFile: () -> Unit = label@{
         if (currentDevice.isOffline || currentSelect?.type != FileType.DIR) {
             return@label
         }
         showNewFileDialog.value = true
     }
-    val downloadFile: () -> Unit by rememberUpdatedState label@{
+    val downloadFile: () -> Unit = label@{
         if (currentDevice.isOffline || currentSelect == null) {
             return@label
         }
         showDownloadFileDialog.value = true
     }
-    val uploadFile: () -> Unit by rememberUpdatedState label@{
+    val uploadFile: () -> Unit = label@{
         if (currentDevice.isOffline || currentSelect == null) {
             return@label
         }
         showUploadFileDialog.value = true
     }
-    val deleteFile: () -> Unit by rememberUpdatedState label@{
+    val deleteFile: () -> Unit = label@{
         if (currentDevice.isOffline || currentSelect == null) {
             return@label
         }
         showDeleteDialog.value = true
     }
 
-    val refresh: (FileInfoItem?) -> Unit by rememberUpdatedState label@{
+    val refresh: (FileInfoItem?) -> Unit = label@{
         if (currentDevice.isOffline) {
             return@label
         }
@@ -309,7 +313,7 @@ private fun LazyListScope.FileView(
     when (fileItem) {
         is FileInfoItem -> {
             val currentExpanded = getExpended(fileItem)
-            item {
+            item(key = fileItem.path) {
                 FileInfoItemView(
                     fileExplorer,
                     fileInfo = fileItem,
@@ -348,7 +352,7 @@ private fun LazyListScope.FileView(
             }
         }
 
-        is FileTipsItem -> item {
+        is FileTipsItem -> item(key = fileItem.msg) {
             FileTipsItemView(fileItem, level)
         }
     }

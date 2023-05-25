@@ -2,7 +2,6 @@
 
 package com.virogu.tools.explorer
 
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import com.virogu.bean.FileInfoItem
 import com.virogu.bean.FileItem
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,8 +10,11 @@ import java.io.File
 
 interface FileExplorer {
     val isBusy: MutableStateFlow<Boolean>
-    val expandedMap: SnapshotStateMap<String, Boolean>
     val tipsFlow: SharedFlow<String>
+
+    fun changeExpanded(path: String, expanded: Boolean)
+
+    fun getExpanded(path: String): Boolean
 
     fun refresh(path: String? = null)
 

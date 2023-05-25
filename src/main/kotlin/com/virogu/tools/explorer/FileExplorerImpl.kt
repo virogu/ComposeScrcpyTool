@@ -27,10 +27,10 @@ class FileExplorerImpl(
     private val fileMapMutex = Mutex()
 
     private val fileChildMap: SnapshotStateMap<String, List<FileItem>> = mutableStateMapOf()
+    private val expandedMap = mutableStateMapOf<String, Boolean>()
     private val loadingJobs = mutableMapOf<String, Job>()
 
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    override val expandedMap = mutableStateMapOf<String, Boolean>()
     override val tipsFlow = MutableSharedFlow<String>()
 
     private val selectedOnlineDevice = deviceConnectTool.currentSelectedDevice.map {
@@ -56,6 +56,28 @@ class FileExplorerImpl(
                 refresh(null)
             }.launchIn(scope)
         }
+    }
+
+    override fun changeExpanded(path: String, expanded: Boolean) {
+        if (expanded) {
+            expandedMap[path] = true
+        } else {
+            closeChild(path)
+        }
+    }
+
+    private fun closeChild(path: String) {
+        fileChildMap[path]?.forEach {
+            if (it is FileInfoItem && it.isDirectory) {
+                closeChild(it.path)
+            }
+        }
+        expandedMap[path] = false
+    }
+
+    override fun getExpanded(path: String): Boolean {
+        //println("getExpanded $path")
+        return expandedMap[path] ?: false
     }
 
     override fun refresh(path: String?) {
@@ -170,6 +192,7 @@ class FileExplorerImpl(
     }
 
     override fun getChild(fileInfo: FileInfoItem): List<FileItem> {
+        //println("getChild ${fileInfo.path}")
         if (currentDevice == null) {
             return listOf(FileTipsItem.Error("未连接设备"))
         }
