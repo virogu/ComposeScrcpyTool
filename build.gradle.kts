@@ -7,8 +7,7 @@ val programName: String by project
 val gitCommitCount: Int by project
 val buildFormatDate: String by project
 val gitCommitShortId: String by project
-val myMsiPackageVersion: String by project
-val myDebPackageVersion: String by project
+val myPackageVersion: String by project
 val myPackageVendor: String by project
 val myCopyright: String by project
 val winUpgradeUuid: String by project
@@ -18,7 +17,7 @@ val javaVersionString = "17"
 plugins {
     kotlin("jvm")
     id("org.jetbrains.compose")
-    //id("com.github.gmazzo.buildconfig") version "3.0.3"
+    id("com.github.gmazzo.buildconfig") version "3.0.3"
     //kotlin("plugin.parcelize") version("1.8.20")
     kotlin("plugin.serialization")
 }
@@ -94,6 +93,27 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
 }
 
+buildConfig {
+    className("BuildConfig")   // forces the class name. Defaults to 'BuildConfig'
+    packageName("tools")
+    //useJavaOutput()                                 // forces the outputType to 'java'
+    useKotlinOutput()                               // forces the outputType to 'kotlin', generating an `object`
+    //useKotlinOutput { topLevelConstants = true }    // forces the outputType to 'kotlin', generating top-level declarations
+    //useKotlinOutput { internalVisibility = true }   // adds `internal` modifier to all declarations
+
+    buildConfigField("String", "AppName", "\"${programName}\"")
+    buildConfigField("String", "AppVersion", provider { "\"${myPackageVersion}\"" })
+    buildConfigField("String", "WinUpgradeUid", "\"$winUpgradeUuid\"")
+    buildConfigField("String", "GitCommitCount", "\"${gitCommitCount}\"")
+    buildConfigField("String", "GitCommitShortId", "\"${gitCommitShortId}\"")
+    buildConfigField("String", "BuildVersion", "\"$myPackageVersion\"")
+    buildConfigField("String", "BuildTime", "\"${buildFormatDate}\"")
+    // buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
+    // buildConfigField("boolean", "FEATURE_ENABLED", "${true}")
+    // buildConfigField("IntArray", "MAGIC_NUMBERS", "intArrayOf(1, 2, 3, 4)")
+    // buildConfigField("com.github.gmazzo.SomeData", "MY_DATA", "new SomeData(\"a\",1)")
+}
+
 compose.desktop {
     application {
         mainClass = "MainKt"
@@ -113,7 +133,7 @@ compose.desktop {
             vendor = myPackageVendor
             copyright = myCopyright
             windows {
-                packageVersion = myMsiPackageVersion
+                packageVersion = myPackageVersion
                 //console = true
                 menu = true
                 dirChooser = true
@@ -125,7 +145,7 @@ compose.desktop {
             }
             linux {
                 iconFile.set(project.file("logo/logo.png"))
-                packageVersion = myDebPackageVersion
+                packageVersion = myPackageVersion
                 // an email of the deb package's maintainer;
                 debMaintainer = "virogu@foxmail.com"
                 // a menu group for the application;

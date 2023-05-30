@@ -15,6 +15,7 @@ import org.kodein.di.conf.global
 import org.kodein.di.instance
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tools.BuildConfig
 
 
 //private val preferences = Preferences.userRoot()
@@ -36,7 +37,7 @@ private val size by lazy {
 //    } catch (e: Throwable) {
 //        DpSize(700.dp, 620.dp)
 //    }
-    DpSize(700.dp, 820.dp)
+    DpSize(700.dp, 860.dp)
 }
 
 fun main() {
@@ -70,7 +71,7 @@ private fun startApplication() = application {
 
     Window(
         onCloseRequest = ::exit,
-        title = "ScrcpyTool",
+        title = "${BuildConfig.AppName}_v${BuildConfig.BuildVersion}",
         state = state,
         undecorated = false,
         alwaysOnTop = alwaysOnTop,

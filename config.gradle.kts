@@ -1,5 +1,4 @@
 ﻿import java.io.ByteArrayOutputStream
-import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -59,60 +58,49 @@ project.extra["gitCommitCount"] = gitCommitCount
 project.extra["buildFormatDate"] = buildFormatDate
 project.extra["gitCommitShortId"] = gitCommitShortId
 project.extra["packageVersionTriple"] = packageVersionTriple
+project.extra["myPackageVersion"] = msiPackageVersion
 project.extra["myMsiPackageVersion"] = msiPackageVersion
 project.extra["myDebPackageVersion"] = debPackageVersion
 
-tasks.create("packageMsiAndRename") {
-    group = "package"
-    dependsOn("packageMsi")
-    doLast {
-        println("do rename task")
-        project.rootDir.resolve("out/packages/main/msi").listFiles()?.filter {
-            it.name.endsWith(".msi")
-        }?.forEach {
-            val newName = "$installProgramName-${msiPackageVersion}_${gitCommitShortId}.msi"
-            println("rename [${it.name}] to [$newName]")
-            it.renameTo(File(it.parentFile, newName))
+listOf("Msi", "Deb").forEach {
+    tasks.create("package${it}AndRename") {
+        group = "package"
+        dependsOn("package$it")
+        doLast {
+            val lower = it.toLowerCase()
+            println("do rename task")
+            project.rootDir.resolve("out/packages/main/${lower}").listFiles()?.filter {
+                it.name.endsWith(".${lower}")
+            }?.forEach {
+                val newName = "$installProgramName-${msiPackageVersion}-${gitCommitCount}_${gitCommitShortId}.${lower}"
+                println("rename [${it.name}] to [$newName]")
+                it.renameTo(File(it.parentFile, newName))
+            }
         }
     }
 }
 
-tasks.create("packageDebAndRename") {
-    group = "package"
-    dependsOn("packageDeb")
-    doLast {
-        println("do rename task")
-        project.rootDir.resolve("out/packages/main/deb").listFiles()?.filter {
-            it.name.endsWith(".deb")
-        }?.forEach {
-            val newName = "$installProgramName-${msiPackageVersion}_${gitCommitShortId}.deb"
-            println("rename [${it.name}] to [$newName]")
-            it.renameTo(File(it.parentFile, newName))
-        }
-    }
-}
-
-task("zipPackageFiles", Zip::class) {
-    rootProject.rootDir.resolve("out/zip").apply {
-        println("clear path:[${this.path}]")
-        this.deleteRecursively()
-    }
-    group = "package"
-    from("C:\\Program Files\\$programName") {
-        //include {
-        //    println("found file [${it.path}]")
-        //    true
-        //}
-    }
-    // programName-myPackageVersion-gitCommitShortid.zip
-    archiveBaseName.set(programName)
-    archiveAppendix.set(msiPackageVersion)
-    archiveVersion.set(gitCommitShortId)
-    archiveExtension.set("zip")
-    destinationDirectory.set(rootProject.rootDir.resolve("out/zip"))
-    doLast {
-        val zipFile = archiveFile.get().asFile
-        val size = DecimalFormat(".##").format(zipFile.length() / (1024 * 1024f))
-        println("zip file [${zipFile.path}] success, size: ${size}MB")
-    }
-}
+//task("zipPackageFiles", Zip::class) {
+//    rootProject.rootDir.resolve("out/zip").apply {
+//        println("clear path:[${this.path}]")
+//        this.deleteRecursively()
+//    }
+//    group = "package"
+//    from("C:\\Program Files\\$programName") {
+//        //include {
+//        //    println("found file [${it.path}]")
+//        //    true
+//        //}
+//    }
+//    // programName-myPackageVersion-gitCommitShortid.zip
+//    archiveBaseName.set(programName)
+//    archiveAppendix.set(msiPackageVersion)
+//    archiveVersion.set(gitCommitShortId)
+//    archiveExtension.set("zip")
+//    destinationDirectory.set(rootProject.rootDir.resolve("out/zip"))
+//    doLast {
+//        val zipFile = archiveFile.get().asFile
+//        val size = DecimalFormat(".##").format(zipFile.length() / (1024 * 1024f))
+//        println("zip file [${zipFile.path}] success, size: ${size}MB")
+//    }
+//}
