@@ -19,11 +19,11 @@ data class ProcessInfo(
     ) {
         object NAME : SortBy("NAME", { list, desc ->
             if (desc) {
-                list.sortedBy {
+                list.sortedByDescending {
                     it.processName
                 }
             } else {
-                list.sortedByDescending {
+                list.sortedBy {
                     it.processName
                 }
             }
@@ -31,12 +31,12 @@ data class ProcessInfo(
 
         object PID : SortBy("PID", { list, desc ->
             if (desc) {
-                list.sortedBy {
-                    it.pid
+                list.sortedByDescending {
+                    it.pid.toLongOrNull() ?: 0
                 }
             } else {
-                list.sortedByDescending {
-                    it.pid
+                list.sortedBy {
+                    it.pid.toLongOrNull() ?: 0
                 }
             }
         })
