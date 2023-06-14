@@ -3,16 +3,19 @@
 package com.virogu.pager
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.rememberDialogState
 import com.virogu.bean.FileInfoItem
+import com.virogu.bean.FilePermission
 import com.virogu.bean.FileType
 import com.virogu.pager.view.FileChooser
 import com.virogu.tools.explorer.FileExplorer
@@ -140,6 +143,195 @@ fun FileUploadDialog(
             multiSelectionEnabled = true
         ) {
             fileExplore.pushFile(currentSelect, it.toList())
+        }
+    }
+}
+
+@Composable
+fun ChmodFileDialog(
+    show: MutableState<Boolean>,
+    currentSelect: FileInfoItem?,
+    fileExplore: FileExplorer
+) {
+    if (currentSelect == null) {
+        return
+    }
+    if (show.value) {
+        ShowChmodDialog(
+            windowTitle = "更改权限",
+            onClose = {
+                show.value = false
+            },
+            defaultPermission = currentSelect.permission,
+            onConfirm = label@{
+                fileExplore.chmod(currentSelect, permission = it)
+            }
+        )
+    }
+}
+
+@Composable
+private fun ShowChmodDialog(
+    windowTitle: String,
+    onClose: () -> Unit,
+    defaultPermission: FilePermission = FilePermission(),
+    defaultWidth: Dp = TextFieldDefaults.MinWidth.times(2f),
+    defaultHeight: Dp = TextFieldDefaults.MinHeight.times(10f),
+    onConfirm: (String) -> Unit,
+) {
+    val close by rememberUpdatedState(onClose)
+    val confirm by rememberUpdatedState(onConfirm)
+
+    var permission by remember {
+        mutableStateOf(defaultPermission)
+    }
+
+    var text by remember(permission) {
+        mutableStateOf(permission.value)
+    }
+    LaunchedEffect(text) {
+        val p = FilePermission.parseIntString(text)
+        if (p != null) {
+            permission = p
+        }
+    }
+    val errorString by remember(text) {
+        val matchResults = Regex("[0-7]{4}").findAll(text)
+        if (matchResults.count() <= 0) {
+            mutableStateOf("""权限格式不正确, 例: 0777 """)
+        } else {
+            mutableStateOf("")
+        }
+    }
+    val error by remember(errorString) {
+        mutableStateOf(errorString.isNotEmpty())
+    }
+    val confirmEnable by remember(errorString, text) {
+        mutableStateOf(errorString.isEmpty() && text.isNotEmpty())
+    }
+    val state = rememberDialogState(
+        size = DpSize(defaultWidth, defaultHeight)
+    )
+    Dialog(
+        onCloseRequest = {
+            close()
+        },
+        title = windowTitle,
+        state = state
+    ) {
+        MainTheme {
+            Column(
+                modifier = Modifier.align(Alignment.Center).fillMaxWidth().padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                val modifier = Modifier.align(Alignment.CenterHorizontally)
+                OutlinedTextField(
+                    modifier = modifier,
+                    value = text,
+                    onValueChange = {
+                        text = it.filter { s -> s.isDigit() }.take(4)
+                    },
+                    isError = error,
+                    label = {
+                        if (errorString.isNotEmpty()) {
+                            Text(errorString)
+                        } else {
+                            Text(permission.desc)
+                        }
+                    },
+                )
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val m1 = Modifier.weight(1f).align(Alignment.CenterHorizontally)
+                    val textAlign = TextAlign.Center
+                    Row(Modifier.fillMaxWidth()) {
+                        Text("", m1, textAlign = textAlign)
+                        Text("所有者", m1, textAlign = textAlign)
+                        Text("组", m1, textAlign = textAlign)
+                        Text("其他", m1, textAlign = textAlign)
+                    }
+                    Row(Modifier.fillMaxWidth()) {
+                        Text("读", m1, textAlign = textAlign)
+                        Checkbox(permission.owner.readable, {
+                            permission = permission.copy(owner = permission.owner.copy(readable = it))
+                        }, modifier = m1)
+                        Checkbox(permission.group.readable, {
+                            permission = permission.copy(group = permission.group.copy(readable = it))
+                        }, modifier = m1)
+                        Checkbox(permission.other.readable, {
+                            permission = permission.copy(other = permission.other.copy(readable = it))
+                        }, modifier = m1)
+                    }
+                    Row(Modifier.fillMaxWidth()) {
+                        Text("写", m1, textAlign = textAlign)
+                        Checkbox(permission.owner.writeable, {
+                            permission = permission.copy(owner = permission.owner.copy(writeable = it))
+                        }, modifier = m1)
+                        Checkbox(permission.group.writeable, {
+                            permission = permission.copy(group = permission.group.copy(writeable = it))
+                        }, modifier = m1)
+                        Checkbox(permission.other.writeable, {
+                            permission = permission.copy(other = permission.other.copy(writeable = it))
+                        }, modifier = m1)
+                    }
+                    Row(Modifier.fillMaxWidth()) {
+                        Text("执行", m1, textAlign = textAlign)
+                        Checkbox(permission.owner.executable, {
+                            permission = permission.copy(owner = permission.owner.copy(executable = it))
+                        }, modifier = m1)
+                        Checkbox(permission.group.executable, {
+                            permission = permission.copy(group = permission.group.copy(executable = it))
+                        }, modifier = m1)
+                        Checkbox(permission.other.executable, {
+                            permission = permission.copy(other = permission.other.copy(executable = it))
+                        }, modifier = m1)
+                    }
+                    Spacer(
+                        Modifier.padding(32.dp, 16.dp).fillMaxWidth().height(1.dp)
+                            .background(materialColors.onBackground.copy(alpha = 0.7f))
+                    )
+                    Row(Modifier.fillMaxWidth()) {
+                        Text("setuid", m1, textAlign = textAlign)
+                        Text("setgid", m1, textAlign = textAlign)
+                        Text("sticky", m1, textAlign = textAlign)
+                    }
+                    Row(Modifier.fillMaxWidth()) {
+                        Checkbox(permission.special.setUid, {
+                            permission = permission.copy(special = permission.special.copy(setUid = it))
+                        }, modifier = m1)
+                        Checkbox(permission.special.setGid, {
+                            permission = permission.copy(special = permission.special.copy(setGid = it))
+                        }, modifier = m1)
+                        Checkbox(permission.special.sticky, {
+                            permission = permission.copy(special = permission.special.copy(sticky = it))
+                        }, modifier = m1)
+                    }
+                }
+                Row(
+                    modifier = modifier,
+                    horizontalArrangement = Arrangement.spacedBy(32.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            confirm(text)
+                            close()
+                        },
+                        enabled = confirmEnable,
+                        border = BorderStroke(1.dp, materialColors.primary),
+                        colors = ButtonDefaults.buttonColors(backgroundColor = materialColors.primary.copy(alpha = 0.5f))
+                    ) {
+                        Text("确定")
+                    }
+                    Button(
+                        onClick = {
+                            close()
+                        },
+                        border = BorderStroke(1.dp, materialColors.primary),
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent)
+                    ) {
+                        Text("取消")
+                    }
+                }
+            }
         }
     }
 }

@@ -21,7 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -80,6 +82,9 @@ fun FileExplorerPager(
     val showDeleteDialog = remember(currentDevice, currentSelect) {
         mutableStateOf(false)
     }
+    val showChmodDialog = remember(currentDevice, currentSelect) {
+        mutableStateOf(false)
+    }
 
     val createNewFolder: () -> Unit = label@{
         if (currentDevice.isOffline || currentSelect?.type != FileType.DIR) {
@@ -124,6 +129,13 @@ fun FileExplorerPager(
         } else {
             fileExplorer.refresh(it.parentPath)
         }
+    }
+
+    val chmodFile: () -> Unit = label@{
+        if (currentDevice.isOffline || currentSelect == null) {
+            return@label
+        }
+        showChmodDialog.value = true
     }
 
     Box {
@@ -190,6 +202,7 @@ fun FileExplorerPager(
                             uploadFile = uploadFile,
                             refresh = refresh,
                             deleteFile = deleteFile,
+                            chmodFile = chmodFile,
                         )
                     }
                 }
@@ -208,6 +221,7 @@ fun FileExplorerPager(
     FileDownloadDialog(showDownloadFileDialog, currentSelect, fileExplorer)
     FileUploadDialog(showUploadFileDialog, currentSelect, fileExplorer)
     DeleteFileConfirmDialog(showDeleteDialog, currentSelect, fileExplorer, selectFile)
+    ChmodFileDialog(showChmodDialog, currentSelect, fileExplorer)
 }
 
 @Composable
@@ -309,6 +323,7 @@ private fun LazyListScope.FileView(
     uploadFile: () -> Unit,
     deleteFile: () -> Unit,
     refresh: (FileInfoItem?) -> Unit,
+    chmodFile: () -> Unit,
 ) {
     when (fileItem) {
         is FileInfoItem -> {
@@ -328,6 +343,7 @@ private fun LazyListScope.FileView(
                     uploadFile = uploadFile,
                     refresh = refresh,
                     deleteFile = deleteFile,
+                    chmodFile = chmodFile,
                 )
             }
             if (currentExpanded) {
@@ -345,8 +361,9 @@ private fun LazyListScope.FileView(
                         createNewFile = createNewFile,
                         downloadFile = downloadFile,
                         uploadFile = uploadFile,
-                        refresh = refresh,
                         deleteFile = deleteFile,
+                        refresh = refresh,
+                        chmodFile = chmodFile,
                     )
                 }
             }
@@ -374,12 +391,20 @@ private fun FileInfoItemView(
     uploadFile: () -> Unit,
     deleteFile: () -> Unit,
     refresh: (FileInfoItem?) -> Unit,
+    chmodFile: () -> Unit,
 ) {
+    val clipboardManager = LocalClipboardManager.current
     val selected = remember(fileInfo.path, currentSelect) {
         mutableStateOf(currentSelect == fileInfo)
     }
     val refreshPath by rememberUpdatedState {
         refresh(fileInfo)
+    }
+    val copyName by rememberUpdatedState {
+        clipboardManager.setText(AnnotatedString(fileInfo.name))
+    }
+    val copyPath by rememberUpdatedState {
+        clipboardManager.setText(AnnotatedString(fileInfo.path))
     }
     val primaryColor = materialColors.primary.copy(alpha = 0.5f)
     var mouseEnter by remember { mutableStateOf(false) }
@@ -394,7 +419,6 @@ private fun FileInfoItemView(
         mutableStateOf(c)
     }
     val contextMenuState = remember { ContextMenuState() }
-
     LaunchedEffect(contextMenuState.status) {
         if (contextMenuState.status is ContextMenuState.Status.Open) {
             selectFile(fileInfo)
@@ -402,14 +426,17 @@ private fun FileInfoItemView(
     }
     ContextMenuArea(state = contextMenuState, items = {
         mutableListOf<ContextMenuItem>().apply {
+            ContextMenuItem("刷新", refreshPath).also(::add)
             if (fileInfo.isDirectory) {
                 ContextMenuItem("新建文件夹", createNewFolder).also(::add)
                 ContextMenuItem("新建文件", createNewFile).also(::add)
                 ContextMenuItem("导入文件", uploadFile).also(::add)
             }
             ContextMenuItem("导出文件", downloadFile).also(::add)
+            ContextMenuItem("复制名称", copyName).also(::add)
+            ContextMenuItem("复制路径", copyPath).also(::add)
+            ContextMenuItem("修改权限", chmodFile).also(::add)
             ContextMenuItem("删除", deleteFile).also(::add)
-            ContextMenuItem("刷新", refreshPath).also(::add)
         }
     }) {
         Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {

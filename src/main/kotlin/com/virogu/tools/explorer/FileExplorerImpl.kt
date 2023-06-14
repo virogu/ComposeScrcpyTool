@@ -278,6 +278,29 @@ class FileExplorerImpl(
         }
     }
 
+    override fun chmod(fileInfo: FileInfoItem, permission: String) {
+        withLock("chmod file") {
+            val device = currentDevice ?: return@withLock
+            val s = buildString {
+                progressTool.exec(
+                    "adb", "-s", device.serial, "shell",
+                    "chmod", permission, fileInfo.path,
+                    showLog = true
+                ).onSuccess {
+                    if (it.isNotBlank()) {
+                        appendLine(it)
+                    } else {
+                        appendLine("chmod $permission ${fileInfo.path} success")
+                    }
+                }.onFailure {
+                    appendLine("chmod $permission ${fileInfo.path} fail, ${it.localizedMessage}")
+                }
+            }
+            tipsFlow.emit(s)
+            refresh(fileInfo.parentPath)
+        }
+    }
+
     /**
      * what to show:
      * -a  all files including .hidden    -b  escape nongraphic chars

@@ -32,4 +32,6 @@ interface FileExplorer {
 
     fun pullFile(fromFile: List<FileInfoItem>, toLocalFile: File)
 
+    fun chmod(fileInfo: FileInfoItem, permission: String)
+
 }
