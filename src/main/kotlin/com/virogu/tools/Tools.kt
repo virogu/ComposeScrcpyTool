@@ -1,6 +1,7 @@
 package com.virogu.tools
 
 import com.virogu.tools.adb.ProgressTool
+import com.virogu.tools.common.AuxiliaryTool
 import com.virogu.tools.config.ConfigStores
 import com.virogu.tools.connect.DeviceConnectTool
 import com.virogu.tools.explorer.FileExplorer
@@ -18,6 +19,7 @@ interface Tools {
     val scrcpyTool: ScrcpyTool
     val fileExplorer: FileExplorer
     val processTool: DeviceProcessTool
+    val auxiliaryTool: AuxiliaryTool
 
     fun start()
     fun stop()

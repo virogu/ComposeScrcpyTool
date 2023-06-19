@@ -2,6 +2,8 @@ package com.virogu.tools
 
 import com.virogu.tools.adb.ProgressTool
 import com.virogu.tools.adb.ProgressToolsImpl
+import com.virogu.tools.common.AuxiliaryTool
+import com.virogu.tools.common.AuxiliaryToolImpl
 import com.virogu.tools.config.ConfigStores
 import com.virogu.tools.config.impl.ConfigStoreImpl
 import com.virogu.tools.connect.DeviceConnectTool
@@ -47,6 +49,8 @@ class ToolImpl : Tools {
     override val fileExplorer: FileExplorer = FileExplorerImpl(initTool, deviceConnectTool, progressTool)
 
     override val processTool: DeviceProcessTool = DeviceProcessToolImpl(initTool, deviceConnectTool, progressTool)
+
+    override val auxiliaryTool: AuxiliaryTool = AuxiliaryToolImpl(deviceConnectTool, progressTool)
 
     init {
         initTool.init()
