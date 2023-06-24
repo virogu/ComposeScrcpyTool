@@ -102,7 +102,7 @@ private fun ToolsView(
     }
 
     val list = remember {
-        Auxiliary.values()
+        Auxiliary.entries.toTypedArray()
     }
     LazyColumn(
         modifier = modifier.wrapContentWidth().fillMaxHeight().padding(8.dp),

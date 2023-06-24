@@ -2,7 +2,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 apply("config.gradle.kts")
 
-val kotlinVersion = "1.8.20"
+val kotlinVersion = "1.9.20"
 val programName: String by project
 val gitCommitCount: Int by project
 val buildFormatDate: String by project
@@ -18,7 +18,6 @@ plugins {
     kotlin("jvm")
     id("org.jetbrains.compose")
     id("com.github.gmazzo.buildconfig") version "3.0.3"
-    //kotlin("plugin.parcelize") version("1.8.20")
     kotlin("plugin.serialization")
 }
 
@@ -49,7 +48,7 @@ dependencies {
     implementation(compose.desktop.currentOs)
     //implementation(compose.materialIconsExtended)
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     //implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.6.0-native-mt")
     //implementation("com.jakewharton.timber:timber:4.7.1")
     // https://mvnrepository.com/artifact/org.apache.sshd/sshd-mina
@@ -87,10 +86,10 @@ dependencies {
     //val accompanistVersion = "0.30.1"
     //implementation("com.google.accompanist:accompanist-animations:$accompanistVersion")
 
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
 }
 
 buildConfig {

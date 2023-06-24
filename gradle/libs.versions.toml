@@ -1,0 +1,13 @@
+[versions]
+kotlin = "1.9.20"
+gmazzoBuildconfig = "3.0.3"
+
+[libraries]
+
+[plugins]
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+gmazzo-buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "gmazzoBuildconfig" }
