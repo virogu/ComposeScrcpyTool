@@ -27,7 +27,6 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,7 +38,9 @@ import com.virogu.pager.view.LogListView
 import com.virogu.tools.Tools
 import com.virogu.tools.log.LogTool
 import logger
+import theme.Icon
 import theme.Red_500
+import theme.Star
 import theme.materialColors
 import views.defaultTextSize
 
@@ -232,13 +233,11 @@ fun ConnectDeviceView(
                 }) {
                     Text(text = device.showName, modifier = Modifier.weight(1f).padding(16.dp, 10.dp, 16.dp, 10.dp))
                     Icon(
-                        painter = painterResource(
-                            if (device.tagged) {
-                                "icons/ic_star_fill.svg"
-                            } else {
-                                "icons/ic_star.svg"
-                            }
-                        ),
+                        painter = if (device.tagged) {
+                            Icon.Filled.Star
+                        } else {
+                            Icon.Outlined.Star
+                        },
                         contentDescription = if (device.tagged) "取消置顶" else "置顶",
                         modifier = Modifier.size(40.dp).clickable {
                             historyDevicesStore.updateLastConnectTagged(device, !device.tagged)

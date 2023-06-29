@@ -12,12 +12,13 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import theme.FileFolder
+import theme.Icon
 import theme.materialColors
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
@@ -147,7 +148,7 @@ fun FileSelectView(
                 }.aspectRatio(1f).padding().align(Alignment.CenterEnd)
             ) {
                 Icon(
-                    painter = painterResource("icons/ic_folder_fill.svg"),
+                    painter = Icon.Filled.FileFolder,
                     contentDescription = "选择文件",
                     modifier = Modifier.fillMaxHeight(0.6f).aspectRatio(1f).align(Alignment.Center),
                     tint = contentColorFor(MaterialTheme.colors.background)

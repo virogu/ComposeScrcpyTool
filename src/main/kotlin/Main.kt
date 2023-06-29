@@ -1,7 +1,6 @@
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
@@ -15,6 +14,8 @@ import org.kodein.di.conf.global
 import org.kodein.di.instance
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import theme.Icon
+import theme.Logo
 import tools.BuildConfig
 
 
@@ -50,7 +51,7 @@ fun main() {
 }
 
 private fun startApplication() = application {
-    val icon = painterResource("logo.svg")
+    val icon = Icon.Logo
     val state = rememberWindowState(
         placement = WindowPlacement.Floating,
         size = size,

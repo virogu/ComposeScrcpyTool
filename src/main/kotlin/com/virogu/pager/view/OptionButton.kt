@@ -15,7 +15,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 
 /**
@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 fun OptionButton(
     description: String,
     enable: Boolean,
-    resourcePath: String,
+    painter: Painter,
     elevation: ButtonElevation? = null,
     shape: Shape = RoundedCornerShape(8.dp),
     border: BorderStroke? = null,
@@ -60,7 +60,7 @@ fun OptionButton(
             elevation = elevation,
             border = border
         ) {
-            Icon(modifier = iconModifier, painter = painterResource(resourcePath), contentDescription = description)
+            Icon(modifier = iconModifier, painter = painter, contentDescription = description)
         }
     }
 }

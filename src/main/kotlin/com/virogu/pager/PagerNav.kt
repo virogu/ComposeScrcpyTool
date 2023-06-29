@@ -5,29 +5,32 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import theme.CPU
+import theme.DesktopAndPhone
+import theme.FileFolderOpen
+import theme.Icon
 
 sealed class Pager(
     val title: String,
     val imgPainter: @Composable () -> Painter
 ) {
-    object DeviceConnection : Pager(
+    data object DeviceConnection : Pager(
         title = "设备连接", imgPainter = {
-            painterResource("icons/ic_device_connection.svg")
+            Icon.Outlined.DesktopAndPhone
         }
     )
 
-    object DeviceExplorer : Pager(
+    data object DeviceExplorer : Pager(
         title = "文件管理", imgPainter = {
-            painterResource("icons/ic_folder_open.svg")
+            Icon.Outlined.FileFolderOpen
         }
     )
 
-    object DeviceProcess : Pager(
+    data object DeviceProcess : Pager(
         title = "进程管理", imgPainter = {
-            painterResource("icons/ic_memory.svg")
+            Icon.Outlined.CPU
         }
     )
 }

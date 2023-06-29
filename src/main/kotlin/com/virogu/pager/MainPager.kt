@@ -19,10 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.WindowState
 import com.virogu.tools.Tools
+import theme.Construction
+import theme.Icon
 import theme.materialColors
 
 @Composable
@@ -146,7 +147,7 @@ private fun AuxiliaryToolView(
                 Icons
                 Icon(
                     modifier = Modifier.size(28.dp),
-                    painter = painterResource("icons/ic_construction.svg"),
+                    painter = Icon.Outlined.Construction,
                     contentDescription = "辅助工具",
                 )
             }

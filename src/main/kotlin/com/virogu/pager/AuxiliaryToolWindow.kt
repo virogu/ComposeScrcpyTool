@@ -13,12 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.virogu.bean.Auxiliary
 import com.virogu.tools.Tools
+import theme.Icon
+import theme.Logo
 import theme.MainTheme
 
 /**
@@ -34,7 +35,7 @@ fun AuxiliaryToolWindow(
     if (!show.value) {
         return
     }
-    val icon = painterResource("logo.svg")
+    val icon = Icon.Logo
     val state = rememberWindowState(
         placement = WindowPlacement.Floating,
         size = DpSize(60.dp, 500.dp),

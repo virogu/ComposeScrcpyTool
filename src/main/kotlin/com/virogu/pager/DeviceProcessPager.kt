@@ -20,7 +20,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,7 +32,7 @@ import com.virogu.tools.Tools
 import com.virogu.tools.process.DeviceProcessTool
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import theme.materialColors
+import theme.*
 
 /**
  * Created by Virogu
@@ -132,7 +131,7 @@ private fun ToolBarView(
             OptionButton(
                 "停止进程\nkill",
                 enable = deviceConnected && currentSelect != null,
-                resourcePath = "icons/ic_dangerous.svg",
+                painter = Icon.Outlined.Dangerous,
                 colors = ButtonDefaults.buttonColors(
                     backgroundColor = Color.Transparent,
                     contentColor = materialColors.error
@@ -146,7 +145,7 @@ private fun ToolBarView(
             OptionButton(
                 "强行停止程序\nforce stop",
                 enable = deviceConnected && currentSelect != null,
-                resourcePath = "icons/ic_stop.svg",
+                painter = Icon.Outlined.Stop,
                 colors = ButtonDefaults.buttonColors(
                     backgroundColor = Color.Transparent,
                     contentColor = materialColors.error
@@ -160,7 +159,7 @@ private fun ToolBarView(
             OptionButton(
                 "刷新",
                 enable = deviceConnected,
-                resourcePath = "icons/ic_sync.svg"
+                painter = Icon.Outlined.Sync
             ) {
                 processTool.refresh()
             }
@@ -176,7 +175,7 @@ private fun ToolBarView(
             )
             Icon(
                 modifier = Modifier.align(Alignment.CenterEnd).size(24.dp).rotate(infiniteTransition),
-                painter = painterResource("icons/ic_clock_loader.svg"),
+                painter = Icon.Outlined.ClockLoader,
                 contentDescription = "运行状态"
             )
         }
@@ -300,7 +299,7 @@ private fun ProcessItemView(
             ) {
                 Icon(
                     modifier = iconModifier,
-                    painter = painterResource("icons/ic_smartphone.svg"),
+                    painter = Icon.Outlined.SmartPhone,
                     contentDescription = "icon smartphone"
                 )
                 TooltipArea(

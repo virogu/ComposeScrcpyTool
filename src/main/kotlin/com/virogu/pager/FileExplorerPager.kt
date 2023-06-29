@@ -22,7 +22,6 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -33,7 +32,7 @@ import com.virogu.pager.view.SelectDeviceView
 import com.virogu.pager.view.TipsView
 import com.virogu.tools.Tools
 import com.virogu.tools.explorer.FileExplorer
-import theme.materialColors
+import theme.*
 import java.net.URI
 import kotlin.io.path.toPath
 
@@ -243,49 +242,49 @@ private fun ToolBarView(
             OptionButton(
                 "新建文件夹",
                 enable = deviceConnected && currentSelect?.type == FileType.DIR,
-                resourcePath = "icons/ic_new_folder.svg"
+                painter = Icon.Outlined.FileNewFolder
             ) {
                 createNewFolder()
             }
             OptionButton(
                 "新建文件",
                 enable = deviceConnected && currentSelect?.type == FileType.DIR,
-                resourcePath = "icons/ic_new_file.svg"
+                painter = Icon.Outlined.FileNewFile
             ) {
                 createNewFile()
             }
             OptionButton(
                 "导出文件",
                 enable = deviceConnected && currentSelect != null,
-                resourcePath = "icons/ic_download.svg"
+                painter = Icon.Outlined.Download
             ) {
                 downloadFile()
             }
             OptionButton(
                 "导入文件",
                 enable = deviceConnected && currentSelect?.type == FileType.DIR,
-                resourcePath = "icons/ic_upload.svg"
+                painter = Icon.Outlined.Upload
             ) {
                 uploadFile()
             }
             OptionButton(
                 "删除",
                 enable = deviceConnected && currentSelect != null,
-                resourcePath = "icons/ic_delete.svg"
+                painter = Icon.Outlined.TrashCan
             ) {
                 deleteFile()
             }
             OptionButton(
                 "以root模式连接",
                 enable = deviceConnected,
-                resourcePath = "icons/ic_admin_panel_settings.svg"
+                painter = Icon.Outlined.AdminPanelSettings
             ) {
                 fileExplorer.restartWithRoot()
             }
             OptionButton(
                 "刷新",
                 enable = deviceConnected,
-                resourcePath = "icons/ic_sync.svg"
+                painter = Icon.Outlined.Sync
             ) {
                 refresh(null)
             }
@@ -301,7 +300,7 @@ private fun ToolBarView(
             )
             Icon(
                 modifier = Modifier.align(Alignment.CenterEnd).size(24.dp).rotate(infiniteTransition),
-                painter = painterResource("icons/ic_clock_loader.svg"),
+                painter = Icon.Outlined.ClockLoader,
                 contentDescription = "运行状态"
             )
         }
@@ -519,7 +518,7 @@ private fun FileInfoItemView(
                                 )
                                 Icon(
                                     modifier = iconModifier,
-                                    painter = painterResource("icons/ic_folder.svg"),
+                                    painter = Icon.Outlined.FileFolder,
                                     contentDescription = fileInfo.name
                                 )
                             }
@@ -528,7 +527,7 @@ private fun FileInfoItemView(
                                 Spacer(iconModifier)
                                 Icon(
                                     modifier = iconModifier,
-                                    painter = painterResource("icons/ic_file_link.svg"),
+                                    painter = Icon.Outlined.FileLink,
                                     contentDescription = fileInfo.name
                                 )
                             }
@@ -537,7 +536,7 @@ private fun FileInfoItemView(
                                 Spacer(iconModifier)
                                 Icon(
                                     modifier = iconModifier,
-                                    painter = painterResource("icons/ic_file.svg"),
+                                    painter = Icon.Outlined.FileDocument,
                                     contentDescription = fileInfo.name
                                 )
                             }
@@ -546,7 +545,7 @@ private fun FileInfoItemView(
                                 Spacer(iconModifier)
                                 Icon(
                                     modifier = iconModifier,
-                                    painter = painterResource("icons/ic_unknown_file.svg"),
+                                    painter = Icon.Outlined.FileUnknown,
                                     contentDescription = fileInfo.name
                                 )
                             }
