@@ -32,11 +32,11 @@ class AuxiliaryToolImpl(
 
     override val processListFlow: MutableStateFlow<List<ProcessInfo>> = MutableStateFlow(emptyList())
 
-    override fun exec(command: String) {
+    override fun exec(command: Array<String>) {
         withLock("command: $command") {
             val device = currentDevice ?: return@withLock
             progressTool.exec(
-                "adb", "-s", device.serial, command,
+                "adb", "-s", device.serial, *command,
                 consoleLog = true,
             )
         }

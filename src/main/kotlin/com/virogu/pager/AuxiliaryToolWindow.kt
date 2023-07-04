@@ -21,6 +21,7 @@ import com.virogu.tools.Tools
 import theme.Icon
 import theme.Logo
 import theme.MainTheme
+import theme.MoreHorizon
 
 /**
  * Created by Virogu
@@ -36,9 +37,10 @@ fun AuxiliaryToolWindow(
         return
     }
     val icon = Icon.Logo
+    val defaultHeight = (50 + Auxiliary.entries.size * (45 + 8)).coerceAtMost(800)
     val state = rememberWindowState(
         placement = WindowPlacement.Floating,
-        size = DpSize(60.dp, 500.dp),
+        size = DpSize(60.dp, defaultHeight.dp),
         position = WindowPosition.Aligned(Alignment.CenterEnd),
     )
     val alwaysOnTop = remember {
@@ -66,26 +68,12 @@ fun AuxiliaryToolWindow(
 
 @Composable
 private fun WindowScope.ToolBar(alwaysOnTop: MutableState<Boolean>) = WindowDraggableArea {
-    Box(Modifier.fillMaxWidth().height(30.dp).background(Color.Black.copy(0.1f))) {
-//        Row(Modifier.align(Alignment.CenterEnd)) {
-//            Button(
-//                onClick = {
-//                },
-//                modifier = Modifier.size(30.dp),
-//                shape = RoundedCornerShape(0.dp),
-//                colors = ButtonDefaults.buttonColors(
-//                    backgroundColor = Color.Transparent
-//                ),
-//                elevation = null,
-//                contentPadding = PaddingValues(0.dp)
-//            ) {
-//                Icon(
-//                    modifier = Modifier.size(20.dp),
-//                    imageVector = Icons.Filled.Close,
-//                    contentDescription = "关闭",
-//                )
-//            }
-//        }
+    Box(Modifier.fillMaxWidth().height(30.dp).background(Color.Black.copy(0.2f))) {
+        Icon(
+            modifier = Modifier.size(20.dp).align(Alignment.Center),
+            painter = Icon.Outlined.MoreHorizon,
+            contentDescription = "移动",
+        )
     }
 }
 
@@ -98,9 +86,6 @@ private fun ToolsView(
     val auxiliaryTool = tools.auxiliaryTool
     val isBusy by auxiliaryTool.isBusy.collectAsState()
     val currentDevice by auxiliaryTool.selectedOnlineDevice.collectAsState()
-    val enable by remember(currentDevice, isBusy) {
-        mutableStateOf(currentDevice != null && !isBusy)
-    }
 
     val list = remember {
         Auxiliary.entries.toTypedArray()
@@ -120,9 +105,11 @@ private fun ToolsView(
             ) {
                 Button(
                     onClick = {
-                        auxiliaryTool.exec(it.opt)
+                        if (currentDevice == null || isBusy) {
+                            return@Button
+                        }
+                        auxiliaryTool.exec(it.command)
                     },
-                    enabled = enable,
                     modifier = Modifier.size(45.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(

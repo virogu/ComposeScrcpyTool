@@ -138,6 +138,10 @@ val Icon.Outlined.DragPan: Painter
     @Composable
     get() = fromResource("icons/ic_drag_pan.svg")
 
+val Icon.Outlined.MoreHorizon: Painter
+    @Composable
+    get() = fromResource("icons/ic_more_horiz.svg")
+
 //Filled
 val Icon.Filled.Star: Painter
     @Composable

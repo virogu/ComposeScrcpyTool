@@ -13,6 +13,6 @@ interface AuxiliaryTool {
     val isBusy: StateFlow<Boolean>
     val selectedOnlineDevice: StateFlow<AdbDevice?>
 
-    fun exec(command: String)
+    fun exec(command: Array<String>)
 
 }
