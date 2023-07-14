@@ -1,86 +1,56 @@
 package com.virogu.pager.view
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.dp
 import com.virogu.bean.AdbDevice
 import com.virogu.tools.Tools
-import theme.materialColors
+import theme.dropdownMenuItemPadding
+import theme.textFieldContentPadding
+import views.OutlinedTextField
 
 /**
  * Created by Virogu
  * Date 2023/08/03 下午 3:28:25
  **/
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SelectDeviceView(
     modifier: Modifier = Modifier, currentDevice: AdbDevice?, tools: Tools
 ) {
     val connectTool = tools.deviceConnectTool
-
     val devices = connectTool.connectedDevice.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
 
-    val expanded = remember { mutableStateOf(false) }
-    val dropMenuWidth = remember {
-        mutableStateOf(0.dp)
-    }
-    val dropMenuOffset = remember {
-        mutableStateOf(0.dp)
-    }
-    Box(
-        modifier = modifier.border(
-            BorderStroke(1.dp, materialColors.onSurface.copy(alpha = ContentAlpha.disabled)),
-            TextFieldDefaults.OutlinedTextFieldShape
-        ).clickable {
-            expanded.value = true
-        }.onPlaced {
-            dropMenuWidth.value = it.size.width.dp
-        },
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier,
     ) {
-        Row {
-            Text(
-                text = currentDevice?.showName.orEmpty(),
-                maxLines = 1,
-                modifier = Modifier.align(Alignment.CenterVertically).weight(1f).padding(horizontal = 16.dp)
-            )
-            Button(
-                onClick = {
-                    expanded.value = !expanded.value
-                },
-                modifier = Modifier.fillMaxHeight().aspectRatio(1f).align(Alignment.CenterVertically),
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
-                contentPadding = PaddingValues(4.dp),
-                elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-            ) {
-                Icon(Icons.Default.ArrowDropDown, "", tint = contentColorFor(MaterialTheme.colors.background))
-            }
-        }
-        DropdownMenu(
-            expanded = expanded.value, onDismissRequest = {
-                expanded.value = false
-            }, modifier = Modifier.width(dropMenuWidth.value), offset = DpOffset(dropMenuOffset.value, 0.dp)
+        OutlinedTextField(
+            modifier = Modifier.fillMaxSize(),
+            readOnly = true,
+            singleLine = true,
+            value = currentDevice?.showName.orEmpty(),
+            onValueChange = {},
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            contentPadding = textFieldContentPadding()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
         ) {
             devices.value.forEach {
-                Column(modifier = Modifier.clickable {
-                    connectTool.selectDevice(it)
-                    expanded.value = false
-                }) {
-                    Text(text = it.showName, modifier = Modifier.fillMaxWidth().padding(16.dp, 10.dp, 16.dp, 10.dp))
-                    //Box(modifier = Modifier.fillMaxWidth().padding(16.dp).height(0.5.dp).background(Color.LightGray))
+                DropdownMenuItem(
+                    onClick = {
+                        connectTool.selectDevice(it)
+                        expanded = false
+                    },
+                    contentPadding = dropdownMenuItemPadding(),
+                ) {
+                    Text(text = it.showName)
                 }
             }
         }

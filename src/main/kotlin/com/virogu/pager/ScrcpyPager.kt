@@ -4,9 +4,6 @@ package com.virogu.pager
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -19,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.virogu.bean.AdbDevice
@@ -28,6 +24,9 @@ import com.virogu.pager.view.FileSelectView
 import com.virogu.tools.Tools
 import com.virogu.tools.scrcpy.ScrcpyTool
 import theme.materialColors
+import theme.textFieldContentPadding
+import theme.textFieldHeight
+import views.OutlinedTextField
 import javax.swing.JFileChooser
 
 @Composable
@@ -92,7 +91,7 @@ private fun ScrcpyConfigView(
     Row(
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        val modifier = Modifier.height(40.dp).align(Alignment.CenterVertically)
+        val modifier = Modifier.textFieldHeight().align(Alignment.CenterVertically)
         SelectRecordPathView(modifier.weight(2f), window, commonConfig.recordPath) {
             currentUpdateCommonConfig(commonConfig.copy(recordPath = it))
         }
@@ -102,13 +101,14 @@ private fun ScrcpyConfigView(
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         val modifier = Modifier.height(40.dp).weight(1f).align(Alignment.CenterVertically)
+        val labelModifier = Modifier.width(80.dp).align(Alignment.CenterVertically)
         DropMenuConfigView(
             modifier,
             label = {
-                Text("录像格式", Modifier.width(80.dp).align(Alignment.CenterVertically))
+                Text("录像格式", labelModifier)
             },
             currentValue = commonConfig.recordFormat,
-            menuList = ScrcpyConfig.RecordFormat.values().toList(),
+            menuList = ScrcpyConfig.RecordFormat.entries,
             valueFormat = { it.value },
         ) {
             currentUpdateCommonConfig(commonConfig.copy(recordFormat = it))
@@ -116,10 +116,10 @@ private fun ScrcpyConfigView(
         DropMenuConfigView(
             modifier,
             label = {
-                Text("视频编码", Modifier.width(80.dp).align(Alignment.CenterVertically))
+                Text("视频编码", labelModifier)
             },
             currentValue = specialConfig.videoCodec,
-            menuList = ScrcpyConfig.VideoCodec.values().toList(),
+            menuList = ScrcpyConfig.VideoCodec.entries,
             valueFormat = { it.value },
             enabled = specialConfigEnable,
         ) {
@@ -128,10 +128,10 @@ private fun ScrcpyConfigView(
         DropMenuConfigView(
             modifier,
             label = {
-                Text("比特率", Modifier.width(80.dp).align(Alignment.CenterVertically))
+                Text("比特率", labelModifier)
             },
             currentValue = specialConfig.bitRate,
-            menuList = ScrcpyConfig.VideoBiteRate.values().toList(),
+            menuList = ScrcpyConfig.VideoBiteRate.entries,
             valueFormat = { it.value },
             enabled = specialConfigEnable,
         ) {
@@ -143,13 +143,14 @@ private fun ScrcpyConfigView(
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         val modifier = Modifier.height(40.dp).weight(1f).align(Alignment.CenterVertically)
+        val labelModifier = Modifier.width(80.dp).align(Alignment.CenterVertically)
         DropMenuConfigView(
             modifier,
             label = {
-                Text("最大尺寸", Modifier.width(80.dp).align(Alignment.CenterVertically))
+                Text("最大尺寸", labelModifier)
             },
             currentValue = specialConfig.maxSize,
-            menuList = ScrcpyConfig.MaxSize.values().toList(),
+            menuList = ScrcpyConfig.MaxSize.entries,
             valueFormat = { it.value },
             enabled = specialConfigEnable,
         ) {
@@ -159,10 +160,10 @@ private fun ScrcpyConfigView(
         DropMenuConfigView(
             modifier,
             label = {
-                Text("视频方向", Modifier.width(80.dp).align(Alignment.CenterVertically))
+                Text("视频方向", labelModifier)
             },
             currentValue = specialConfig.videoRotation,
-            menuList = ScrcpyConfig.VideoRotation.values().toList(),
+            menuList = ScrcpyConfig.VideoRotation.entries,
             valueFormat = { it.desc },
             enabled = specialConfigEnable,
         ) {
@@ -171,10 +172,10 @@ private fun ScrcpyConfigView(
         DropMenuConfigView(
             modifier,
             label = {
-                Text("窗口方向", Modifier.width(80.dp).align(Alignment.CenterVertically))
+                Text("窗口方向", labelModifier)
             },
             currentValue = specialConfig.windowRotation,
-            menuList = ScrcpyConfig.WindowRotation.values().toList(),
+            menuList = ScrcpyConfig.WindowRotation.entries,
             valueFormat = { it.desc },
             enabled = specialConfigEnable,
         ) {
@@ -275,6 +276,7 @@ private fun SelectRecordPathView(
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun <T> DropMenuConfigView(
     modifier: Modifier = Modifier,
@@ -288,52 +290,45 @@ private fun <T> DropMenuConfigView(
     val currentOnMenuSelected by rememberUpdatedState(onMenuSelected)
     val currentValueFormat by rememberUpdatedState(valueFormat)
 
-    val expanded = remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
-    val dropMenuWidth = remember {
-        mutableStateOf(0.dp)
-    }
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         label()
-        Box(
-            modifier = Modifier.clickable(enabled) {
-                expanded.value = true
-            }.weight(1f).background(
-                if (enabled) {
-                    Color.Transparent
-                } else {
-                    MaterialTheme.colors.onSurface.copy(alpha = 0.1f)
-                },
-                TextFieldDefaults.OutlinedTextFieldShape
-            ).fillMaxHeight().border(
-                BorderStroke(1.dp, materialColors.onSurface.copy(alpha = ContentAlpha.disabled)),
-                TextFieldDefaults.OutlinedTextFieldShape
-            ).onPlaced {
-                dropMenuWidth.value = it.size.width.dp
-            }
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = {
+                if (!enabled) {
+                    return@ExposedDropdownMenuBox
+                }
+                expanded = !expanded
+            },
+            modifier = Modifier.fillMaxSize(),
         ) {
-            Text(
-                text = currentValueFormat(currentValue),
-                modifier = Modifier.align(Alignment.Center).padding(0.dp),
-                textAlign = TextAlign.Center
+            OutlinedTextField(
+                modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically),
+                textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+                readOnly = true,
+                singleLine = true,
+                enabled = enabled,
+                value = currentValueFormat(currentValue),
+                onValueChange = {},
+                contentPadding = textFieldContentPadding()
             )
-            DropdownMenu(
-                expanded = expanded.value,
-                onDismissRequest = {
-                    expanded.value = false
-                },
-                modifier = Modifier.width(dropMenuWidth.value),
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
             ) {
                 menuList.forEach {
                     Text(
                         text = currentValueFormat(it),
+                        style = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
                         modifier = Modifier.fillMaxWidth().clickable {
                             currentOnMenuSelected(it)
-                            expanded.value = false
-                        }.padding(16.dp, 10.dp, 16.dp, 10.dp)
+                            expanded = false
+                        }.padding(16.dp, 8.dp)
                     )
                 }
             }

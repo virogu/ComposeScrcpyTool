@@ -36,7 +36,6 @@ import theme.*
 import java.net.URI
 import kotlin.io.path.toPath
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun FileExplorerPager(
     tools: Tools,
@@ -142,7 +141,7 @@ fun FileExplorerPager(
             modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             SelectDeviceView(
-                Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp).height(40.dp),
+                Modifier.textFieldHeight().align(Alignment.CenterHorizontally).padding(horizontal = 16.dp),
                 currentDevice,
                 tools
             )

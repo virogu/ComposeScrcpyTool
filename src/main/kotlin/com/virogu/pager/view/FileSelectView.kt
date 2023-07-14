@@ -1,25 +1,32 @@
 package com.virogu.pager.view
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.*
+import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.contentColorFor
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.DragData
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.awt.ComposeWindow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.onExternalDrag
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import theme.FileFolder
 import theme.Icon
-import theme.materialColors
+import theme.textFieldContentPadding
+import views.OutlinedTextField
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
@@ -46,7 +53,7 @@ fun FileSelectView(
     window: ComposeWindow,
     text: String,
     fileChooserType: Int,
-    modifier: Modifier = Modifier.height(40.dp),
+    modifier: Modifier = Modifier.height(48.dp),
     filesFilter: Array<String> = emptyArray(),
     multiSelectionEnabled: Boolean = false,
     defaultPath: String = "",
@@ -71,91 +78,88 @@ fun FileSelectView(
         }
     }
     var dragging: Boolean by remember { mutableStateOf(false) }
-    val activeBorderStroke = BorderStroke(1.dp, materialColors.primary)
-    val notActiveBorderStroke = BorderStroke(1.dp, materialColors.onSurface.copy(alpha = ContentAlpha.disabled))
-    Card(
-        modifier.onExternalDrag(
+    val interactionSource = remember { MutableInteractionSource() }
+    var focus by remember {
+        mutableStateOf(FocusInteraction.Focus())
+    }
+    LaunchedEffect(dragging) {
+        if (dragging) {
+            focus = FocusInteraction.Focus()
+            interactionSource.emit(focus)
+        } else {
+            interactionSource.emit(FocusInteraction.Unfocus(focus))
+        }
+    }
+    OutlinedTextField(
+        modifier = modifier.onExternalDrag(
             onDragStart = {
                 dragging = true
             },
             onDragExit = {
                 dragging = false
             },
-        ) {
-            dragging = false
-            it.dragData.also { dragData ->
-                if (dragData !is DragData.FilesList) {
-                    return@also
-                }
-                val list = dragData.readFiles().mapNotNull { uri ->
-                    try {
-                        URI.create(uri).toPath().toFile()
-                    } catch (e: Throwable) {
-                        null
+            onDrop = {
+                dragging = false
+                it.dragData.also { dragData ->
+                    if (dragData !is DragData.FilesList) {
+                        return@also
                     }
-                }.filter { f ->
-                    val a1 = when (fileChooserType) {
-                        JFileChooser.FILES_ONLY -> {
-                            f.isFile
+                    val list = dragData.readFiles().mapNotNull { uri ->
+                        try {
+                            URI.create(uri).toPath().toFile()
+                        } catch (e: Throwable) {
+                            null
                         }
+                    }.filter { f ->
+                        val a1 = when (fileChooserType) {
+                            JFileChooser.FILES_ONLY -> {
+                                f.isFile
+                            }
 
-                        JFileChooser.DIRECTORIES_ONLY -> {
-                            f.isDirectory
+                            JFileChooser.DIRECTORIES_ONLY -> {
+                                f.isDirectory
+                            }
+
+                            else -> {
+                                true
+                            }
                         }
-
-                        else -> {
+                        val a2 = if (filesFilter.isEmpty()) {
                             true
+                        } else {
+                            f.isDirectory || (f.isFile && f.extension in filesFilter)
+                        }
+                        a1 && a2
+                    }
+                    if (multiSelectionEnabled) {
+                        currentOnFileSelected(list.toTypedArray())
+                    } else {
+                        if (list.size == 1) {
+                            currentOnFileSelected(list.toTypedArray())
                         }
                     }
-                    val a2 = if (filesFilter.isEmpty()) {
-                        true
-                    } else {
-                        f.isDirectory || (f.isFile && f.extension in filesFilter)
-                    }
-                    a1 && a2
-                }
-                if (multiSelectionEnabled) {
-                    currentOnFileSelected(list.toTypedArray())
-                } else {
-                    if (list.size == 1) {
-                        currentOnFileSelected(list.toTypedArray())
-                    }
                 }
             }
-        },
-        border = if (dragging) {
-            activeBorderStroke
-        } else {
-            notActiveBorderStroke
-        },
-        backgroundColor = Color.Transparent,
-        elevation = 0.dp
-    ) {
-        Box {
-            SelectionContainer(Modifier.fillMaxSize().align(Alignment.Center)) {
-                Text(
-                    text = text,
-                    maxLines = 1,
-                    modifier = Modifier.wrapContentHeight().fillMaxWidth().align(Alignment.Center).padding(
-                        start = 8.dp, end = 8.dp
-                    ),
-                    textAlign = TextAlign.Start
-                )
-            }
-            Box(
-                Modifier.fillMaxHeight().clickable {
-                    showFileChooser = true
-                }.aspectRatio(1f).padding().align(Alignment.CenterEnd)
-            ) {
+        ),
+        readOnly = true,
+        singleLine = true,
+        value = text,
+        onValueChange = {},
+        interactionSource = interactionSource,
+        trailingIcon = {
+            IconButton({
+                showFileChooser = true
+            }) {
                 Icon(
                     painter = Icon.Filled.FileFolder,
                     contentDescription = "选择文件",
-                    modifier = Modifier.fillMaxHeight(0.6f).aspectRatio(1f).align(Alignment.Center),
+                    modifier = Modifier.padding(10.dp),
                     tint = contentColorFor(MaterialTheme.colors.background)
                 )
             }
-        }
-    }
+        },
+        contentPadding = textFieldContentPadding()
+    )
 }
 
 @Composable
@@ -169,7 +173,7 @@ fun FileChooser(
     onFileSelected: (selectedFiles: Array<File>) -> Unit,
 ) {
     LaunchedEffect(Unit) {
-        launch(Dispatchers.Unconfined) {
+        launch(Dispatchers.IO) {
             val defaultFile = File(defaultPath)
             val f = if (defaultPath.isNotEmpty() && defaultFile.exists()) {
                 if (defaultFile.isFile) {
@@ -199,9 +203,9 @@ fun FileChooser(
                     fileFilter = FileNameExtensionFilter(description, *filesFilter)
                 }
             }
-            delay(10)
-            val status = jFileChooser.showOpenDialog(null)
-            delay(10)
+            val status = withContext(Dispatchers.Unconfined) {
+                jFileChooser.showOpenDialog(null)
+            }
             if (status == JFileChooser.APPROVE_OPTION) {
                 val files = if (multiSelectionEnabled) {
                     jFileChooser.selectedFiles

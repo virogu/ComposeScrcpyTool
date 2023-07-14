@@ -4,33 +4,27 @@ package com.virogu.pager
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.WindowState
 import com.virogu.bean.HistoryDevice
@@ -38,11 +32,9 @@ import com.virogu.pager.view.LogListView
 import com.virogu.tools.Tools
 import com.virogu.tools.log.LogTool
 import logger
-import theme.Icon
-import theme.Red_500
-import theme.Star
-import theme.materialColors
-import views.defaultTextSize
+import theme.*
+import views.OutlinedTextField
+import views.modifier.onEnterKey
 
 /**
  * @author Virogu
@@ -91,7 +83,7 @@ fun DeviceConnectView(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ConnectDeviceView(
     windowState: WindowState,
@@ -99,6 +91,7 @@ fun ConnectDeviceView(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         val historyDevicesStore = tools.configStores.historyDevicesStore
@@ -117,14 +110,7 @@ fun ConnectDeviceView(
         }
 
         //for drop menu
-        val expanded = remember { mutableStateOf(false) }
-        val dropMenuWidth = remember {
-            mutableStateOf(0.dp)
-        }
-        val dropMenuOffset = remember {
-            mutableStateOf(0.dp)
-        }
-
+        var expanded by remember { mutableStateOf(false) }
         val connectAction = label@{
             if (isBusy.value) {
                 return@label
@@ -157,119 +143,114 @@ fun ConnectDeviceView(
             connectTool.connect(ip.value, port.value)
         }
 
-        val ipModifier = Modifier.onKeyEvent { event ->
-            if (event.key == Key.Enter) {
-                connectAction()
-                true
-            } else {
-                false
-            }
+        val ipModifier = Modifier.textFieldWithLabelHeight().onEnterKey {
+            connectAction()
         }
-        Text("无线连接", modifier = Modifier.width(80.dp).align(Alignment.CenterVertically).onPlaced {
-            dropMenuOffset.value = (it.size.width + 8).dp
-        })
-        Row(
-            modifier = Modifier.weight(1f).onPlaced {
-                dropMenuWidth.value = it.size.width.dp
+        Text("无线连接", modifier = Modifier.width(80.dp))
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = {
+                //expanded = !expanded
             },
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.weight(1f),
         ) {
-            OutlinedTextField(
-                value = ip.value,
-                onValueChange = {
-                    ip.value = it.filter { c: Char -> c.isDigit() || c == '.' }.take(15)
-                },
-                placeholder = {
-                    Text("192.168.5.1")
-                },
-                singleLine = true,
-                modifier = ipModifier.weight(3f),
-                label = {
-                    Text(text = "IP")
-                },
-                colors = TextFieldDefaults.outlinedTextFieldColors(textColor = contentColorFor(MaterialTheme.colors.background)),
-            )
-            OutlinedTextField(
-                value = port.value.toString(),
-                onValueChange = {
-                    port.value = it.take(5).toIntOrNull() ?: 5555
-                },
-                placeholder = {
-                    Text("5555")
-                },
-                singleLine = true,
-                modifier = ipModifier.weight(2f),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Done
-                ),
-                label = {
-                    Text(text = "端口")
-                },
-                colors = TextFieldDefaults.outlinedTextFieldColors(textColor = contentColorFor(MaterialTheme.colors.background))
-            )
-        }
-        DropdownMenu(
-            expanded = expanded.value,
-            onDismissRequest = {
-                expanded.value = false
-            },
-            modifier = Modifier.width(dropMenuWidth.value)
-                .heightIn(0.dp, (windowState.size.height.value * 0.5).dp),
-            offset = DpOffset(dropMenuOffset.value, 0.dp)
-        ) {
-            if (history.value.isNotEmpty()) {
-                Column(modifier = Modifier.clickable {
-                    historyDevicesStore.clearHistoryConnect()
-                }) {
-                    Text(text = "清空连接记录", modifier = Modifier.fillMaxWidth().padding(16.dp, 10.dp, 16.dp, 10.dp))
-                }
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = ip.value,
+                    onValueChange = {
+                        ip.value = it.filter { c: Char -> c.isDigit() || c == '.' }.take(15)
+                    },
+                    placeholder = {
+                        Text("192.168.5.1")
+                    },
+                    singleLine = true,
+                    modifier = ipModifier.weight(3f),
+                    label = {
+                        Text(text = "IP")
+                    },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(textColor = contentColorFor(MaterialTheme.colors.background)),
+                    contentPadding = textFieldContentPadding()
+                )
+                OutlinedTextField(
+                    value = port.value.toString(),
+                    onValueChange = {
+                        port.value = it.take(5).toIntOrNull() ?: 5555
+                    },
+                    placeholder = {
+                        Text("5555")
+                    },
+                    singleLine = true,
+                    modifier = ipModifier.weight(2f),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Done
+                    ),
+                    label = {
+                        Text(text = "端口")
+                    },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(textColor = contentColorFor(MaterialTheme.colors.background)),
+                    contentPadding = textFieldContentPadding()
+                )
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded, onIconClick = { expanded = !expanded })
             }
-            history.value.forEach { device ->
-                Row(modifier = Modifier.clickable {
-                    ip.value = device.ip
-                    port.value = device.port
-                    expanded.value = !expanded.value
-                }) {
-                    Text(text = device.showName, modifier = Modifier.weight(1f).padding(16.dp, 10.dp, 16.dp, 10.dp))
-                    Icon(
-                        painter = if (device.tagged) {
-                            Icon.Filled.Star
-                        } else {
-                            Icon.Outlined.Star
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                history.value.forEach { device ->
+                    DropdownMenuItem(
+                        onClick = {
+                            ip.value = device.ip
+                            port.value = device.port
+                            expanded = false
                         },
-                        contentDescription = if (device.tagged) "取消置顶" else "置顶",
-                        modifier = Modifier.size(40.dp).clickable {
-                            historyDevicesStore.updateLastConnectTagged(device, !device.tagged)
-                        }.padding(10.dp).align(Alignment.CenterVertically),
-                        tint = contentColorFor(MaterialTheme.colors.background)
-                    )
-                    Icon(
-                        Icons.Default.Close,
-                        "",
-                        modifier = Modifier.size(40.dp).clickable {
-                            historyDevicesStore.removeLastConnect(device)
-                        }.padding(8.dp).align(Alignment.CenterVertically),
-                        tint = contentColorFor(MaterialTheme.colors.background)
-                    )
+                        contentPadding = dropdownMenuItemPadding(),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = device.showName,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconToggleButton(
+                                checked = device.tagged,
+                                onCheckedChange = {
+                                    historyDevicesStore.updateLastConnectTagged(device, it)
+                                }
+                            ) {
+                                Icon(
+                                    painter = if (device.tagged) {
+                                        Icon.Filled.Star
+                                    } else {
+                                        Icon.Outlined.Star
+                                    },
+                                    contentDescription = if (device.tagged) "取消置顶" else "置顶",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            IconButton({
+                                historyDevicesStore.removeLastConnect(device)
+                            }) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    "",
+                                    tint = contentColorFor(MaterialTheme.colors.background),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
-        }
-        Button(
-            onClick = {
-                expanded.value = !expanded.value
-            },
-            modifier = Modifier.align(Alignment.CenterVertically),
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0, 0, 0, alpha = 0)),
-            contentPadding = PaddingValues(4.dp),
-            elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-        ) {
-            Icon(Icons.Default.ArrowDropDown, "", tint = contentColorFor(MaterialTheme.colors.background))
         }
         TextButton(
             onClick = connectAction,
             enabled = !isBusy.value,
-            modifier = Modifier.align(Alignment.CenterVertically)
         ) {
             Text("无线连接")
         }
@@ -277,6 +258,7 @@ fun ConnectDeviceView(
 
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun DeviceListView(
     windowState: WindowState,
@@ -288,62 +270,39 @@ fun DeviceListView(
         val current = connectTool.currentSelectedDevice.collectAsState()
         val devices = connectTool.connectedDevice.collectAsState()
 
-        val expanded = remember { mutableStateOf(false) }
+        var expanded by remember { mutableStateOf(false) }
 
-        val dropMenuWidth = remember {
-            mutableStateOf(0.dp)
-        }
-        val dropMenuOffset = remember {
-            mutableStateOf(0.dp)
-        }
-        Text("设备列表", modifier = Modifier.width(80.dp).align(Alignment.CenterVertically).onPlaced {
-            dropMenuOffset.value = (it.size.width + 8).dp
-        })
-        Box(
-            modifier = Modifier.weight(1f).border(
-                BorderStroke(1.dp, materialColors.onSurface.copy(alpha = ContentAlpha.disabled)),
-                TextFieldDefaults.OutlinedTextFieldShape
-            ).defaultTextSize().clickable {
-                expanded.value = true
-            }.onPlaced {
-                dropMenuWidth.value = it.size.width.dp
-            }.align(Alignment.CenterVertically),
+        Text("设备列表", modifier = Modifier.width(80.dp).align(Alignment.CenterVertically))
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.textFieldHeight().weight(1f).align(Alignment.CenterVertically),
         ) {
-            Text(
-                text = current.value?.showName.orEmpty(),
-                maxLines = 1,
-                modifier = Modifier.align(Alignment.CenterStart).padding(horizontal = 16.dp)
+            OutlinedTextField(
+                modifier = Modifier.fillMaxSize(),
+                readOnly = true,
+                singleLine = true,
+                value = current.value?.showName.orEmpty(),
+                onValueChange = {},
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                contentPadding = textFieldContentPadding()
             )
-        }
-        DropdownMenu(
-            expanded = expanded.value,
-            onDismissRequest = {
-                expanded.value = false
-            },
-            modifier = Modifier.width(dropMenuWidth.value)
-                .heightIn(0.dp, (windowState.size.height.value * 0.5).dp),
-            offset = DpOffset(dropMenuOffset.value, 0.dp)
-        ) {
-            devices.value.forEach {
-                Column(modifier = Modifier.clickable {
-                    connectTool.selectDevice(it)
-                    expanded.value = false
-                }) {
-                    Text(text = it.showName, modifier = Modifier.fillMaxWidth().padding(16.dp, 10.dp, 16.dp, 10.dp))
-                    //Box(modifier = Modifier.fillMaxWidth().padding(16.dp).height(0.5.dp).background(Color.LightGray))
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                devices.value.forEach {
+                    DropdownMenuItem(
+                        onClick = {
+                            connectTool.selectDevice(it)
+                            expanded = false
+                        },
+                        contentPadding = dropdownMenuItemPadding(),
+                    ) {
+                        Text(text = it.showName)
+                    }
                 }
             }
-        }
-        Button(
-            onClick = {
-                expanded.value = !expanded.value
-            },
-            modifier = Modifier.align(Alignment.CenterVertically),
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0, 0, 0, alpha = 0)),
-            contentPadding = PaddingValues(4.dp),
-            elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-        ) {
-            Icon(Icons.Default.ArrowDropDown, "", tint = contentColorFor(MaterialTheme.colors.background))
         }
         TextButton(
             onClick = connectTool::refresh,
@@ -355,7 +314,6 @@ fun DeviceListView(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun DeviceView(tools: Tools) {
     val connectTool = tools.deviceConnectTool
@@ -376,13 +334,8 @@ fun DeviceView(tools: Tools) {
         }
         OutlinedTextField(
             value = desc.value,
-            modifier = Modifier.onKeyEvent { event ->
-                if (event.key == Key.Enter) {
-                    updateDescAction()
-                    true
-                } else {
-                    false
-                }
+            modifier = Modifier.textFieldHeight().onEnterKey {
+                updateDescAction()
             }.weight(1f),
             singleLine = true,
             onValueChange = {
@@ -394,7 +347,8 @@ fun DeviceView(tools: Tools) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-            }
+            },
+            contentPadding = textFieldContentPadding()
         )
         TextButton(
             onClick = updateDescAction,
@@ -428,7 +382,6 @@ fun DeviceView(tools: Tools) {
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun LogView(
     tool: LogTool
@@ -491,7 +444,7 @@ fun LogView(
                 slideInVertically(
                     animationSpec = tween(200),
                     initialOffsetY = { it - initialState }
-                ) with slideOutVertically(
+                ) togetherWith slideOutVertically(
                     animationSpec = tween(200),
                     targetOffsetY = { -initialState }
                 )
@@ -499,7 +452,7 @@ fun LogView(
                 slideInVertically(
                     animationSpec = tween(200),
                     initialOffsetY = { targetState - initialState }
-                ) with slideOutVertically(
+                ) togetherWith slideOutVertically(
                     animationSpec = tween(200),
                     targetOffsetY = { initialState }
                 )
