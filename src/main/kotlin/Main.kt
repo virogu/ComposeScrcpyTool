@@ -61,7 +61,7 @@ private fun startApplication() = application {
         mutableStateOf(false)
     }
 
-    val pagerController by rememberPagerController<Pager>(
+    val pagerController by rememberPagerController(
         listOf(
             Pager.DeviceConnection,
             Pager.DeviceExplorer,

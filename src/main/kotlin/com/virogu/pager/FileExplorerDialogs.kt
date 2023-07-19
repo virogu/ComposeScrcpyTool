@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.virogu.bean.FileInfoItem
 import com.virogu.bean.FilePermission
@@ -212,12 +212,12 @@ private fun ShowChmodDialog(
     val state = rememberDialogState(
         size = DpSize(defaultWidth, defaultHeight)
     )
-    Dialog(
+    DialogWindow(
         onCloseRequest = {
             close()
         },
+        state = state,
         title = windowTitle,
-        state = state
     ) {
         MainTheme {
             Column(
@@ -369,7 +369,7 @@ private fun FileNameInputDialog(
 
     val state = rememberDialogState()
     state.size = DpSize(defaultWidth, defaultHeight)
-    Dialog(
+    DialogWindow(
         onCloseRequest = {
             close()
         },
@@ -443,7 +443,7 @@ private fun CommonConfirmDialog(
 
     val state = rememberDialogState()
     state.size = DpSize(defaultWidth, defaultHeight)
-    Dialog(
+    DialogWindow(
         onCloseRequest = {
             close()
         },
