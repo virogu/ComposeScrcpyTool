@@ -90,6 +90,12 @@ private fun ToolsView(
     val list = remember {
         Auxiliary.entries.toTypedArray()
     }
+    val onClick: (Array<String>) -> Unit by rememberUpdatedState label@{
+        if (currentDevice == null || isBusy) {
+            return@label
+        }
+        auxiliaryTool.exec(it)
+    }
     LazyColumn(
         modifier = modifier.wrapContentWidth().fillMaxHeight().padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -104,12 +110,7 @@ private fun ToolsView(
                 delayMillis = 500, // in milliseconds
             ) {
                 Button(
-                    onClick = {
-                        if (currentDevice == null || isBusy) {
-                            return@Button
-                        }
-                        auxiliaryTool.exec(it.command)
-                    },
+                    onClick = { onClick(it.command) },
                     modifier = Modifier.size(45.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
