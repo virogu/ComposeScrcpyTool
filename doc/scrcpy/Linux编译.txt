@@ -1,0 +1,9 @@
+git submodule update --remote
+cd scrcpy
+export ANDROID_SDK_ROOT=~/Android/Sdk
+meson setup x --buildtype=release --strip -Db_lto=true
+ninja -Cx
+
+主要文件：
+x/app/scrcpy
+x/server/scrcpy-server
