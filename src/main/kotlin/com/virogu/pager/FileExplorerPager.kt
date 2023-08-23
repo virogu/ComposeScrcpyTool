@@ -441,6 +441,8 @@ private fun FileInfoItemView(
             mouseEnter = true
         }.onPointerEvent(PointerEventType.Exit) {
             mouseEnter = false
+        }.onPointerEvent(PointerEventType.Release) {
+            mouseEnter = false
         }.run {
             when (fileInfo.type) {
                 FileType.DIR -> {
