@@ -1,10 +1,7 @@
 package com.virogu.tools.init
 
 import com.virogu.tools.adb.ProgressTool
-import com.virogu.tools.commonResourceDir
-import com.virogu.tools.commonWorkDir
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -13,72 +10,66 @@ import java.security.MessageDigest
 
 class LinuxInitTool(
     private val progressTool: ProgressTool
-) : InitTool {
+) : DefaultInitTool() {
 
-    private val workDir: File by lazy {
-        commonWorkDir
-    }
-
-    private val resourceDir: File by lazy {
-        commonResourceDir
-    }
-
-    override val initStateFlow: MutableStateFlow<InitState> = MutableStateFlow(InitState(false))
-
-    override fun init() {
-        val t = System.currentTimeMillis()
+    override fun doInit() {
         runBlocking {
             withContext(Dispatchers.IO) {
                 innerInit()
             }
         }
-        println("init spend ${System.currentTimeMillis() - t}ms")
     }
 
     private suspend fun innerInit() = runCatching {
-        File(resourceDir, "app").listFiles()?.forEach {
-            val f = File(workDir, "app/${it.name}")
-            if (!f.exists()) {
-                it.copyTo(f, true)
-                println("copy [$it] to [$f]")
-            } else if (f.md5() != it.md5()) {
-                f.delete()
-                it.copyTo(f, true)
-                println("[$f] exist, but md5 is not same, re-copy [$it] to [$f]")
-            }
-        }
-        File(resourceDir, "files").listFiles()?.forEach {
-            val f = File(workDir, "files/${it.name}")
-            if (!f.exists()) {
-                it.copyTo(f, true)
-                println("copy [$it] to [$f]")
-            }
-        }
+        prepareResource(resourceDir, workDir, "")
         listOf(
             File(workDir, "app/adb"),
             File(workDir, "app/scrcpy"),
         ).forEach { f ->
-            val runnable = progressTool.exec(
-                "sh", "-c", "test -x '${f.absolutePath}' && echo '1' || echo '0'",
-            ).fold({
-                println("test -x ${f.absolutePath}, result: [$it]")
-                it.trim() == "1"
-            }, {
-                println("[$it]")
-                false
-            })
-            if (runnable) {
-                return@forEach
-            }
-            progressTool.exec(
-                "chmod", "+x", f.absolutePath
-            ).onSuccess {
-                println("chmod +x ${f.absolutePath}, result: [$it]")
-            }.onFailure {
-                println("chmod +x ${f.absolutePath}, result: [$it]")
-            }
+            chmodX(f.absolutePath)
         }
         initStateFlow.emit(InitState(true))
+    }
+
+    private fun prepareResource(origin: File, target: File, child: String) {
+        println("prepare resource: [$child]")
+        File(resourceDir, child).listFiles()?.forEach {
+            if (it.isDirectory) {
+                prepareResource(origin, target, "$child/${it.name}")
+            } else if (it.isFile) {
+                val f = File(workDir, "$child/${it.name}")
+                if (!f.exists()) {
+                    it.copyTo(f, true)
+                    println("copy file [$it] to [$f]")
+                } else if (f.md5() != it.md5()) {
+                    f.delete()
+                    it.copyTo(f, true)
+                    println("[$f] exist, but md5 is not same, re-copy [$it] to [$f]")
+                }
+            }
+        }
+    }
+
+    private suspend fun chmodX(absolutePath: String) {
+        val runnable = progressTool.exec(
+            "sh", "-c", "test -x '${absolutePath}' && echo '1' || echo '0'",
+        ).fold({
+            println("test -x ${absolutePath}, result: [$it]")
+            it.trim() == "1"
+        }, {
+            println("[$it]")
+            false
+        })
+        if (runnable) {
+            return
+        }
+        progressTool.exec(
+            "chmod", "+x", absolutePath
+        ).onSuccess {
+            println("chmod +x ${absolutePath}, result: [$it]")
+        }.onFailure {
+            println("chmod +x ${absolutePath}, result: [$it]")
+        }
     }
 
     private fun File.md5(): String {

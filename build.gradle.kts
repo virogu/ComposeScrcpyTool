@@ -54,11 +54,11 @@ dependencies {
     // https://mvnrepository.com/artifact/org.apache.sshd/sshd-mina
     // https://github.com/apache/mina-sshd/blob/master/docs/client-setup.md
 
-    //val sshdVersion = "2.10.0"
-    //implementation("org.apache.sshd:sshd-mina:$sshdVersion")
-    //implementation("org.apache.sshd:sshd-core:$sshdVersion")
-    //implementation("org.apache.sshd:sshd-common:$sshdVersion")
-    //implementation("org.apache.sshd:sshd-putty:$sshdVersion")
+    val sshdVersion = "2.10.0"
+    implementation("org.apache.sshd:sshd-mina:$sshdVersion")
+    implementation("org.apache.sshd:sshd-core:$sshdVersion")
+    implementation("org.apache.sshd:sshd-common:$sshdVersion")
+    implementation("org.apache.sshd:sshd-putty:$sshdVersion")
     //implementation("org.apache.sshd:apache-sshd:$sshdVersion")
     implementation("org.slf4j:slf4j-api:2.0.7")
     implementation("ch.qos.logback:logback-core:1.4.8")
@@ -118,9 +118,8 @@ compose.desktop {
         mainClass = "MainKt"
         nativeDistributions {
             modules(
-                "java.naming", "jdk.unsupported"
-                //"java.rmi",
-                //"java.management",
+                "java.naming", "jdk.unsupported",
+                "java.rmi", "java.management",
             )
             //includeAllModules = true
             appResourcesRootDir.set(project.layout.projectDirectory.dir("resources").also {

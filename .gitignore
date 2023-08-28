@@ -42,3 +42,4 @@ bin/
 .DS_Store
 .idea
 /app/
+/resources/common/files/ssh/device_ssh_config.json
