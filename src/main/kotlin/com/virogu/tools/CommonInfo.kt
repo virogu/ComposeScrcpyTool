@@ -4,7 +4,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 
-val logger: Logger by lazy {
+val commonLogger: Logger by lazy {
     LoggerFactory.getLogger("CommonLogger")
 }
 
@@ -42,7 +42,7 @@ val pingCommand: Array<String>? by lazy {
 
 val commonResourceDir: File by lazy {
     File(System.getProperty("compose.application.resources.dir")).also {
-        logger.info("workFile: ${it.absolutePath}")
+        commonLogger.info("workFile: ${it.absolutePath}")
     }.absoluteFile
 }
 
