@@ -109,7 +109,7 @@ compose.desktop {
             appResourcesRootDir.set(project.layout.projectDirectory.dir("resources").also {
                 println("resources: ${it.asFile.absolutePath}")
             })
-            outputBaseDir.set(project.rootDir.resolve("out/packages"))
+            outputBaseDir.set(project.rootDir.resolve("out"))
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = appBuildInfo.programName
             vendor = appBuildInfo.packageVendor

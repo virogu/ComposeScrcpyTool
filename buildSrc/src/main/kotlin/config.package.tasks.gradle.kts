@@ -8,13 +8,13 @@ plugins {
 val appBuildInfo: AppBuildInfo by project
 
 listOf("Msi", "Deb").forEach {
-    tasks.create("package${it}AndRename") {
+    tasks.create("pack${it}") {
         group = "package"
         dependsOn("package$it")
         doLast {
             val lower = it.lowercase(Locale.getDefault())
             println("do rename task")
-            project.rootDir.resolve("out/packages/main/${lower}").listFiles()?.filter { f ->
+            project.rootDir.resolve("out/main/${lower}").listFiles()?.filter { f ->
                 f.name.endsWith(".${lower}")
             }?.forEach { f ->
                 val newName = "${appBuildInfo.installProgramName}-${appBuildInfo.msiPackageVersion}-" +
