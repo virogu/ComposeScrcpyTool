@@ -1,0 +1,10 @@
+device_ssh_config.json放在此文件同级目录，格式如下：
+{
+  "user": "root",
+  "pwd": "123",
+  "ppk": [{
+    "name": "aKeyName.ppk",
+    "value": "XXX",
+    "pwd": "123"
+  }]
+}
