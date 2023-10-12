@@ -9,6 +9,50 @@ ComposeScrcpyTool是一款无需root权限即可通过 USB连接/网络连接And
 对安卓设备进行画面展示和控制的部分使用了 [Genymobile](https://github.com/Genymobile)
 的开源项目 [scrcpy](https://github.com/Genymobile/scrcpy)。
 
+### 安装运行
+
+#### Windows
+
+无需额外环境配置，双击打包编译出的`.msi`安装程序进行安装，安装完成后即可运行
+
+尽量不要安装到C盘，如果安装到了C盘可能需要以管理员身份才能运行
+
+#### Linux
+
+已在下面的系统上测试过安装完成之后即可直接使用，其他系统需要自测。
+  - LinuxMint 20.3 Cinnamon Edition (Ubuntu Focal)
+  - Deepin 20.9
+  - WSL2 Ubuntu 22.04.3 LTS
+
+```cmd
+sudo dpkg -i ScrcpyTool-x.x.x-xx.deb
+```
+
+运行环境依赖，很多系统中默认已经有这些依赖了
+
+```cmd
+sudo apt install ffmpeg libsdl2-2.0-0 libusb-1.0-0
+```
+
+如果安装时提示一些其他依赖的软件包，请根据提示进行安装
+
+如果安装时提示
+
+```cmd
+xdg-desktop-menu: No writable system menu directory found.
+```
+
+执行一下这个
+
+```cmd
+sudo mkdir /usr/share/desktop-directories/
+```
+
+#### MacOs
+
+暂未进行编译测试 ，需要的话自行补充相关内容再编译运行
+
+
 ### 界面展示
 
 ![主界面](screens/img.png)
@@ -27,8 +71,11 @@ Android版本需要API21（Android 5.0），并且要开启USB调试
 ADB连接相关的一些配置选项以及功能按钮
 
 - 无线连接：输入同一网络下的已开启无线调试的设备IP和端口之后点击`无线连接`按钮或者按`Enter`
-  按键即可连接该设备。一般手机需要在开发者模式里面打开 `无线调试` 功能，其他特殊设备需要自行打开无线调试。
-  下拉列表可以查看已连接过的设备记录，可以选择置顶某个常用的设备，或者清空设备列表。
+  按键即可连接该设备。
+
+  一般手机需要在开发者模式里面打开 `无线调试` 功能，其他特殊设备需要自行打开无线调试。
+
+  下拉列表可以查看已连接过的设备记录，可以选择置顶某个常用的设备，或者清空设备连接记录。
 
   ![设备连接记录](screens/img_2.png)
 
@@ -60,46 +107,10 @@ scrcpy启动相关的一些配置项
 - 设备息屏：启动后是否让设备自动息屏
 - 无边框：设备画面展示窗口无边框
 
-注：标有`*`的配置项会针对不同的设备保存不同的配置，因为这几个配置对不同的设备来说不一定通用。如果遇到画面展示异常的问题，可以尝试修改一下这些配置再进行连接（一般情况下，修改一下最大尺寸和比特率可以解决多数画面异常的问题）。
+注：标有`*`的配置项会针对不同的设备保存不同的配置，因为这几个配置对不同的设备来说不一定通用。
+如果遇到画面展示异常的问题，可以尝试修改一下这些配置再进行连接
+（一般情况下，修改一下`最大尺寸`、`比特率`或者`视频方向`可以解决多数画面异常的问题）。
 
 #### 启动按钮
 
 选择某个已连接的设备点击按钮即可启动/关闭该设备画面的展示窗口。支持同时启动连接多个设备。
-
-### 程序安装运行
-
-#### Windows
-
-无需额外环境配置，双击`.msi`安装程序进行安装，安装完成后即可运行
-
-尽量不要安装到C盘，如果安装到了C盘可能需要以管理员身份才能运行
-
-#### Linux
-
-测试在 `LinuxMint 20.3 Cinnamon Edition (Ubuntu Focal)` 和 `Deepin 20.9`上安装完成之后即可直接使用，其他系统需要自测。
-
-```cmd
-sudo dpkg -i ScrcpyTool-x.x.x-xx.deb
-```
-
-运行环境依赖，在上述系统测试时，系统中默认已经有这些依赖了
-
-```cmd
-sudo apt install ffmpeg libsdl2-2.0-0 libusb-1.0-0
-```
-
-如果安装时提示
-
-```cmd
-xdg-desktop-menu: No writable system menu directory found.
-```
-
-执行一下这个
-
-```cmd
-sudo mkdir /usr/share/desktop-directories/
-```
-
-#### MacOs
-
-暂未进行编译测试 ，需要自行编译
