@@ -168,10 +168,11 @@ class FileExplorerImpl(
         val tag = "delete $path"
         withLock(tag) {
             val device = currentDevice ?: return@withLock
-            if (path.count { it == '/' } <= 1) {
-                tipsFlow.emit("Are you sure you want rm -r $path?\nPlease delete it by yourself")
-                return@withLock
-            }
+            // 不删除根目录下面的文件，删除时已经有弹窗提示确认了，误删的可能应该不大
+            // if (path.count { it == '/' } <= 1) {
+            //     tipsFlow.emit("Are you sure you want rm -r $path \nPlease delete it by yourself")
+            //     return@withLock
+            // }
             progressTool.exec(
                 "adb", "-s", device.serial, "shell",
                 "rm -r '$path'",
