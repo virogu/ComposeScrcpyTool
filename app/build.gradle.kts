@@ -13,13 +13,6 @@ val appBuildInfo: AppBuildInfo by project
 val javaVersion = JavaVersion.VERSION_17
 val javaVersionString = "17"
 
-repositories {
-    google()
-    mavenCentral()
-    maven("https://jitpack.io")
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-}
-
 java {
     sourceCompatibility = javaVersion
     targetCompatibility = javaVersion
