@@ -3,24 +3,29 @@ package com.virogu.pager.view
 import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import theme.ContentCopy
+import theme.Icon
 import theme.materialColors
 
 /**
@@ -41,6 +46,7 @@ fun TipsView(
         mutableStateOf(false)
     }
     var mouseEnter by remember { mutableStateOf(false) }
+    val clipboardManager = LocalClipboardManager.current
 
     LaunchedEffect(Unit) {
         tipsFlow.onEach {
@@ -72,22 +78,43 @@ fun TipsView(
             Row(
                 modifier = Modifier.fillMaxWidth()
                     .defaultMinSize(minHeight = 50.dp)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Icon(Icons.Filled.Info, "info")
+                Icon(Icons.Outlined.Info, "info")
+                Spacer(Modifier.size(4.dp))
                 Text(tips, Modifier.weight(1f))
-                Button(
-                    onClick = { showTips = false },
-                    modifier = Modifier.size(35.dp),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
-                    contentPadding = PaddingValues(4.dp),
-                    elevation = ButtonDefaults.elevation(defaultElevation = 0.dp)
-                ) {
+                //TextButton(onClick = {
+                //    clipboardManager.setText(AnnotatedString(tips))
+                //}, modifier = Modifier.align(Alignment.CenterVertically)) {
+                //    Text("复制")
+                //}
+                //TextButton(onClick = {
+                //    showTips = false
+                //}, modifier = Modifier.align(Alignment.CenterVertically)) {
+                //    Text("清除")
+                //}
+                IconButton({
+                    clipboardManager.setText(AnnotatedString(tips))
+                }) {
+                    Icon(Icon.Outlined.ContentCopy, "复制")
+                }
+                IconButton({
+                    showTips = false
+                }) {
                     Icon(Icons.Default.Close, "关闭")
                 }
+                //Button(
+                //    onClick = { showTips = false },
+                //    modifier = Modifier.size(35.dp),
+                //    shape = CircleShape,
+                //    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
+                //    contentPadding = PaddingValues(4.dp),
+                //    elevation = ButtonDefaults.elevation(defaultElevation = 0.dp)
+                //) {
+                //    Icon(Icons.Default.Close, "关闭")
+                //}
             }
         }
     }
