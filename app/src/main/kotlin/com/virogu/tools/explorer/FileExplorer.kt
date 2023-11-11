@@ -12,6 +12,8 @@ interface FileExplorer {
     val isBusy: MutableStateFlow<Boolean>
     val tipsFlow: SharedFlow<String>
 
+    fun emitTips(tips: String)
+
     fun changeExpanded(path: String, expanded: Boolean)
 
     fun getExpanded(path: String): Boolean
@@ -27,6 +29,8 @@ interface FileExplorer {
     fun deleteFile(file: FileInfoItem, onDeleted: suspend () -> Unit = {})
 
     fun getChild(fileInfo: FileInfoItem): List<FileItem>
+
+    fun getFileDetails(fileInfo: FileInfoItem)
 
     fun pushFile(toFile: FileInfoItem, fromLocalFiles: List<File>)
 

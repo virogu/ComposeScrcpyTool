@@ -58,6 +58,12 @@ class FileExplorerImpl(
         }
     }
 
+    override fun emitTips(tips: String) {
+        scope.launch {
+            tipsFlow.emit(tips)
+        }
+    }
+
     override fun changeExpanded(path: String, expanded: Boolean) {
         if (expanded) {
             expandedMap[path] = true
@@ -219,6 +225,59 @@ class FileExplorerImpl(
             refreshFileChild(device, path)
         }
         return listOf(FileTipsItem.Info("Loading..."))
+    }
+
+    override fun getFileDetails(fileInfo: FileInfoItem) {
+        withLock("get file detail info") {
+            val device = currentDevice ?: return@withLock
+            val s = buildString {
+                //rogressTool.exec(
+                //   "adb", "-s", device.serial,
+                //   "shell", "ls", "-l", fileInfo.path
+                //.onSuccess {
+                //   appendLine(it)
+                //.onFailure {
+                //   appendLine("获取文件信息失败 ${it.localizedMessage}")
+                //
+                appendLine("路径: ${fileInfo.path}")
+                append("权限: ${fileInfo.permissions}")
+                append("  ")
+                append("类型: ${fileInfo.type.name}")
+                append("  ")
+                append("大小: ${fileInfo.size}")
+                appendLine()
+                appendLine("修改时间: ${fileInfo.modificationTime}")
+                progressTool.exec(
+                    "adb", "-s", device.serial,
+                    "shell", "md5sum", fileInfo.path, showLog = true
+                ).onSuccess {
+                    it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
+                        if (l.size == 2) {
+                            appendLine("MD5: ${l[0]}")
+                        } else {
+                            appendLine("MD5: $it")
+                        }
+                    }
+                }.onFailure {
+                    appendLine("获取MD5信息失败 ${it.localizedMessage}")
+                }
+                progressTool.exec(
+                    "adb", "-s", device.serial,
+                    "shell", "sha1sum", fileInfo.path
+                ).onSuccess {
+                    it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
+                        if (l.size == 2) {
+                            appendLine("SHA1: ${l[0]}")
+                        } else {
+                            appendLine("SHA1: $it")
+                        }
+                    }
+                }.onFailure {
+                    appendLine("获取SHA1信息失败 ${it.localizedMessage}")
+                }
+            }
+            tipsFlow.emit(s)
+        }
     }
 
     override fun pullFile(fromFile: List<FileInfoItem>, toLocalFile: File) {

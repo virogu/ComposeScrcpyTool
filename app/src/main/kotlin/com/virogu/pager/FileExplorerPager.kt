@@ -400,9 +400,14 @@ private fun FileInfoItemView(
     }
     val copyName by rememberUpdatedState {
         clipboardManager.setText(AnnotatedString(fileInfo.name))
+        fileExplorer.emitTips("${fileInfo.name} 名称已复制")
     }
     val copyPath by rememberUpdatedState {
         clipboardManager.setText(AnnotatedString(fileInfo.path))
+        fileExplorer.emitTips("${fileInfo.path} 路径已复制")
+    }
+    val getFileDetails by rememberUpdatedState {
+        fileExplorer.getFileDetails(fileInfo)
     }
     val primaryColor = materialColors.primary.copy(alpha = 0.5f)
     var mouseEnter by remember { mutableStateOf(false) }
@@ -433,6 +438,7 @@ private fun FileInfoItemView(
             ContextMenuItem("导出文件", downloadFile).also(::add)
             ContextMenuItem("复制名称", copyName).also(::add)
             ContextMenuItem("复制路径", copyPath).also(::add)
+            ContextMenuItem("显示详细信息", getFileDetails).also(::add)
             ContextMenuItem("修改权限", chmodFile).also(::add)
             ContextMenuItem("删除", deleteFile).also(::add)
         }
