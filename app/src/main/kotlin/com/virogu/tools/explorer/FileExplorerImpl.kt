@@ -201,7 +201,7 @@ class FileExplorerImpl(
     override fun getChild(fileInfo: FileInfoItem): List<FileItem> {
         //println("getChild ${fileInfo.path}")
         if (currentDevice == null) {
-            return listOf(FileTipsItem.Error("未连接设备"))
+            return listOf(FileTipsItem.Error(fileInfo.path, "未连接设备"))
         }
 
         if (!fileInfo.isDirectory) {
@@ -218,13 +218,13 @@ class FileExplorerImpl(
             it.containsKey(path)
         }
         if (existJob) {
-            return listOf(FileTipsItem.Info("Loading..."))
+            return listOf(FileTipsItem.Info(path, "Loading..."))
         }
         withLock(path) {
             val device = currentDevice ?: return@withLock
             refreshFileChild(device, path)
         }
-        return listOf(FileTipsItem.Info("Loading..."))
+        return listOf(FileTipsItem.Info(path, "Loading..."))
     }
 
     override fun getFileDetails(fileInfo: FileInfoItem) {
@@ -397,7 +397,7 @@ class FileExplorerImpl(
                 emptyList()
             } else if (Pattern.compile(".*\\$path.*Permission denied.*").matcher(lines.first()).find()) {
                 //println("^(.*)?${parent}(.*)?Permission denied(.*)?$ find")
-                listOf(FileTipsItem.Error(lines.first()))
+                listOf(FileTipsItem.Error(path, lines.first()))
             } else {
                 lines.parseToFiles(path)
             }

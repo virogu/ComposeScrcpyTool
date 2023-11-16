@@ -13,9 +13,9 @@ enum class FileType(val sortIndex: Int) {
 
 sealed class FileItem(open val name: String = "")
 
-sealed class FileTipsItem(open val msg: String) : FileItem(msg) {
-    data class Info(override val msg: String) : FileTipsItem(msg)
-    data class Error(override val msg: String) : FileTipsItem(msg)
+sealed class FileTipsItem(open val path: String, open val msg: String) : FileItem(msg) {
+    data class Info(override val path: String, override val msg: String) : FileTipsItem(path, msg)
+    data class Error(override val path: String, override val msg: String) : FileTipsItem(path, msg)
 }
 
 data class FileInfoItem(

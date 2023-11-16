@@ -240,49 +240,49 @@ private fun ToolBarView(
         Row(Modifier.align(Alignment.CenterStart), Arrangement.spacedBy(8.dp)) {
             OptionButton(
                 "新建文件夹",
-                enable = deviceConnected && currentSelect?.type == FileType.DIR,
+                enable = deviceConnected && currentSelect?.type == FileType.DIR && !isBusy,
                 painter = Icon.Outlined.FileNewFolder
             ) {
                 createNewFolder()
             }
             OptionButton(
                 "新建文件",
-                enable = deviceConnected && currentSelect?.type == FileType.DIR,
+                enable = deviceConnected && currentSelect?.type == FileType.DIR && !isBusy,
                 painter = Icon.Outlined.FileNewFile
             ) {
                 createNewFile()
             }
             OptionButton(
                 "导出文件",
-                enable = deviceConnected && currentSelect != null,
+                enable = deviceConnected && currentSelect != null && !isBusy,
                 painter = Icon.Outlined.Download
             ) {
                 downloadFile()
             }
             OptionButton(
                 "导入文件",
-                enable = deviceConnected && currentSelect?.type == FileType.DIR,
+                enable = deviceConnected && currentSelect?.type == FileType.DIR && !isBusy,
                 painter = Icon.Outlined.Upload
             ) {
                 uploadFile()
             }
             OptionButton(
                 "删除",
-                enable = deviceConnected && currentSelect != null,
+                enable = deviceConnected && currentSelect != null && !isBusy,
                 painter = Icon.Outlined.TrashCan
             ) {
                 deleteFile()
             }
             OptionButton(
                 "以root模式连接",
-                enable = deviceConnected,
+                enable = deviceConnected && !isBusy,
                 painter = Icon.Outlined.AdminPanelSettings
             ) {
                 fileExplorer.restartWithRoot()
             }
             OptionButton(
                 "刷新",
-                enable = deviceConnected,
+                enable = deviceConnected && !isBusy,
                 painter = Icon.Outlined.Sync
             ) {
                 refresh(null)
@@ -367,7 +367,7 @@ private fun LazyListScope.FileView(
             }
         }
 
-        is FileTipsItem -> item(key = fileItem.msg) {
+        is FileTipsItem -> item(key = "tips_${fileItem.path}") {
             FileTipsItemView(fileItem, level)
         }
     }
