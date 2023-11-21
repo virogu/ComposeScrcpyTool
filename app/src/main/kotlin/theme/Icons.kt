@@ -19,7 +19,7 @@ private fun fromResource(resourcePath: String) = painterResource(resourcePath)
 
 val Icon.Logo: Painter
     @Composable
-    get() = fromResource("logo.svg")
+    get() = fromResource("logo.png")
 
 //Outlined
 val Icon.Outlined.AdminPanelSettings: Painter
