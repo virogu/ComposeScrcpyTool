@@ -32,7 +32,7 @@ class ScrcpyToolImpl(
     private val scrcpyEnvironment: Map<String, String> by lazy {
         when (currentPlateForm) {
             is PlateForm.Linux -> mapOf(
-                "SCRCPY_ICON_PATH" to File(workDir, "logo.png").absolutePath,
+                "SCRCPY_ICON_PATH" to File(workDir, "logo.svg").absolutePath,
                 "SCRCPY_SERVER_PATH" to File(workDir, "scrcpy-server").absolutePath,
                 "ADB_PATH" to workDir.absolutePath,
             )
