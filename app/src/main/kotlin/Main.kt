@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory
 import theme.Icon
 import theme.Logo
 import tools.BuildConfig
+import java.awt.SystemTray
 
 
 //private val preferences = Preferences.userRoot()
@@ -80,8 +81,10 @@ private fun startApplication() = application {
     ) {
         App(window, this@application, state, pagerController, tools)
     }
-    TrayView(icon, tools, state, alwaysOnTop) {
-        setAlwaysOnTop(it)
+    if (SystemTray.isSupported()) {
+        TrayView(icon, tools, state, alwaysOnTop) {
+            setAlwaysOnTop(it)
+        }
     }
 }
 
