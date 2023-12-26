@@ -12,8 +12,8 @@ import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.rotate
@@ -520,7 +520,7 @@ private fun FileInfoItemView(
                                     }.padding(5.dp), imageVector = if (currentExpanded) {
                                         Icons.Filled.KeyboardArrowDown
                                     } else {
-                                        Icons.Filled.KeyboardArrowRight
+                                        Icons.AutoMirrored.Filled.KeyboardArrowRight
                                     }, contentDescription = fileInfo.name
                                 )
                                 Icon(

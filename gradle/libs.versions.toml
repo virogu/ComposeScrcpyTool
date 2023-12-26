@@ -1,7 +1,7 @@
 [versions]
-kotlin = "1.9.20"
+kotlin = "1.9.23"
 gmazzoBuildconfig = "3.0.3"
-compose = "1.5.10"
+compose = "1.6.1"
 kotlin-coroutines = "1.7.1"
 apache-sshd = "2.10.0"
 slf4j = "2.0.7"

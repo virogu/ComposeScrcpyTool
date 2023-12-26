@@ -1,7 +1,7 @@
 package com.virogu.bean
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.runtime.Composable
@@ -46,5 +46,5 @@ enum class Auxiliary(
     Home("主界面", { Icons.Outlined.Home.painter() }, arrayOf("shell", "input keyevent 3")),
 
     //返回
-    Back("返回", { Icons.Outlined.ArrowBack.painter() }, arrayOf("shell", "input keyevent 4")),
+    Back("返回", { Icons.AutoMirrored.Outlined.ArrowBack.painter() }, arrayOf("shell", "input keyevent 4")),
 }

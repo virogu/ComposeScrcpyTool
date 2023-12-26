@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -420,7 +420,7 @@ private fun ColumnScope.ScrcpyOptionView(
                 imageVector = if (active) {
                     Icons.Filled.Close
                 } else {
-                    Icons.Filled.ArrowForward
+                    Icons.AutoMirrored.Filled.ArrowForward
                 },
                 contentDescription = if (active) "断开服务" else "启动服务",
                 tint = contentColorFor(buttonColor)
