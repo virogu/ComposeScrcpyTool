@@ -23,13 +23,13 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.virogu.bean.AdbDevice
+import com.virogu.bean.DeviceInfo
 import com.virogu.bean.ProcessInfo
 import com.virogu.pager.view.OptionButton
 import com.virogu.pager.view.SelectDeviceView
 import com.virogu.pager.view.TipsView
+import com.virogu.tools.DeviceProcessTool
 import com.virogu.tools.Tools
-import com.virogu.tools.process.DeviceProcessTool
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import theme.*
@@ -119,7 +119,7 @@ fun DeviceProcessPager(
 @Composable
 private fun ToolBarView(
     processTool: DeviceProcessTool,
-    currentDevice: AdbDevice?,
+    currentDevice: DeviceInfo?,
     currentSelect: ProcessInfo?,
     selectProcess: (ProcessInfo?) -> Unit,
 ) {

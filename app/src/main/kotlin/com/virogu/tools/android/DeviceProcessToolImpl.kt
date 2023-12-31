@@ -1,9 +1,10 @@
-package com.virogu.tools.process
+package com.virogu.tools.android
 
-import com.virogu.bean.AdbDevice
+import com.virogu.bean.DeviceInfo
 import com.virogu.bean.ProcessInfo
-import com.virogu.tools.adb.ProgressTool
-import com.virogu.tools.connect.DeviceConnectTool
+import com.virogu.tools.DeviceConnectTool
+import com.virogu.tools.DeviceProcessTool
+import com.virogu.tools.ProgressTool
 import com.virogu.tools.init.InitTool
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -87,7 +88,7 @@ class DeviceProcessToolImpl(
         }
     }
 
-    private suspend fun refreshProcess(device: AdbDevice) {
+    private suspend fun refreshProcess(device: DeviceInfo) {
         progressTool.exec(
             "adb", "-s", device.serial, "shell",
             "dumpsys activity processes"

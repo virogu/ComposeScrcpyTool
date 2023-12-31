@@ -1,4 +1,4 @@
-package com.virogu.tools.adb
+package com.virogu.tools
 
 import java.nio.charset.Charset
 

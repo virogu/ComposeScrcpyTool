@@ -1,7 +1,8 @@
-package com.virogu.tools.connect
+package com.virogu.tools.android
 
-import com.virogu.bean.AdbDevice
-import com.virogu.tools.adb.ProgressTool
+import com.virogu.bean.DeviceInfo
+import com.virogu.bean.DevicePlatform
+import com.virogu.tools.ProgressTool
 import com.virogu.tools.config.ConfigStores
 import com.virogu.tools.init.InitTool
 import com.virogu.tools.pingCommand
@@ -23,13 +24,13 @@ class DeviceConnectToolImpl(
 
     private val mutex = Mutex()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val devices: MutableStateFlow<List<AdbDevice>> = MutableStateFlow(emptyList())
+    private val devices: MutableStateFlow<List<DeviceInfo>> = MutableStateFlow(emptyList())
 
     private val autoRefresh = configStores.simpleConfigStore.simpleConfig.map {
         it.autoRefreshAdbDevice
     }.stateIn(scope, SharingStarted.Eagerly, true)
 
-    override val connectedDevice: StateFlow<List<AdbDevice>> = combine(
+    override val connectedDevice: StateFlow<List<DeviceInfo>> = combine(
         configStores.deviceDescStore.deviceDescFlow,
         devices
     ) { deviceDesc, device ->
@@ -57,7 +58,7 @@ class DeviceConnectToolImpl(
         }
     }.stateIn(scope, SharingStarted.Eagerly, emptyList())
 
-    override val currentSelectedDevice: MutableStateFlow<AdbDevice?> = MutableStateFlow(null)
+    override val currentSelectedDevice: MutableStateFlow<DeviceInfo?> = MutableStateFlow(null)
 
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
@@ -91,7 +92,7 @@ class DeviceConnectToolImpl(
         }
     }
 
-    override fun selectDevice(device: AdbDevice) {
+    override fun selectDevice(device: DeviceInfo) {
         currentSelectedDevice.tryEmit(device)
     }
 
@@ -136,7 +137,7 @@ class DeviceConnectToolImpl(
         return progressTool.exec("adb", "connect", "${ip}:${port}")
     }
 
-    override fun disconnect(device: AdbDevice) {
+    override fun disconnect(device: DeviceInfo) {
         withLock {
             progressTool.exec("adb", "disconnect", device.serial).getOrNull()?.also {
                 logger.info(it)
@@ -201,19 +202,20 @@ class DeviceConnectToolImpl(
                     val apiVersion = if (status == "device") {
                         getProp(serial, "ro.build.version.sdk")
                     } else {
-                        ""
+                        " Unknown"
                     }
                     val androidVersion = if (status == "device") {
                         getProp(serial, "ro.build.version.release")
                     } else {
-                        ""
+                        " Unknown"
                     }
-                    AdbDevice(
+                    DeviceInfo(
+                        platform = DevicePlatform.Android,
                         serial = serial,
                         status = status,
                         product = product,
                         model = model,
-                        androidVersion = androidVersion,
+                        version = androidVersion,
                         apiVersion = apiVersion,
                         device = device,
                     )

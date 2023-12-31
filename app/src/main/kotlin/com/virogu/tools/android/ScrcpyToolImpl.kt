@@ -1,10 +1,7 @@
-package com.virogu.tools.scrcpy
+package com.virogu.tools.android
 
 import com.virogu.bean.ScrcpyConfig
-import com.virogu.tools.PlateForm
-import com.virogu.tools.adb.ProgressTool
-import com.virogu.tools.commonWorkDir
-import com.virogu.tools.currentPlateForm
+import com.virogu.tools.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

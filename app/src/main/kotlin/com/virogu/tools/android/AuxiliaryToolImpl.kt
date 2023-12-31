@@ -1,8 +1,9 @@
-package com.virogu.tools.common
+package com.virogu.tools.android
 
 import com.virogu.bean.ProcessInfo
-import com.virogu.tools.adb.ProgressTool
-import com.virogu.tools.connect.DeviceConnectTool
+import com.virogu.tools.AuxiliaryTool
+import com.virogu.tools.DeviceConnectTool
+import com.virogu.tools.ProgressTool
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

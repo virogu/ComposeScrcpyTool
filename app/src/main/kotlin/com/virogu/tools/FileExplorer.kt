@@ -1,6 +1,6 @@
 @file:Suppress("GrazieInspection")
 
-package com.virogu.tools.explorer
+package com.virogu.tools
 
 import com.virogu.bean.FileInfoItem
 import com.virogu.bean.FileItem

@@ -1,5 +1,6 @@
-package com.virogu.tools.adb
+package com.virogu.tools.android
 
+import com.virogu.tools.ProgressTool
 import com.virogu.tools.appendCommonEnvironment
 import com.virogu.tools.commonWorkDir
 import kotlinx.coroutines.*

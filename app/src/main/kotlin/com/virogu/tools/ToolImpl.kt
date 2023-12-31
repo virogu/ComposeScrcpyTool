@@ -1,25 +1,14 @@
 package com.virogu.tools
 
-import com.virogu.tools.adb.ProgressTool
-import com.virogu.tools.adb.ProgressToolsImpl
-import com.virogu.tools.common.AuxiliaryTool
-import com.virogu.tools.common.AuxiliaryToolImpl
+import com.virogu.tools.android.*
 import com.virogu.tools.config.ConfigStores
 import com.virogu.tools.config.impl.ConfigStoreImpl
-import com.virogu.tools.connect.DeviceConnectTool
-import com.virogu.tools.connect.DeviceConnectToolImpl
-import com.virogu.tools.explorer.FileExplorer
-import com.virogu.tools.explorer.FileExplorerImpl
 import com.virogu.tools.init.DefaultInitTool
 import com.virogu.tools.init.InitTool
 import com.virogu.tools.init.LinuxInitTool
 import com.virogu.tools.init.WindowsInitTool
 import com.virogu.tools.log.LogTool
 import com.virogu.tools.log.LogToolImpl
-import com.virogu.tools.process.DeviceProcessTool
-import com.virogu.tools.process.DeviceProcessToolImpl
-import com.virogu.tools.scrcpy.ScrcpyTool
-import com.virogu.tools.scrcpy.ScrcpyToolImpl
 
 class ToolImpl : Tools {
 

@@ -1,12 +1,13 @@
 @file:Suppress("GrazieInspection")
 
-package com.virogu.tools.explorer
+package com.virogu.tools.android
 
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import com.virogu.bean.*
-import com.virogu.tools.adb.ProgressTool
-import com.virogu.tools.connect.DeviceConnectTool
+import com.virogu.tools.DeviceConnectTool
+import com.virogu.tools.FileExplorer
+import com.virogu.tools.ProgressTool
 import com.virogu.tools.init.InitTool
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -385,7 +386,7 @@ class FileExplorerImpl(
      *          files: exe=green  suid=red  suidfile=redback  stickydir=greenback
      *          =auto means detect if output is a tty.
      */
-    private suspend fun refreshFileChild(device: AdbDevice, path: String) {
+    private suspend fun refreshFileChild(device: DeviceInfo, path: String) {
         progressTool.exec(
             "adb", "-s", device.serial, "shell",
             "ls", "-h", "-g", "-L", path

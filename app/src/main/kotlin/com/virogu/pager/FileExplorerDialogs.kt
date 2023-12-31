@@ -18,7 +18,7 @@ import com.virogu.bean.FileInfoItem
 import com.virogu.bean.FilePermission
 import com.virogu.bean.FileType
 import com.virogu.pager.view.FileChooser
-import com.virogu.tools.explorer.FileExplorer
+import com.virogu.tools.FileExplorer
 import theme.MainTheme
 import theme.materialColors
 import javax.swing.JFileChooser

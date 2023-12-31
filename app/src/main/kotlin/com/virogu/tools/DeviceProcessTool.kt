@@ -1,4 +1,4 @@
-package com.virogu.tools.process
+package com.virogu.tools
 
 import com.virogu.bean.ProcessInfo
 import kotlinx.coroutines.flow.MutableStateFlow

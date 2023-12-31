@@ -1,20 +1,20 @@
-package com.virogu.tools.connect
+package com.virogu.tools
 
-import com.virogu.bean.AdbDevice
+import com.virogu.bean.DeviceInfo
 import kotlinx.coroutines.flow.StateFlow
 
 interface DeviceConnectTool {
-    val connectedDevice: StateFlow<List<AdbDevice>>
-    val currentSelectedDevice: StateFlow<AdbDevice?>
+    val connectedDevice: StateFlow<List<DeviceInfo>>
+    val currentSelectedDevice: StateFlow<DeviceInfo?>
     val isBusy: StateFlow<Boolean>
 
     fun start()
 
-    fun selectDevice(device: AdbDevice)
+    fun selectDevice(device: DeviceInfo)
 
     fun connect(ip: String, port: Int = 5555)
 
-    fun disconnect(device: AdbDevice)
+    fun disconnect(device: DeviceInfo)
 
     fun refresh()
 

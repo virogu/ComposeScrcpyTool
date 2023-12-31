@@ -1,4 +1,4 @@
-package com.virogu.tools.scrcpy
+package com.virogu.tools
 
 import com.virogu.bean.ScrcpyConfig
 import kotlinx.coroutines.flow.StateFlow

@@ -1,5 +1,6 @@
-package com.virogu.tools.connect
+package com.virogu.tools.android
 
+import com.virogu.tools.DeviceConnectTool
 import com.virogu.tools.sshd.SSHTool
 import com.virogu.tools.sshd.SSHVerifyTools
 import org.kodein.di.DI

@@ -18,11 +18,11 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.virogu.bean.AdbDevice
+import com.virogu.bean.DeviceInfo
 import com.virogu.bean.ScrcpyConfig
 import com.virogu.pager.view.FileSelectView
+import com.virogu.tools.ScrcpyTool
 import com.virogu.tools.Tools
-import com.virogu.tools.scrcpy.ScrcpyTool
 import theme.materialColors
 import theme.textFieldContentPadding
 import theme.textFieldHeight
@@ -367,7 +367,7 @@ private fun ColumnScope.ScrcpyOptionView(
     scrcpyTool: ScrcpyTool,
     isBusy: Boolean,
     commonConfig: ScrcpyConfig.CommonConfig,
-    currentDevice: AdbDevice?,
+    currentDevice: DeviceInfo?,
     specialConfig: ScrcpyConfig.Config
 ) {
     val activeDevices = scrcpyTool.activeDevicesFLow.collectAsState()

@@ -30,8 +30,8 @@ import com.virogu.bean.*
 import com.virogu.pager.view.OptionButton
 import com.virogu.pager.view.SelectDeviceView
 import com.virogu.pager.view.TipsView
+import com.virogu.tools.FileExplorer
 import com.virogu.tools.Tools
-import com.virogu.tools.explorer.FileExplorer
 import theme.*
 import java.net.URI
 import kotlin.io.path.toPath
@@ -226,7 +226,7 @@ fun FileExplorerPager(
 private fun ToolBarView(
     fileExplorer: FileExplorer,
     currentSelect: FileInfoItem?,
-    currentDevice: AdbDevice?,
+    currentDevice: DeviceInfo?,
     createNewFolder: () -> Unit,
     createNewFile: () -> Unit,
     downloadFile: () -> Unit,

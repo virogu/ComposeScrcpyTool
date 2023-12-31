@@ -1,6 +1,6 @@
-package com.virogu.tools.common
+package com.virogu.tools
 
-import com.virogu.bean.AdbDevice
+import com.virogu.bean.DeviceInfo
 import com.virogu.bean.ProcessInfo
 import kotlinx.coroutines.flow.StateFlow
 
@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 interface AuxiliaryTool {
     val processListFlow: StateFlow<List<ProcessInfo>>
     val isBusy: StateFlow<Boolean>
-    val selectedOnlineDevice: StateFlow<AdbDevice?>
+    val selectedOnlineDevice: StateFlow<DeviceInfo?>
 
     fun exec(command: Array<String>)
 

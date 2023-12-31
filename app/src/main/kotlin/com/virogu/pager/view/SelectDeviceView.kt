@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import com.virogu.bean.AdbDevice
+import com.virogu.bean.DeviceInfo
 import com.virogu.tools.Tools
 import theme.dropdownMenuItemPadding
 import theme.textFieldContentPadding
@@ -18,7 +18,7 @@ import views.OutlinedTextField
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SelectDeviceView(
-    modifier: Modifier = Modifier, currentDevice: AdbDevice?, tools: Tools
+    modifier: Modifier = Modifier, currentDevice: DeviceInfo?, tools: Tools
 ) {
     val connectTool = tools.deviceConnectTool
     val devices = connectTool.connectedDevice.collectAsState()

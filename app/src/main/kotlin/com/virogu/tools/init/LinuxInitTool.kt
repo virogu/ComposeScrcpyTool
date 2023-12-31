@@ -1,6 +1,6 @@
 package com.virogu.tools.init
 
-import com.virogu.tools.adb.ProgressTool
+import com.virogu.tools.ProgressTool
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
