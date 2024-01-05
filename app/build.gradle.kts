@@ -10,8 +10,8 @@ plugins {
 }
 
 val appBuildInfo: AppBuildInfo by project
-val javaVersion = JavaVersion.VERSION_17
-val javaVersionString = "17"
+val javaVersion = JavaVersion.VERSION_21
+val javaVersionString = "21"
 
 java {
     sourceCompatibility = javaVersion
@@ -94,10 +94,7 @@ compose.desktop {
     application {
         mainClass = "MainKt"
         nativeDistributions {
-            modules(
-                "java.naming", "jdk.unsupported",
-                "java.rmi", "java.management",
-            )
+            modules("java.naming", "jdk.unsupported", "java.rmi", "java.management")
             //includeAllModules = true
             appResourcesRootDir.set(project.layout.projectDirectory.dir("resources").also {
                 println("resources: ${it.asFile.absolutePath}")
