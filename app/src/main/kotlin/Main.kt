@@ -4,11 +4,11 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
-import com.virogu.di.initDi
-import com.virogu.pager.Pager
-import com.virogu.pager.rememberPagerController
-import com.virogu.tools.Tools
-import com.virogu.tools.currentPlateForm
+import com.virogu.core.currentPlateForm
+import com.virogu.core.di.initDi
+import com.virogu.core.tool.Tools
+import com.virogu.ui.Pager
+import com.virogu.ui.rememberPagerController
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance

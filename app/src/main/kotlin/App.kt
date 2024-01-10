@@ -19,11 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.WindowScope
 import androidx.compose.ui.window.WindowState
-import com.virogu.pager.InitPager
-import com.virogu.pager.MainPager
-import com.virogu.pager.Pager
-import com.virogu.pager.PagerNavController
-import com.virogu.tools.Tools
+import com.virogu.core.tool.Tools
+import com.virogu.ui.InitPager
+import com.virogu.ui.MainPager
+import com.virogu.ui.Pager
+import com.virogu.ui.PagerNavController
 import theme.MainTheme
 
 /**
