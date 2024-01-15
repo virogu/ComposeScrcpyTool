@@ -40,6 +40,7 @@ class AuxiliaryToolImpl(
             val device = currentDevice ?: return@withLock
             val array = when (device.platform) {
                 DevicePlatform.Android -> arrayOf("adb", "-s", device.serial, *auxiliary.adbCmd)
+                DevicePlatform.OpenHarmony -> TODO()
             }
             progressTool.exec(*array, consoleLog = true)
         }

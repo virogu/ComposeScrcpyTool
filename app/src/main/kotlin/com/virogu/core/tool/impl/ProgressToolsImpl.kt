@@ -1,6 +1,6 @@
 package com.virogu.core.tool.impl
 
-import com.virogu.core.appendCommonEnvironment
+import com.virogu.core.appendCommonEnv
 import com.virogu.core.commonWorkDir
 import com.virogu.core.tool.ProgressTool
 import kotlinx.coroutines.*
@@ -19,18 +19,20 @@ class ProgressToolsImpl : ProgressTool {
 
     private val processMapMutex = Mutex()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    //private val runtime = Runtime.getRuntime()
 
     private val processList: HashMap<Long, Process> = HashMap()
 
     private val workDir: File by lazy {
-        commonWorkDir
+        File(commonWorkDir, "app")
     }
 
-    private val commandPath = mapOf(
-        "adb" to File(workDir, "app/adb").absolutePath,
-        "scrcpy" to File(workDir, "app/scrcpy").absolutePath,
-    )
+    private val commandPath by lazy {
+        mapOf(
+            "adb" to File(workDir, "adb").absolutePath,
+            "hdc" to File(workDir, "hdc").absolutePath,
+            "scrcpy" to File(workDir, "scrcpy").absolutePath,
+        )
+    }
 
     override suspend fun exec(
         vararg command: String,
@@ -44,23 +46,8 @@ class ProgressToolsImpl : ProgressTool {
             if (command.isEmpty()) {
                 return@withContext Result.failure(IllegalArgumentException("command is empty!"))
             }
-            val cmd = command.toMutableList().apply {
-                commandPath[first()]?.also {
-                    this.removeFirst()
-                    this.add(0, it)
-                }
-            }
-            val process = ProcessBuilder(
-                cmd,
-            ).apply {
-                directory(workDir)
-                redirectErrorStream(true)
-                val ev = environment()
-                ev.apply {
-                    appendCommonEnvironment()
-                    putAll(environment)
-                }
-            }.start().also {
+            val cmd = command.fixPath()
+            val process = ProcessBuilder(cmd).fix(environment).start().also {
                 it.onExit().thenApply {
                     scope.launch {
                         processMapMutex.withLock {
@@ -87,7 +74,9 @@ class ProgressToolsImpl : ProgressTool {
                 }
             }
             if (timeout > 0) {
-                process.waitFor(timeout, TimeUnit.SECONDS)
+                if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
+                    process.destroy()
+                }
             } else {
                 process.waitFor()
             }
@@ -119,23 +108,8 @@ class ProgressToolsImpl : ProgressTool {
             if (command.isEmpty()) {
                 return@withContext null
             }
-            val cmd = command.toMutableList().apply {
-                commandPath[first()]?.also {
-                    this.removeFirst()
-                    this.add(0, it)
-                }
-            }
-            val processBuilder = ProcessBuilder(
-                cmd,
-            ).apply {
-                directory(workDir)
-                redirectErrorStream(true)
-                val ev = environment()
-                ev.apply {
-                    appendCommonEnvironment()
-                    putAll(environment)
-                }
-            }
+            val cmd = command.fixPath()
+            val processBuilder = ProcessBuilder(cmd).fix(environment)
             val progress = processBuilder.start()
             progress.onExit().thenApply {
                 println("process ${it.pid()} exit[${it.exitValue()}]. ")
@@ -173,6 +147,27 @@ class ProgressToolsImpl : ProgressTool {
                 logger.info("stop process: $it")
             }
             processList.clear()
+        }
+    }
+
+    private fun ProcessBuilder.fix(extraEnv: Map<String, String>? = null): ProcessBuilder {
+        directory(workDir)
+        val ev = environment()
+        ev.apply {
+            appendCommonEnv()
+        }
+        extraEnv?.also {
+            ev.putAll(it)
+        }
+        return this
+    }
+
+    private fun Array<out String>.fixPath(): List<String> {
+        return this.toMutableList().apply {
+            commandPath[first()]?.also {
+                this.removeFirst()
+                this.add(0, it)
+            }
         }
     }
 

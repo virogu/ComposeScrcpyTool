@@ -1,5 +1,7 @@
 package com.virogu.core.bean
 
+import com.virogu.core.bean.DevicePlatform.Android
+import com.virogu.core.bean.DevicePlatform.OpenHarmony
 import kotlinx.serialization.Serializable
 
 val DeviceInfo?.isOnline get() = this?.isOnline == true
@@ -7,7 +9,8 @@ val DeviceInfo?.isOnline get() = this?.isOnline == true
 val DeviceInfo?.isOffline get() = this?.isOnline != true
 
 enum class DevicePlatform(val platform: String) {
-    Android("Android")
+    Android("Android"),
+    OpenHarmony("OpenHarmony")
 }
 
 @Serializable
@@ -21,9 +24,8 @@ data class DeviceInfo(
     val version: String,
     val apiVersion: String,
     val desc: String = model,
+    val isOnline: Boolean,
 ) {
-    val isOnline = status == "device"
-
     val showName = buildString {
         if (desc.isNotEmpty()) {
             append(desc)
@@ -35,7 +37,8 @@ data class DeviceInfo(
         if (isOnline) {
             append(" (")
             when (platform) {
-                DevicePlatform.Android -> append("A$version")
+                Android -> append("A$version")
+                OpenHarmony -> append("OHOS")
             }
             append("_")
             append(apiVersion)

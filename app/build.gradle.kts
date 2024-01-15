@@ -63,10 +63,12 @@ dependencies {
     //val accompanistVersion = "0.30.1"
     //implementation("com.google.accompanist:accompanist-animations:$accompanistVersion")
 
+    testImplementation(compose.desktop.uiTestJUnit4)
+    testImplementation(compose.desktop.currentOs)
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.junit.jupiter)
-    testImplementation(libs.junit.jupiter.api)
-    testImplementation(libs.junit.jupiter.engine)
+    //testImplementation(libs.junit.jupiter)
+    //testImplementation(libs.junit.jupiter.api)
+    //testImplementation(libs.junit.jupiter.engine)
 }
 
 buildConfig {

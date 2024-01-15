@@ -5,17 +5,12 @@ import com.virogu.core.bean.DevicePlatform
 import com.virogu.core.config.ConfigStores
 import com.virogu.core.init.InitTool
 import com.virogu.core.pingCommand
-import com.virogu.core.tool.DeviceConnectTool
 import com.virogu.core.tool.ProgressTool
-import com.virogu.core.tool.SSHTool
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.kodein.di.DI
-import org.kodein.di.conf.global
-import org.kodein.di.instance
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.charset.Charset
@@ -25,7 +20,7 @@ class DeviceConnectToolImpl(
     private val initTool: InitTool,
     private val configStores: ConfigStores,
     private val progressTool: ProgressTool,
-) : BaseDeviceConnectTool() {
+) : DeviceConnectToolBase() {
 
     private val mutex = Mutex()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -115,37 +110,28 @@ class DeviceConnectToolImpl(
                     return@withLock
                 }
             }
-            val r = connectTo(ip, port).getOrNull().orEmpty()
-            logger.info(r)
-            // cannot connect to 192.168: 由于目标计算机积极拒绝，无法连接。 (10061)
-            // 尝试通过SSH连接到设备再打开ADB
-            if (r.contains("cannot connect to", true) ||
-                r.contains("unable to connect", true) ||
-                r.contains("failed to connect", true) ||
-                r.contains("connection refused", true)
-            ) {
-                logger.info("try open device adbd")
-                openDeviceAdb(ip).onFailure { e ->
-                    logger.info("ssh failed to connect [$ip]. $e")
-                }
-                logger.info("重新连接 [$ip:$port]")
-                connectTo(ip, port).getOrNull()?.also {
-                    logger.info(it)
+            var r = adbConnect(ip, port)
+            if (!r) {
+                r = hdcConnect(ip, port)
+            }
+            if (!r) {
+                openDevicePort(ip, port).onSuccess {
+                    logger.info("重新连接 [$ip:$port]")
+                    r = adbConnect(ip, port)
+                    if (!r) {
+                        hdcConnect(ip, port)
+                    }
                 }
             }
             innerRefreshDevices()
         }
     }
 
-    private suspend fun connectTo(ip: String, port: Int): Result<String> {
-        progressTool.exec("adb", "disconnect", "${ip}:${port}")
-        return progressTool.exec("adb", "connect", "${ip}:${port}")
-    }
-
     override fun disconnect(device: DeviceInfo) {
         withLock {
             val array = when (device.platform) {
                 DevicePlatform.Android -> arrayOf("adb", "disconnect", device.serial)
+                DevicePlatform.OpenHarmony -> arrayOf("hdc", "tconn", device.serial, "-remove")
             }
             progressTool.exec(*array, showLog = true)
             innerRefreshDevices()
@@ -161,8 +147,46 @@ class DeviceConnectToolImpl(
     override fun disconnectAll() {
         withLock {
             progressTool.exec("adb", "disconnect", showLog = true)
+            connectedDevice.value.filter {
+                it.platform == DevicePlatform.OpenHarmony
+            }.forEach {
+                progressTool.exec("hdc", "tconn", it.serial, "-remove", showLog = true)
+            }
             innerRefreshDevices()
         }
+    }
+
+    private suspend fun adbConnect(ip: String, port: Int): Boolean {
+        progressTool.exec("adb", "disconnect", "${ip}:${port}")
+        logger.info("try adb connect")
+        val r = progressTool.exec("adb", "connect", "${ip}:${port}", timeout = 3).getOrNull()?.takeIf {
+            it.isNotEmpty()
+        } ?: run {
+            return false
+        }
+        logger.info(r)
+        // cannot connect to 192.168: 由于目标计算机积极拒绝，无法连接。 (10061)
+        // 尝试通过SSH连接到设备再打开ADB
+        val failed = r.contains("cannot connect to", true) ||
+                r.contains("unable to connect", true) ||
+                r.contains("failed to connect", true) ||
+                r.contains("connection refused", true)
+        return !failed
+    }
+
+    private suspend fun hdcConnect(ip: String, port: Int): Boolean {
+        logger.info("try hdc connect")
+        progressTool.exec("hdc", "tconn", "${ip}:${port}", "-remove", consoleLog = true)
+        val r = progressTool.exec(
+            "hdc", "tconn", "${ip}:${port}", timeout = 3, consoleLog = true
+        ).getOrNull()?.takeIf {
+            it.isNotEmpty()
+        } ?: run {
+            return false
+        }
+        logger.info(r)
+        val failed = r.contains("failed", true)
+        return !failed
     }
 
     private suspend fun activeRefresh() {
@@ -185,56 +209,100 @@ class DeviceConnectToolImpl(
     private suspend fun innerRefreshDevices() {
         val list = mutableListOf<DeviceInfo>()
         list.addAll(refreshAndroidDevices())
+        list.addAll(refreshHarmonyDevices())
         devices.emit(list)
         activeRefresh()
     }
 
-    private suspend fun refreshAndroidDevices(): List<DeviceInfo> {
-        val list = try {
-            val process = progressTool.exec("adb", "devices", "-l").getOrThrow()
-            val result = process.split("\n")
-            result.mapNotNull { line ->
-                //127.0.0.1:58526        device product:windows_x86_64 model:Subsystem_for_Android_TM_ device:windows_x86_64 transport_id:5
-                val matcher = Pattern.compile(
-                    "^(\\S+)\\s+(\\S+)\\s+product:(\\S+)\\s+model:(\\S+)\\s+device:(\\S+)\\s+(transport_id:)?(\\S+)?(.*)$"
-                ).matcher(line.trim())
-                if (!matcher.find()) {
-                    return@mapNotNull null
+    private suspend fun refreshAndroidDevices(): List<DeviceInfo> = try {
+        val process = progressTool.exec("adb", "devices", "-l").getOrThrow()
+        val result = process.split("\n")
+        result.mapNotNull { line ->
+            //127.0.0.1:58526        device product:windows_x86_64 model:Subsystem_for_Android_TM_ device:windows_x86_64 transport_id:5
+            val matcher = Pattern.compile(
+                "^(\\S+)\\s+(\\S+)\\s+product:(\\S+)\\s+model:(\\S+)\\s+device:(\\S+)\\s+(transport_id:)?(\\S+)?(.*)$"
+            ).matcher(line.trim())
+            if (!matcher.find()) {
+                return@mapNotNull null
+            } else {
+                val serial = matcher.group(1) ?: return@mapNotNull null
+                val status = matcher.group(2) ?: return@mapNotNull null
+                val product = matcher.group(3) ?: return@mapNotNull null
+                val model = matcher.group(4) ?: return@mapNotNull null
+                val device = matcher.group(5) ?: return@mapNotNull null
+                val isOnline = status == "device"
+                val apiVersion = if (isOnline) {
+                    adbGetProp(serial, ANDROID_API_VERSION)
                 } else {
-                    val serial = matcher.group(1) ?: return@mapNotNull null
-                    val status = matcher.group(2) ?: return@mapNotNull null
-                    val product = matcher.group(3) ?: return@mapNotNull null
-                    val model = matcher.group(4) ?: return@mapNotNull null
-                    val device = matcher.group(5) ?: return@mapNotNull null
-                    val apiVersion = if (status == "device") {
-                        adbGetProp(serial, "ro.build.version.sdk")
-                    } else {
-                        " Unknown"
-                    }
-                    val androidVersion = if (status == "device") {
-                        adbGetProp(serial, "ro.build.version.release")
-                    } else {
-                        " Unknown"
-                    }
-                    DeviceInfo(
-                        platform = DevicePlatform.Android,
-                        serial = serial,
-                        status = status,
-                        product = product,
-                        model = model,
-                        version = androidVersion,
-                        apiVersion = apiVersion,
-                        device = device,
-                    )
+                    " Unknown"
                 }
-            }.sortedByDescending {
-                it.isOnline
+                val androidVersion = if (isOnline) {
+                    adbGetProp(serial, ANDROID_RELEASE_VERSION)
+                } else {
+                    " Unknown"
+                }
+                DeviceInfo(
+                    platform = DevicePlatform.Android,
+                    serial = serial,
+                    status = status,
+                    product = product,
+                    model = model,
+                    version = androidVersion,
+                    apiVersion = apiVersion,
+                    device = device,
+                    isOnline = isOnline
+                )
             }
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            emptyList()
+        }.sortedByDescending {
+            it.isOnline
         }
-        return list
+    } catch (e: Throwable) {
+        e.printStackTrace()
+        emptyList()
+    }
+
+    private suspend fun refreshHarmonyDevices(): List<DeviceInfo> = try {
+        val process = progressTool.exec("hdc", "list", "targets", "-v").getOrThrow()
+        val result = process.split("\n")
+        result.mapNotNull { line ->
+            //192.168.5.128:10178   TCP     Offline                 hdc
+            //192.168.5.128:5555    TCP     Offline     localhost   hdc
+            //192.168.5.131:5555    TCP     Connected   localhost   hdc
+            //192.168.5.255:5555    TCP     Offline                 hdc
+            //COM1                  UART    Ready                   hdc
+            val matcher = Pattern.compile("^(\\S+)\\s+(\\S+)\\s+(\\S+)(.*)$").matcher(line.trim())
+            if (!matcher.find()) {
+                return@mapNotNull null
+            } else {
+                val serial = matcher.group(1) ?: return@mapNotNull null
+                //val type = matcher.group(2) ?: return@mapNotNull null
+                val status = matcher.group(3) ?: return@mapNotNull null
+                val isOnline = status.equals("Connected", ignoreCase = true)
+                if (!isOnline) {
+                    return@mapNotNull null
+                }
+                val apiVersion = hdcGetProp(serial, OHOS_API_VERSION)
+                val releaseName = hdcGetProp(serial, OHOS_FULL_NAME)
+                val product = hdcGetProp(serial, OHOS_PRODUCT_NAME)
+                val model = hdcGetProp(serial, OHOS_MODEL_NAME)
+                DeviceInfo(
+                    platform = DevicePlatform.OpenHarmony,
+                    serial = serial,
+                    status = status,
+                    product = product,
+                    model = model,
+                    apiVersion = apiVersion,
+                    version = releaseName,
+                    device = product,
+                    isOnline = true,
+                )
+            }
+        }.sortedByDescending {
+            it.isOnline
+        }
+    } catch (e: Throwable) {
+        e.printStackTrace()
+        emptyList()
     }
 
     override fun updateCurrentDesc(desc: String) {
@@ -258,6 +326,12 @@ class DeviceConnectToolImpl(
         return progressTool.exec("adb", "-s", serial, "shell", "getprop", prop).getOrNull() ?: default
     }
 
+    private suspend fun hdcGetProp(serial: String, prop: String, default: String = ""): String {
+        return progressTool.exec("hdc", "-t", serial, "shell", "param", "get", prop).getOrNull()?.takeUnless {
+            it.contains("Get", ignoreCase = true) && it.contains("fail", ignoreCase = true)
+        } ?: default
+    }
+
     private fun withLock(block: suspend CoroutineScope.() -> Unit) {
         scope.launch {
             mutex.withLock {
@@ -274,34 +348,12 @@ class DeviceConnectToolImpl(
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(DeviceConnectToolImpl::class.java)
+        private const val ANDROID_API_VERSION = "ro.build.version.sdk"
+        private const val ANDROID_RELEASE_VERSION = "ro.build.version.release"
+
+        private const val OHOS_API_VERSION = "const.ohos.apiversion"
+        private const val OHOS_FULL_NAME = "const.ohos.fullname"
+        private const val OHOS_PRODUCT_NAME = "const.product.name"
+        private const val OHOS_MODEL_NAME = "const.product.model"
     }
-}
-
-abstract class BaseDeviceConnectTool : DeviceConnectTool {
-
-    private val sshTool: SSHTool by DI.global.instance()
-
-    protected suspend fun openDeviceAdb(ip: String): Result<Boolean> {
-        sshTool.connect(ip, SSHVerifyTools.user, SSHVerifyTools.pwd) {
-            exec(
-                it,
-                "setprop service.adb.tcp.port 5555",
-                "stop adbd",
-                "start adbd"
-            ).onSuccess {
-                logger.info("open device adbd success")
-            }.onFailure { e ->
-                logger.info("open device adbd fail. $e")
-            }
-        }.fold({
-            return Result.success(true)
-        }, {
-            return Result.failure(it)
-        })
-    }
-
-    companion object {
-        private val logger: Logger = LoggerFactory.getLogger(BaseDeviceConnectTool::class.java)
-    }
-
 }

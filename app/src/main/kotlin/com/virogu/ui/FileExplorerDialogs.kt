@@ -5,11 +5,15 @@ package com.virogu.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.DialogWindow
@@ -21,6 +25,7 @@ import com.virogu.core.tool.FileExplorer
 import com.virogu.ui.view.FileChooser
 import theme.MainTheme
 import theme.materialColors
+import views.modifier.onEnterKey
 import javax.swing.JFileChooser
 
 @Composable
@@ -377,6 +382,10 @@ private fun FileNameInputDialog(
         state = state
     ) {
         MainTheme {
+            val focusRequester = remember { FocusRequester() }
+            LaunchedEffect(Unit) {
+                focusRequester.requestFocus()
+            }
             Column(
                 modifier = Modifier.align(Alignment.Center).fillMaxWidth().padding(32.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -384,17 +393,23 @@ private fun FileNameInputDialog(
                 val modifier = Modifier.align(Alignment.CenterHorizontally)
                 Text(inputTips, modifier.padding(8.dp))
                 OutlinedTextField(
-                    modifier = modifier.padding(horizontal = 16.dp),
+                    modifier = modifier.padding(horizontal = 16.dp).focusRequester(focusRequester).onEnterKey {
+                        if (confirmEnable) {
+                            onConfirm(text)
+                            close()
+                        }
+                    },
                     value = text,
                     onValueChange = {
-                        text = it.take(50)
+                        text = it.trim().take(50)
                     },
                     isError = error,
                     label = {
                         if (errorString.isNotEmpty()) {
                             Text(errorString)
                         }
-                    }
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                 )
                 Row(
                     modifier = modifier,

@@ -7,6 +7,9 @@ import com.virogu.core.init.InitTool
 import com.virogu.core.tool.DeviceConnectTool
 import com.virogu.core.tool.DeviceProcessTool
 import com.virogu.core.tool.ProgressTool
+import com.virogu.core.tool.special.ProcessManage
+import com.virogu.core.tool.special.adb.ProcessManageAdb
+import com.virogu.core.tool.special.hdc.ProcessManageHdc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -22,6 +25,14 @@ class DeviceProcessToolImpl(
     private val jobsMutex = Mutex()
     private val loadingJobs = mutableMapOf<String, Job>()
     private var mJob: Job? = null
+
+    private val processTools = mapOf(
+        DevicePlatform.Android to ProcessManageAdb(progressTool),
+        DevicePlatform.OpenHarmony to ProcessManageHdc(progressTool),
+    )
+
+    private val DeviceInfo.processManage: ProcessManage get() = processTools[platform]!!
+
 
     @Volatile
     private var active = false
@@ -90,72 +101,15 @@ class DeviceProcessToolImpl(
     }
 
     private suspend fun refreshProcess(device: DeviceInfo) {
-        when (device.platform) {
-            DevicePlatform.Android -> adbRefreshProcess(device.serial)
-        }
-    }
-
-    private suspend fun adbRefreshProcess(serial: String) {
-        progressTool.exec(
-            "adb", "-s", serial, "shell", "dumpsys activity processes"
-        ).onSuccess {
-            delay(10)
-            //println(it)
-            val process = it.androidParseProcess()
-            delay(10)
-            processListFlow.emit(process)
-        }
-    }
-
-    private fun String.androidParseProcess(): List<ProcessInfo> {
-        val matches = Regex("""(?s)(APP|PERS)\*\s+(.*?)(\*|PID mappings:)""").findAll(this)
-        if (matches.count() <= 0) {
-            return emptyList()
-        }
-        return try {
-            matches.mapNotNull { matchesResult ->
-                val process = matchesResult.groupValues[2]
-                val first = process.reader().readLines().firstOrNull()?.trim() ?: return@mapNotNull null
-                //UID 1000 ProcessRecord{a0f6d00 727:com.microsoft.windows.systemapp/u0a48}
-                val baseInfo = Regex("""\S+\s+(\d+)\s+ProcessRecord\{(\S+)\s+(\d+):(\S+)/(\S+)}(.*)""").find(first)
-                    ?: return@mapNotNull null
-                val uid = baseInfo.groupValues.getOrNull(1) ?: return@mapNotNull null
-                val pid = baseInfo.groupValues.getOrNull(3) ?: return@mapNotNull null
-                val processName = baseInfo.groupValues.getOrNull(4) ?: return@mapNotNull null
-                val packageName = processName.split(":").firstOrNull() ?: return@mapNotNull null
-                val user: String = baseInfo.groupValues.getOrNull(5).orEmpty().let {
-                    if (it.first().isDigit()) {
-                        it.toIntOrNull()?.toString() ?: "0"
-                    } else {
-                        val m = Regex("""(.*?)(\d+)(.*?)""").find(it)
-                        m?.groupValues?.getOrNull(2) ?: "0"
-                    }
-                }
-                val maps = Regex("""\s*(\w+)=(\{[^{}]*}|\S+)\s*""").findAll(process).associate { kv ->
-                    kv.groupValues[1] to kv.groupValues[2]
-                }
-                ProcessInfo(
-                    user = user,
-                    uid = uid,
-                    pid = pid,
-                    processName = processName,
-                    packageName = packageName,
-                    params = maps
-                )
-            }.toList()
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            emptyList()
-        }
+        val process = device.processManage.refresh(device)
+        delay(10)
+        processListFlow.emit(process)
     }
 
     override fun killProcess(info: ProcessInfo) {
         withLock("kill ${info.pid}") {
             val device = currentDevice ?: return@withLock
-            val array = when (device.platform) {
-                DevicePlatform.Android -> arrayOf("adb", "-s", device.serial, "shell", "am", "kill", info.packageName)
-            }
-            progressTool.exec(*array, consoleLog = true).toast()
+            device.processManage.killProcess(device, info).toast()
             refreshProcess(device)
         }
     }
@@ -163,13 +117,7 @@ class DeviceProcessToolImpl(
     override fun forceStopProcess(info: ProcessInfo) {
         withLock("force stop ${info.packageName}") {
             val device = currentDevice ?: return@withLock
-            val array = when (device.platform) {
-                DevicePlatform.Android -> arrayOf(
-                    "adb", "-s", device.serial,
-                    "shell", "am", "force-stop", info.packageName,
-                )
-            }
-            progressTool.exec(*array, consoleLog = true).toast()
+            device.processManage.forceStopProcess(device, info).toast()
             refreshProcess(device)
         }
     }

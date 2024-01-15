@@ -59,10 +59,7 @@ class ScrcpyToolImpl(
                 return@withLock
             }
             val progress = progressTool.execAsync(
-                "scrcpy",
-                "-s",
-                serial,
-                "--window-title=$title",
+                "scrcpy", "-s", serial, "--window-title=$title",
                 *commonConfig.scrcpyArgs().toTypedArray(),
                 *config.scrcpyArgs().toTypedArray(),
                 environment = scrcpyEnvironment
