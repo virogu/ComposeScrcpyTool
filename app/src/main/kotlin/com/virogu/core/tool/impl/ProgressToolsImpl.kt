@@ -47,6 +47,7 @@ class ProgressToolsImpl : ProgressTool {
                 return@withContext Result.failure(IllegalArgumentException("command is empty!"))
             }
             val cmd = command.fixPath()
+            val cmdString = cmd.joinToString(" ")
             val process = ProcessBuilder(cmd).fix(environment).start().also {
                 it.onExit().thenApply {
                     scope.launch {
@@ -60,9 +61,9 @@ class ProgressToolsImpl : ProgressTool {
                 }
             }
             if (showLog) {
-                logger.info("$cmd wait")
+                logger.info(" [$cmdString] wait")
             } else if (consoleLog) {
-                println("$cmd wait")
+                println(" [$cmdString] wait")
             }
             val s = async {
                 BufferedReader(InputStreamReader(process.inputStream, charset)).use {
@@ -83,9 +84,19 @@ class ProgressToolsImpl : ProgressTool {
             //val inputStreamReader = InputStreamReader(process.inputStream, charset)
             val result = s.await()
             if (showLog) {
-                logger.info("$cmd result: [$result]")
+                val msg = """ ---
+                    |> $cmdString
+                    |$result
+                    |---
+                """.trimMargin()
+                logger.info(msg)
             } else if (consoleLog) {
-                println("$cmd result: [$result]")
+                val msg = """ ---
+                    | > $cmdString
+                    | $result
+                    | ---
+                """.trimMargin()
+                println(msg)
             }
             return@withContext Result.success(result)
         } catch (e: Throwable) {

@@ -7,7 +7,6 @@ import com.virogu.core.init.InitTool
 import com.virogu.core.pingCommand
 import com.virogu.core.tool.ProgressTool
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -37,7 +36,33 @@ class DeviceConnectToolImpl(
         device.map {
             it.copy(desc = deviceDesc[it.serial].orEmpty())
         }
-    }.distinctUntilChanged().onEach { list ->
+    }.distinctUntilChanged().onEach(::onDeviceConnectedChanged).stateIn(scope, SharingStarted.Eagerly, emptyList())
+
+    override val currentSelectedDevice: MutableStateFlow<DeviceInfo?> = MutableStateFlow(null)
+
+    override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    init {
+        start()
+    }
+
+    private var mJob: Job? = null
+    private var refreshJob: Job? = null
+
+    override fun start() {
+        mJob?.cancel()
+        mJob = scope.launch {
+            logger.info("等待程序初始化")
+            initTool.initStateFlow.first {
+                it.success
+            }
+            logger.info("初始化成功")
+            delay(100)
+            autoRefresh.onEach(::autoRefreshChanged).launchIn(this)
+        }
+    }
+
+    private suspend fun onDeviceConnectedChanged(list: List<DeviceInfo>) {
         val current = currentSelectedDevice.value
         if (current == null) {
             list.firstOrNull {
@@ -56,39 +81,21 @@ class DeviceConnectToolImpl(
                 currentSelectedDevice.emit(find)
             }
         }
-    }.stateIn(scope, SharingStarted.Eagerly, emptyList())
-
-    override val currentSelectedDevice: MutableStateFlow<DeviceInfo?> = MutableStateFlow(null)
-
-    override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
-
-    private val activeRefreshFlow = MutableSharedFlow<Any>()
-
-    init {
-        start()
     }
 
-    private var mJob: Job? = null
-
-    @OptIn(FlowPreview::class)
-    override fun start() {
-        mJob?.cancel()
-        mJob = scope.launch {
-            logger.info("等待程序初始化")
-            initTool.initStateFlow.first {
-                it.success
+    private suspend fun autoRefreshChanged(enable: Boolean) {
+        logger.info("auto refresh: $enable")
+        refreshJob?.cancel()
+        if (!enable) {
+            return
+        }
+        refreshJob = scope.launch {
+            while (isActive) {
+                if (autoRefresh.value) {
+                    autoRefresh()
+                }
+                delay(10_000)
             }
-            logger.info("初始化成功")
-            activeRefreshFlow.debounce(5000).buffer(
-                onBufferOverflow = BufferOverflow.DROP_LATEST
-            ).onEach {
-                autoRefresh()
-            }.launchIn(this)
-            delay(100)
-            autoRefresh.onEach {
-                activeRefresh()
-            }.launchIn(this)
-            autoRefresh()
         }
     }
 
@@ -189,21 +196,14 @@ class DeviceConnectToolImpl(
         return !failed
     }
 
-    private suspend fun activeRefresh() {
-        activeRefreshFlow.emit(System.currentTimeMillis())
-    }
-
     private suspend fun autoRefresh() {
         if (!autoRefresh.value) {
             return
         }
         if (!initTool.initStateFlow.value.success) {
-            activeRefresh()
             return
         }
-        mutex.withLock {
-            innerRefreshDevices()
-        }
+        innerRefreshDevices()
     }
 
     private suspend fun innerRefreshDevices() {
@@ -211,7 +211,6 @@ class DeviceConnectToolImpl(
         list.addAll(refreshAndroidDevices())
         list.addAll(refreshHarmonyDevices())
         devices.emit(list)
-        activeRefresh()
     }
 
     private suspend fun refreshAndroidDevices(): List<DeviceInfo> = try {
@@ -262,7 +261,7 @@ class DeviceConnectToolImpl(
     }
 
     private suspend fun refreshHarmonyDevices(): List<DeviceInfo> = try {
-        val process = progressTool.exec("hdc", "list", "targets", "-v").getOrThrow()
+        val process = progressTool.exec("hdc", "list", "targets", "-v", timeout = 2, consoleLog = true).getOrThrow()
         val result = process.split("\n")
         result.mapNotNull { line ->
             //192.168.5.128:10178   TCP     Offline                 hdc
@@ -327,7 +326,11 @@ class DeviceConnectToolImpl(
     }
 
     private suspend fun hdcGetProp(serial: String, prop: String, default: String = ""): String {
-        return progressTool.exec("hdc", "-t", serial, "shell", "param", "get", prop).getOrNull()?.takeUnless {
+        delay(20)
+        return progressTool.exec(
+            "hdc", "-t", serial, "shell",
+            "param", "get", prop, timeout = 1, consoleLog = true
+        ).getOrNull()?.takeUnless {
             it.contains("Get", ignoreCase = true) && it.contains("fail", ignoreCase = true)
         } ?: default
     }
