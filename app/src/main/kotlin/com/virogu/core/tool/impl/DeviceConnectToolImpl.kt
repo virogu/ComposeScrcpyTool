@@ -261,7 +261,7 @@ class DeviceConnectToolImpl(
     }
 
     private suspend fun refreshHarmonyDevices(): List<DeviceInfo> = try {
-        val process = progressTool.exec("hdc", "list", "targets", "-v", timeout = 2, consoleLog = true).getOrThrow()
+        val process = progressTool.exec("hdc", "list", "targets", "-v", timeout = 2, consoleLog = false).getOrThrow()
         val result = process.split("\n")
         result.mapNotNull { line ->
             //192.168.5.128:10178   TCP     Offline                 hdc
@@ -329,7 +329,7 @@ class DeviceConnectToolImpl(
         delay(20)
         return progressTool.exec(
             "hdc", "-t", serial, "shell",
-            "param", "get", prop, timeout = 1, consoleLog = true
+            "param", "get", prop, timeout = 1, consoleLog = false
         ).getOrNull()?.takeUnless {
             it.contains("Get", ignoreCase = true) && it.contains("fail", ignoreCase = true)
         } ?: default
