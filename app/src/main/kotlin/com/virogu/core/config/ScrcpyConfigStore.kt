@@ -11,4 +11,8 @@ interface ScrcpyConfigStore {
 
     fun updateScrcpyConfig(serial: String, config: ScrcpyConfig.Config)
 
+    fun removeScrcpyConfig(serial: String)
+
+    fun clearConfig()
+
 }

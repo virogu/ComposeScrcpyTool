@@ -33,4 +33,18 @@ class DescConfigImpl(
         updateSerializableConfig(KEY, newDesc)
     }
 
+    override fun removeDesc(device: String) {
+        val deviceDesc = deviceDescFlow.value
+        if (!deviceDesc.contains(device)) {
+            return
+        }
+        val newDesc = deviceDesc.toMutableMap()
+        newDesc.remove(device)
+        updateSerializableConfig(KEY, newDesc)
+    }
+
+    override fun clearDesc() {
+        updateSerializableConfig(KEY, emptyMap<String, String>())
+    }
+
 }

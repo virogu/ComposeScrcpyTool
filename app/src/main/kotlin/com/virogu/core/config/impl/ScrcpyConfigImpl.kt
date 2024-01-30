@@ -48,4 +48,18 @@ class ScrcpyConfigImpl(
         updateSerializableConfig(KEY, new)
     }
 
+    override fun removeScrcpyConfig(serial: String) {
+        val current = scrcpyConfigFlow.value
+        if (!current.configs.containsKey(serial)) {
+            return
+        }
+        val configs = current.configs.toMutableMap()
+        configs.remove(serial)
+        val new = current.copy(configs = configs)
+        updateSerializableConfig(KEY, new)
+    }
+
+    override fun clearConfig() {
+        updateSerializableConfig(KEY, ScrcpyConfig())
+    }
 }

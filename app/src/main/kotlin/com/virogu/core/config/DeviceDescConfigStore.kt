@@ -8,4 +8,8 @@ interface DeviceDescConfigStore {
 
     fun updateDesc(device: String, desc: String)
 
+    fun removeDesc(device: String)
+
+    fun clearDesc()
+
 }
