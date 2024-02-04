@@ -23,10 +23,10 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.virogu.core.bean.DeviceInfo
 import com.virogu.core.bean.ProcessInfo
-import com.virogu.core.tool.DeviceProcessTool
+import com.virogu.core.device.Device
 import com.virogu.core.tool.Tools
+import com.virogu.core.tool.manager.ProcessManager
 import com.virogu.ui.view.OptionButton
 import com.virogu.ui.view.SelectDeviceView
 import com.virogu.ui.view.TipsView
@@ -43,7 +43,7 @@ fun DeviceProcessPager(
     tools: Tools,
 ) {
     val processTool = tools.processTool
-    val currentDevice by tools.deviceConnectTool.currentSelectedDevice.collectAsState()
+    val currentDevice by tools.deviceScan.currentSelectedDevice.collectAsState()
 
     val listState = rememberLazyListState()
     val scrollAdapter = rememberScrollbarAdapter(listState)
@@ -118,8 +118,8 @@ fun DeviceProcessPager(
 
 @Composable
 private fun ToolBarView(
-    processTool: DeviceProcessTool,
-    currentDevice: DeviceInfo?,
+    processTool: ProcessManager,
+    currentDevice: Device?,
     currentSelect: ProcessInfo?,
     selectProcess: (ProcessInfo?) -> Unit,
 ) {

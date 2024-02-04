@@ -26,9 +26,13 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.virogu.core.bean.*
-import com.virogu.core.tool.FileExplorer
+import com.virogu.core.bean.FileInfoItem
+import com.virogu.core.bean.FileItem
+import com.virogu.core.bean.FileTipsItem
+import com.virogu.core.bean.FileType
+import com.virogu.core.device.Device
 import com.virogu.core.tool.Tools
+import com.virogu.core.tool.manager.FolderManager
 import com.virogu.ui.view.OptionButton
 import com.virogu.ui.view.SelectDeviceView
 import com.virogu.ui.view.TipsView
@@ -41,9 +45,9 @@ fun FileExplorerPager(
     tools: Tools,
     fileListState: LazyListState,
 ) {
-    val fileExplorer = tools.fileExplorer
+    val fileExplorer = tools.folderManager
     val scrollAdapter = rememberScrollbarAdapter(fileListState)
-    val currentDevice by tools.deviceConnectTool.currentSelectedDevice.collectAsState()
+    val currentDevice by tools.deviceScan.currentSelectedDevice.collectAsState()
     var currentSelect: FileInfoItem? by remember(currentDevice) {
         mutableStateOf(null)
     }
@@ -85,40 +89,37 @@ fun FileExplorerPager(
     }
 
     val createNewFolder: () -> Unit = label@{
-        if (currentDevice.isOffline || currentSelect?.type != FileType.DIR) {
+        if (currentSelect?.type != FileType.DIR) {
             return@label
         }
         showNewFolderDialog.value = true
     }
     val createNewFile: () -> Unit = label@{
-        if (currentDevice.isOffline || currentSelect?.type != FileType.DIR) {
+        if (currentSelect?.type != FileType.DIR) {
             return@label
         }
         showNewFileDialog.value = true
     }
     val downloadFile: () -> Unit = label@{
-        if (currentDevice.isOffline || currentSelect == null) {
+        if (currentSelect == null) {
             return@label
         }
         showDownloadFileDialog.value = true
     }
     val uploadFile: () -> Unit = label@{
-        if (currentDevice.isOffline || currentSelect == null) {
+        if (currentSelect == null) {
             return@label
         }
         showUploadFileDialog.value = true
     }
     val deleteFile: () -> Unit = label@{
-        if (currentDevice.isOffline || currentSelect == null) {
+        if (currentSelect == null) {
             return@label
         }
         showDeleteDialog.value = true
     }
 
     val refresh: (FileInfoItem?) -> Unit = label@{
-        if (currentDevice.isOffline) {
-            return@label
-        }
         if (it == null) {
             selectFile(null)
             fileExplorer.refresh(null)
@@ -130,7 +131,7 @@ fun FileExplorerPager(
     }
 
     val chmodFile: () -> Unit = label@{
-        if (currentDevice.isOffline || currentSelect == null) {
+        if (currentSelect == null) {
             return@label
         }
         showChmodDialog.value = true
@@ -146,7 +147,7 @@ fun FileExplorerPager(
                 tools
             )
             ToolBarView(
-                fileExplorer = tools.fileExplorer,
+                folderManager = tools.folderManager,
                 currentSelect = currentSelect,
                 currentDevice = currentDevice,
                 createNewFolder = createNewFolder,
@@ -186,7 +187,7 @@ fun FileExplorerPager(
                 ) {
                     getChildFiles(FileInfoItem.ROOT).forEach {
                         FileView(
-                            fileExplorer = fileExplorer,
+                            folderManager = fileExplorer,
                             fileItem = it,
                             currentSelect = currentSelect,
                             level = 0,
@@ -224,9 +225,9 @@ fun FileExplorerPager(
 
 @Composable
 private fun ToolBarView(
-    fileExplorer: FileExplorer,
+    folderManager: FolderManager,
     currentSelect: FileInfoItem?,
-    currentDevice: DeviceInfo?,
+    currentDevice: Device?,
     createNewFolder: () -> Unit,
     createNewFile: () -> Unit,
     downloadFile: () -> Unit,
@@ -235,7 +236,7 @@ private fun ToolBarView(
     refresh: (FileInfoItem?) -> Unit,
 ) {
     val deviceConnected = currentDevice?.isOnline == true
-    val isBusy by fileExplorer.isBusy.collectAsState()
+    val isBusy by folderManager.isBusy.collectAsState()
     Box(modifier = Modifier.fillMaxWidth().padding(16.dp, 8.dp).height(35.dp)) {
         Row(Modifier.align(Alignment.CenterStart), Arrangement.spacedBy(8.dp)) {
             OptionButton(
@@ -278,7 +279,7 @@ private fun ToolBarView(
                 enable = deviceConnected && !isBusy,
                 painter = Icon.Outlined.AdminPanelSettings
             ) {
-                fileExplorer.restartWithRoot()
+                folderManager.restartWithRoot()
             }
             OptionButton(
                 "刷新",
@@ -307,7 +308,7 @@ private fun ToolBarView(
 }
 
 private fun LazyListScope.FileView(
-    fileExplorer: FileExplorer,
+    folderManager: FolderManager,
     fileItem: FileItem,
     currentSelect: FileInfoItem?,
     level: Int,
@@ -328,7 +329,7 @@ private fun LazyListScope.FileView(
             val currentExpanded = getExpended(fileItem)
             item(key = fileItem.path) {
                 FileInfoItemView(
-                    fileExplorer,
+                    folderManager,
                     fileInfo = fileItem,
                     currentSelect = currentSelect,
                     level = level,
@@ -347,7 +348,7 @@ private fun LazyListScope.FileView(
             if (currentExpanded) {
                 getChildFiles(fileItem).forEach {
                     FileView(
-                        fileExplorer = fileExplorer,
+                        folderManager = folderManager,
                         fileItem = it,
                         currentSelect = currentSelect,
                         level = level + 1,
@@ -376,7 +377,7 @@ private fun LazyListScope.FileView(
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun FileInfoItemView(
-    fileExplorer: FileExplorer,
+    folderManager: FolderManager,
     fileInfo: FileInfoItem,
     currentSelect: FileInfoItem?,
     level: Int,
@@ -400,14 +401,14 @@ private fun FileInfoItemView(
     }
     val copyName by rememberUpdatedState {
         clipboardManager.setText(AnnotatedString(fileInfo.name))
-        fileExplorer.emitTips("${fileInfo.name} 名称已复制")
+        folderManager.emitTips("${fileInfo.name} 名称已复制")
     }
     val copyPath by rememberUpdatedState {
         clipboardManager.setText(AnnotatedString(fileInfo.path))
-        fileExplorer.emitTips("${fileInfo.path} 路径已复制")
+        folderManager.emitTips("${fileInfo.path} 路径已复制")
     }
     val getFileDetails by rememberUpdatedState {
-        fileExplorer.getFileDetails(fileInfo)
+        folderManager.getFileDetails(fileInfo)
     }
     val primaryColor = materialColors.primary.copy(alpha = 0.5f)
     var mouseEnter by remember { mutableStateOf(false) }
@@ -476,7 +477,7 @@ private fun FileInfoItemView(
                                     null
                                 }
                             }
-                            fileExplorer.pushFile(fileInfo, files)
+                            folderManager.pushFile(fileInfo, files)
                             println("onDrop $files")
                         }
                     }

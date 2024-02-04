@@ -18,10 +18,10 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.virogu.core.bean.DeviceInfo
 import com.virogu.core.bean.ScrcpyConfig
-import com.virogu.core.tool.ScrcpyTool
+import com.virogu.core.device.Device
 import com.virogu.core.tool.Tools
+import com.virogu.core.tool.manager.ScrcpyManager
 import com.virogu.ui.view.FileSelectView
 import theme.materialColors
 import theme.textFieldContentPadding
@@ -31,8 +31,8 @@ import javax.swing.JFileChooser
 
 @Composable
 fun ScrcpyView(window: ComposeWindow, tools: Tools) {
-    val connectTool = tools.deviceConnectTool
-    val scrcpyTool = tools.scrcpyTool
+    val connectTool = tools.deviceScan
+    val scrcpyTool = tools.scrcpyManager
     val configTool = tools.configStores.scrcpyConfigStore
 
     val scrcpyConfig = configTool.scrcpyConfigFlow.collectAsState()
@@ -364,13 +364,13 @@ private fun CheckBoxView(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun ColumnScope.ScrcpyOptionView(
-    scrcpyTool: ScrcpyTool,
+    scrcpyManager: ScrcpyManager,
     isBusy: Boolean,
     commonConfig: ScrcpyConfig.CommonConfig,
-    currentDevice: DeviceInfo?,
+    currentDevice: Device?,
     specialConfig: ScrcpyConfig.Config
 ) {
-    val activeDevices = scrcpyTool.activeDevicesFLow.collectAsState()
+    val activeDevices = scrcpyManager.activeDevicesFLow.collectAsState()
     val currentActive = remember(currentDevice, activeDevices.value) {
         mutableStateOf(currentDevice != null && activeDevices.value.contains(currentDevice.serial))
     }
@@ -398,9 +398,9 @@ private fun ColumnScope.ScrcpyOptionView(
         onClick = label@{
             val device = currentDevice ?: return@label
             if (currentActive.value) {
-                scrcpyTool.disConnect(device)
+                scrcpyManager.disConnect(device)
             } else {
-                scrcpyTool.connect(device, commonConfig, specialConfig)
+                scrcpyManager.connect(device, commonConfig, specialConfig)
             }
         },
         modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally),

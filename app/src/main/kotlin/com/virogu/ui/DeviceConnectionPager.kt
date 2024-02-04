@@ -28,8 +28,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.WindowState
 import com.virogu.core.bean.HistoryDevice
-import com.virogu.core.tool.LogTool
 import com.virogu.core.tool.Tools
+import com.virogu.core.tool.log.LogTool
 import com.virogu.ui.view.LogListView
 import logger
 import theme.*
@@ -95,7 +95,7 @@ fun ConnectDeviceView(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         val historyDevicesStore = tools.configStores.historyDevicesStore
-        val connectTool = tools.deviceConnectTool
+        val connectTool = tools.deviceScan
         val isBusy = connectTool.isBusy.collectAsState()
         val history = historyDevicesStore.historyDeviceFlow.collectAsState()
 
@@ -265,7 +265,7 @@ fun DeviceListView(
     tools: Tools,
 ) {
     Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
-        val connectTool = tools.deviceConnectTool
+        val connectTool = tools.deviceScan
         val isBusy = connectTool.isBusy.collectAsState()
         val current = connectTool.currentSelectedDevice.collectAsState()
         val devices = connectTool.connectedDevice.collectAsState()
@@ -316,7 +316,7 @@ fun DeviceListView(
 
 @Composable
 fun DeviceView(tools: Tools) {
-    val connectTool = tools.deviceConnectTool
+    val connectTool = tools.deviceScan
     val isBusy = connectTool.isBusy.collectAsState()
     val current = connectTool.currentSelectedDevice.collectAsState()
 

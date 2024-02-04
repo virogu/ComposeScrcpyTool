@@ -1,9 +1,17 @@
 package com.virogu.core.di
 
+import com.virogu.core.command.AdbCommand
+import com.virogu.core.command.BaseCommand
+import com.virogu.core.command.HdcCommand
+import com.virogu.core.command.PingCommand
 import com.virogu.core.config.*
-import com.virogu.core.tool.*
-import com.virogu.core.tool.impl.SSHToolImpl
-import com.virogu.core.tool.impl.ToolImpl
+import com.virogu.core.tool.ToolImpl
+import com.virogu.core.tool.Tools
+import com.virogu.core.tool.log.LogTool
+import com.virogu.core.tool.manager.ScrcpyManager
+import com.virogu.core.tool.scan.DeviceScan
+import com.virogu.core.tool.ssh.SSHTool
+import com.virogu.core.tool.ssh.SSHToolImpl
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton
 import org.kodein.di.conf.global
@@ -20,40 +28,51 @@ fun initDi(
     }
     init = true
     DI.global.addConfig {
+        bindSingleton<BaseCommand> {
+            BaseCommand()
+        }
+        bindSingleton<PingCommand> {
+            PingCommand()
+        }
+        bindSingleton<AdbCommand> {
+            AdbCommand()
+        }
+        bindSingleton<HdcCommand> {
+            HdcCommand()
+        }
         val tools = ToolImpl()
+        val configStores = tools.configStores
+        bindSingleton<ConfigStores> {
+            configStores
+        }
+        bindSingleton<HistoryDevicesStore> {
+            configStores.historyDevicesStore
+        }
+        bindSingleton<DeviceDescConfigStore> {
+            configStores.deviceDescStore
+        }
+        bindSingleton<ScrcpyConfigStore> {
+            configStores.scrcpyConfigStore
+        }
+        bindSingleton<SimpleConfigStore> {
+            configStores.simpleConfigStore
+        }
         bindSingleton<SSHTool> {
             SSHToolImpl()
         }
         bindSingleton<Tools> {
             tools
         }
-        bindSingleton<ProgressTool> {
-            tools.progressTool
-        }
-        bindSingleton<ConfigStores> {
-            tools.configStores
-        }
-        bindSingleton<DeviceConnectTool> {
-            tools.deviceConnectTool
+        bindSingleton<DeviceScan> {
+            tools.deviceScan
         }
         bindSingleton<LogTool> {
             tools.logTool
         }
-        bindSingleton<ScrcpyTool> {
-            tools.scrcpyTool
+        bindSingleton<ScrcpyManager> {
+            tools.scrcpyManager
         }
-        bindSingleton<HistoryDevicesStore> {
-            tools.configStores.historyDevicesStore
-        }
-        bindSingleton<DeviceDescConfigStore> {
-            tools.configStores.deviceDescStore
-        }
-        bindSingleton<ScrcpyConfigStore> {
-            tools.configStores.scrcpyConfigStore
-        }
-        bindSingleton<SimpleConfigStore> {
-            tools.configStores.simpleConfigStore
-        }
+
         onBind()
     }
 }

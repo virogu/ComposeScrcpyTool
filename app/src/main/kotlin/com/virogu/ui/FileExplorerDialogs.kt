@@ -21,7 +21,7 @@ import androidx.compose.ui.window.rememberDialogState
 import com.virogu.core.bean.FileInfoItem
 import com.virogu.core.bean.FilePermission
 import com.virogu.core.bean.FileType
-import com.virogu.core.tool.FileExplorer
+import com.virogu.core.tool.manager.FolderManager
 import com.virogu.ui.view.FileChooser
 import theme.MainTheme
 import theme.materialColors
@@ -32,7 +32,7 @@ import javax.swing.JFileChooser
 fun NewFolderDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FileExplorer
+    fileExplore: FolderManager
 ) {
     if (currentSelect?.type != FileType.DIR) {
         return
@@ -55,7 +55,7 @@ fun NewFolderDialog(
 fun NewFileDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FileExplorer
+    fileExplore: FolderManager
 ) {
     if (currentSelect?.type != FileType.DIR) {
         return
@@ -78,7 +78,7 @@ fun NewFileDialog(
 fun DeleteFileConfirmDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FileExplorer,
+    fileExplore: FolderManager,
     selectFile: (FileInfoItem?) -> Unit
 ) {
     if (currentSelect == null) {
@@ -109,7 +109,7 @@ fun DeleteFileConfirmDialog(
 fun FileDownloadDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FileExplorer
+    fileExplore: FolderManager
 ) {
     if (currentSelect == null) {
         return
@@ -133,7 +133,7 @@ fun FileDownloadDialog(
 fun FileUploadDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FileExplorer
+    fileExplore: FolderManager
 ) {
     if (currentSelect == null) {
         return
@@ -156,7 +156,7 @@ fun FileUploadDialog(
 fun ChmodFileDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FileExplorer
+    fileExplore: FolderManager
 ) {
     if (currentSelect == null) {
         return

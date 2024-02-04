@@ -43,7 +43,7 @@ val pingCommand: Array<String>? by lazy {
 val commonResourceDir: File by lazy {
     val resourcesDir = System.getProperty("compose.application.resources.dir").orEmpty()
     File(resourcesDir).also {
-        commonLogger.info("workFile: ${it.absolutePath}")
+        commonLogger.info("ResourceDir: ${it.absolutePath}")
     }.absoluteFile
 }
 

@@ -15,10 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.virogu.core.init.InitState
+import com.virogu.core.tool.init.InitTool
 
 @Composable
-fun InitPager(initState: State<InitState>) {
+fun InitPager(initState: State<InitTool.State>) {
     Box(modifier = Modifier.fillMaxSize().padding(32.dp)) {
         Column(
             modifier = Modifier.align(Alignment.Center),

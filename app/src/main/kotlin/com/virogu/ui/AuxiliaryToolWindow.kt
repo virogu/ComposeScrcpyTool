@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
-import com.virogu.core.bean.Auxiliary
+import com.virogu.core.bean.Additional
 import com.virogu.core.tool.Tools
 import theme.Icon
 import theme.Logo
@@ -37,7 +37,7 @@ fun AuxiliaryToolWindow(
         return
     }
     val icon = Icon.Logo
-    val defaultHeight = (50 + Auxiliary.entries.size * (45 + 8)).coerceAtMost(800)
+    val defaultHeight = (50 + Additional.entries.size * (45 + 8)).coerceAtMost(800)
     val state = rememberWindowState(
         placement = WindowPlacement.Floating,
         size = DpSize(60.dp, defaultHeight.dp),
@@ -83,14 +83,14 @@ private fun ToolsView(
     tools: Tools,
     modifier: Modifier = Modifier,
 ) {
-    val auxiliaryTool = tools.auxiliaryTool
+    val auxiliaryTool = tools.additionalManager
     val isBusy by auxiliaryTool.isBusy.collectAsState()
     val currentDevice by auxiliaryTool.selectedOnlineDevice.collectAsState()
 
     val list = remember {
-        Auxiliary.entries.toTypedArray()
+        Additional.entries.toTypedArray()
     }
-    val onClick: (Auxiliary) -> Unit by rememberUpdatedState label@{
+    val onClick: (Additional) -> Unit by rememberUpdatedState label@{
         if (currentDevice == null || isBusy) {
             return@label
         }
