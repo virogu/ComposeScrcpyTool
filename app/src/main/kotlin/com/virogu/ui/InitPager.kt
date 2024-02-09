@@ -15,10 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.virogu.core.tool.init.InitTool
+import com.virogu.core.tool.init.InitState
 
 @Composable
-fun InitPager(initState: State<InitTool.State>) {
+fun InitPager(initState: State<InitState>) {
     Box(modifier = Modifier.fillMaxSize().padding(32.dp)) {
         Column(
             modifier = Modifier.align(Alignment.Center),
@@ -30,9 +30,13 @@ fun InitPager(initState: State<InitTool.State>) {
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth()
             )
+            val subMsg = initState.value.subMsg.trim()
+            if (subMsg.isEmpty()) {
+                return
+            }
             SelectionContainer {
                 Text(
-                    text = initState.value.subMsg.trim(),
+                    text = subMsg,
                     fontFamily = FontFamily.Cursive,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.fillMaxWidth().background(

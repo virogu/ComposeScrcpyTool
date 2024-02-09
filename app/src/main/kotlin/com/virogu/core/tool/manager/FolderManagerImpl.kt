@@ -46,9 +46,7 @@ class FolderManagerImpl(
 
     private fun start() {
         scope.launch {
-            initTool.initStateFlow.first {
-                it.success
-            }
+            initTool.waitStart()
             selectedOnlineDevice.onEach {
                 expandedMap.clear()
                 cancelAllJob()

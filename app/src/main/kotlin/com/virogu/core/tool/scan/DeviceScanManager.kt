@@ -23,9 +23,7 @@ class DeviceScanManager(
         mJob?.cancel()
         mJob = scope.launch {
             logger.info("等待程序初始化")
-            initTool.initStateFlow.first {
-                it.success
-            }
+            initTool.waitStart()
             logger.info("初始化成功")
             delay(100)
             autoRefresh.onEach(::autoRefreshChanged).launchIn(this)

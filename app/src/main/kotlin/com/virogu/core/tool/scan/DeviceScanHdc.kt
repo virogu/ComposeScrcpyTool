@@ -6,7 +6,6 @@ import com.virogu.core.device.Device
 import com.virogu.core.device.DeviceEntityOhos
 import com.virogu.core.device.DevicePlatform
 import com.virogu.core.tool.ssh.SSHTool
-import kotlinx.coroutines.delay
 import org.apache.sshd.client.session.ClientSession
 import org.kodein.di.DI
 import org.kodein.di.conf.global
@@ -108,30 +107,30 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
     }
 
     override suspend fun doOpenTcpPort(ssh: SSHTool, session: ClientSession, port: Int): Boolean {
-        var r = super.doOpenTcpPort(ssh, session, port)
+        val r = super.doOpenTcpPort(ssh, session, port)
         if (r) {
             return true
         }
         ssh.exec(
             session, "param set persist.hdc.mode all",
             "param set persist.hdc.port $port",
-            "hdcd -b"
+            //"hdcd -b"
         ).onSuccess {
-            r = true
             logger.info("open hdc tcp port success")
+            logger.info("需要重启设备，请重启设备后重新连接")
+            ssh.exec(session, "reboot")
         }.onFailure { e ->
             logger.info("open hdc tcp port fail:\n$e")
         }
-        return r
+        return false
     }
 
-    private suspend fun hdcGetProp(serial: String, prop: String, default: String = ""): String {
-        delay(20)
+    private suspend fun hdcGetProp(serial: String, prop: String, default: String = "Unknown"): String {
         return cmd.hdc(
             "-t", serial, "shell",
             "param", "get", prop, timeout = 1, consoleLog = false
         ).getOrNull()?.takeUnless {
-            it.contains("fail", ignoreCase = true)
+            it.isEmpty() || it.contains("fail", ignoreCase = true)
         } ?: default
     }
 

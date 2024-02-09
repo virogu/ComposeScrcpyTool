@@ -42,9 +42,7 @@ class ProcessManagerImpl(
 
     private fun start() {
         scope.launch {
-            initTool.initStateFlow.first {
-                it.success
-            }
+            initTool.waitStart()
             selectedOnlineDevice.onEach {
                 initJob()
             }.launchIn(scope)

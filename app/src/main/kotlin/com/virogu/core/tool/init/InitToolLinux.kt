@@ -1,9 +1,6 @@
 package com.virogu.core.tool.init
 
 import com.virogu.core.command.BaseCommand
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
@@ -15,12 +12,9 @@ class InitToolLinux : InitToolDefault() {
 
     private val cmd: BaseCommand by DI.global.instance<BaseCommand>()
 
-    override fun doInit() {
-        runBlocking {
-            withContext(Dispatchers.IO) {
-                innerInit()
-            }
-        }
+    override suspend fun doInit() {
+        innerInit()
+        initStateFlow.emit(InitState.Success)
     }
 
     private suspend fun innerInit() = runCatching {
@@ -28,10 +22,10 @@ class InitToolLinux : InitToolDefault() {
         listOf(
             File(workDir, "app/adb"),
             File(workDir, "app/scrcpy"),
+            File(workDir, "app/hdc"),
         ).forEach { f ->
             chmodX(f.absolutePath)
         }
-        initStateFlow.emit(InitTool.State(true))
     }
 
     private fun prepareResource(origin: File, target: File, child: String) {

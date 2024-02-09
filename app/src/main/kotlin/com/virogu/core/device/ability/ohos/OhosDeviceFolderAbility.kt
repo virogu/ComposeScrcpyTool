@@ -53,7 +53,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     }
 
     override suspend fun createDir(dir: String, newFile: String): Result<String> = cmd.hdc(
-        "-t", serial, "shell", "mkdir '${dir}/${newFile}'",
+        "-t", serial, "shell", "mkdir -p '${dir}/${newFile}'",
         showLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
@@ -129,7 +129,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         fromFile.forEach { f ->
             cmd.hdc(
                 "-t", serial,
-                "file", "recv", "-a", f.path, toLocalFile.absolutePath,
+                "file", "recv", "-a", "\"${f.path}\"", "\"${toLocalFile.absolutePath}\"",
                 showLog = true
             ).onSuccess {
                 appendLine(it)
@@ -142,9 +142,9 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     override suspend fun pushFile(toFile: FileInfoItem, fromLocalFiles: List<File>): String = buildString {
         fromLocalFiles.forEach { f ->
             val args = if (f.isDirectory) {
-                arrayOf("${f.absolutePath}\\.", "${toFile.path}/${f.name}/.")
+                arrayOf("\"${f.absolutePath}\\.\"", "\"${toFile.path}/${f.name}/.\"")
             } else {
-                arrayOf(f.absolutePath, "${toFile.path}/${f.name}")
+                arrayOf("\"${f.absolutePath}\"", "\"${toFile.path}/${f.name}\"")
             }
             cmd.hdc(
                 "-t", serial,

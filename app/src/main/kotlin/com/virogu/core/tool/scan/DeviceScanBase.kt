@@ -60,8 +60,6 @@ abstract class DeviceScanBase(
             if (!r) {
                 throw IllegalStateException("open device port fail")
             }
-        }.onFailure {
-            logger.info("$it")
         }.isSuccess
     }
 
