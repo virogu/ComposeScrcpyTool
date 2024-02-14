@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit
 open class BaseCommand {
 
     protected open val workDir: File? = null
+    private val processMap = HashMap<Long, Process>()
 
     val commonCmd by lazy {
         when (currentPlateForm) {
@@ -40,7 +41,12 @@ open class BaseCommand {
             if (command.isEmpty()) {
                 return@withContext Result.failure(IllegalArgumentException("command is empty!"))
             }
-            val process = ProcessBuilder(*commonCmd, *command).fixEnv(env, workDir).start()
+            val process = ProcessBuilder(*commonCmd, *command).fixEnv(env, workDir).start().also { p ->
+                addProcess(p)
+                p.onExit().thenApply {
+                    removeProcess(it.pid())
+                }
+            }
             val s = async {
                 BufferedReader(InputStreamReader(process.inputStream, charset)).use {
                     buildString {
@@ -93,7 +99,12 @@ open class BaseCommand {
                 return@withContext null
             }
             val processBuilder = ProcessBuilder(*commonCmd, *command).fixEnv(env, workDir)
-            val progress = processBuilder.start()
+            val progress = processBuilder.start().also { p ->
+                addProcess(p)
+                p.onExit().thenApply {
+                    removeProcess(it.pid())
+                }
+            }
             scope.launch {
                 BufferedReader(progress.inputReader(charset)).use {
                     it.lineSequence().forEach { s ->
@@ -137,13 +148,35 @@ open class BaseCommand {
         | ------ """.trimMargin()
     }
 
+    private fun addProcess(process: Process) {
+        synchronized(processMap) {
+            processMap[process.pid()]?.destroyRecursively()
+            processMap[process.pid()] = process
+        }
+    }
+
+    private fun removeProcess(pid: Long) {
+        synchronized(processMap) {
+            processMap.remove(pid)?.destroyRecursively()
+        }
+    }
+
     private fun Process.destroyRecursively() {
         descendants().forEach {
-            logger.debug("destroy child [${it.pid()}]")
+            //println("destroy child [${it.pid()}]")
             it.destroy()
         }
-        logger.debug("destroy [${pid()}]")
+        //println("destroy [${pid()}]")
         destroy()
+    }
+
+    fun destroy() {
+        synchronized(processMap) {
+            processMap.onEach {
+                it.value.destroyRecursively()
+            }
+            processMap.clear()
+        }
     }
 
     companion object {

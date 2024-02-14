@@ -108,10 +108,10 @@ class ScrcpyManagerImpl : ScrcpyManager {
 
     private fun Process.destroyRecursively() {
         descendants().forEach {
-            logger.debug("destroy child [${it.pid()}]")
+            //println("destroy child [${it.pid()}]")
             it.destroy()
         }
-        logger.debug("destroy [${pid()}]")
+        //println("destroy [${pid()}]")
         destroy()
     }
 

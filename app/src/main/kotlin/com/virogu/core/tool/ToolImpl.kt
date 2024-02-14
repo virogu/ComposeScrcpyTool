@@ -1,6 +1,10 @@
 package com.virogu.core.tool
 
 import com.virogu.core.PlateForm
+import com.virogu.core.command.AdbCommand
+import com.virogu.core.command.BaseCommand
+import com.virogu.core.command.HdcCommand
+import com.virogu.core.command.PingCommand
 import com.virogu.core.config.ConfigStores
 import com.virogu.core.config.impl.ConfigStoreImpl
 import com.virogu.core.currentPlateForm
@@ -13,12 +17,24 @@ import com.virogu.core.tool.log.LogToolImpl
 import com.virogu.core.tool.manager.*
 import com.virogu.core.tool.scan.DeviceScan
 import com.virogu.core.tool.scan.DeviceScanManager
+import com.virogu.core.tool.ssh.SSHTool
+import com.virogu.core.tool.ssh.SSHToolImpl
 
 class ToolImpl : Tools {
 
     override val configStores: ConfigStores = ConfigStoreImpl()
 
     override val logTool: LogTool = LogToolImpl()
+
+    override val sshTool: SSHTool = SSHToolImpl()
+
+    override val baseCommand: BaseCommand = BaseCommand()
+
+    override val pingCommand: PingCommand = PingCommand()
+
+    override val adbCommand: AdbCommand = AdbCommand()
+
+    override val hdcCommand: HdcCommand = HdcCommand()
 
     override val initTool: InitTool by lazy {
         when (currentPlateForm) {
@@ -47,6 +63,10 @@ class ToolImpl : Tools {
     override fun stop() {
         scrcpyManager.disConnect()
         deviceScan.stop()
+        baseCommand.destroy()
+        pingCommand.destroy()
+        hdcCommand.destroy()
+        adbCommand.destroy()
         logTool.stop()
     }
 

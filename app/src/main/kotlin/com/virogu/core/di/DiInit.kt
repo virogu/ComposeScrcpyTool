@@ -11,7 +11,6 @@ import com.virogu.core.tool.log.LogTool
 import com.virogu.core.tool.manager.ScrcpyManager
 import com.virogu.core.tool.scan.DeviceScan
 import com.virogu.core.tool.ssh.SSHTool
-import com.virogu.core.tool.ssh.SSHToolImpl
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton
 import org.kodein.di.conf.global
@@ -28,20 +27,23 @@ fun initDi(
     }
     init = true
     DI.global.addConfig {
-        bindSingleton<BaseCommand> {
-            BaseCommand()
-        }
-        bindSingleton<PingCommand> {
-            PingCommand()
-        }
-        bindSingleton<AdbCommand> {
-            AdbCommand()
-        }
-        bindSingleton<HdcCommand> {
-            HdcCommand()
-        }
         val tools = ToolImpl()
         val configStores = tools.configStores
+        bindSingleton<Tools> {
+            tools
+        }
+        bindSingleton<BaseCommand> {
+            tools.baseCommand
+        }
+        bindSingleton<PingCommand> {
+            tools.pingCommand
+        }
+        bindSingleton<AdbCommand> {
+            tools.adbCommand
+        }
+        bindSingleton<HdcCommand> {
+            tools.hdcCommand
+        }
         bindSingleton<ConfigStores> {
             configStores
         }
@@ -58,10 +60,7 @@ fun initDi(
             configStores.simpleConfigStore
         }
         bindSingleton<SSHTool> {
-            SSHToolImpl()
-        }
-        bindSingleton<Tools> {
-            tools
+            tools.sshTool
         }
         bindSingleton<DeviceScan> {
             tools.deviceScan
@@ -72,7 +71,6 @@ fun initDi(
         bindSingleton<ScrcpyManager> {
             tools.scrcpyManager
         }
-
         onBind()
     }
 }
