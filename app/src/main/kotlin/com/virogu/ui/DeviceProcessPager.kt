@@ -1,6 +1,5 @@
 package com.virogu.ui
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
@@ -27,6 +25,7 @@ import com.virogu.core.bean.ProcessInfo
 import com.virogu.core.device.Device
 import com.virogu.core.tool.Tools
 import com.virogu.core.tool.manager.ProcessManager
+import com.virogu.ui.view.BusyProcessView
 import com.virogu.ui.view.OptionButton
 import com.virogu.ui.view.SelectDeviceView
 import com.virogu.ui.view.TipsView
@@ -164,21 +163,7 @@ private fun ToolBarView(
                 processTool.refresh()
             }
         }
-        if (isBusy) {
-            val infiniteTransition by rememberInfiniteTransition().animateFloat(
-                initialValue = 0f,
-                targetValue = 360f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(1000, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart
-                )
-            )
-            Icon(
-                modifier = Modifier.align(Alignment.CenterEnd).size(24.dp).rotate(infiniteTransition),
-                painter = Icon.Outlined.ClockLoader,
-                contentDescription = "运行状态"
-            )
-        }
+        BusyProcessView(modifier = Modifier.align(Alignment.CenterEnd).size(24.dp), isBusy = isBusy)
     }
 }
 

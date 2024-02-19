@@ -68,7 +68,7 @@ abstract class DeviceScanAdb(configStores: ConfigStores) : DeviceScanBase(config
     }
 
     override suspend fun refreshDevice(): List<Device> = try {
-        val process = cmd.adb("devices", "-l").getOrThrow()
+        val process = cmd.adb("devices", "-l", showLog = false, consoleLog = false).getOrThrow()
         val result = process.split("\n")
         result.mapNotNull { line ->
             //127.0.0.1:58526        device product:windows_x86_64 model:Subsystem_for_Android_TM_ device:windows_x86_64 transport_id:5
@@ -110,7 +110,7 @@ abstract class DeviceScanAdb(configStores: ConfigStores) : DeviceScanBase(config
             it.isOnline
         }
     } catch (e: Throwable) {
-        e.printStackTrace()
+        //e.printStackTrace()
         emptyList()
     }
 
@@ -119,7 +119,10 @@ abstract class DeviceScanAdb(configStores: ConfigStores) : DeviceScanBase(config
     }
 
     private suspend fun adbGetProp(serial: String, prop: String, default: String = ""): String {
-        return cmd.adb("-s", serial, "shell", "getprop", prop).getOrNull() ?: default
+        return cmd.adb(
+            "-s", serial, "shell", "getprop", prop,
+            consoleLog = false, showLog = false
+        ).getOrNull() ?: default
     }
 
     companion object {

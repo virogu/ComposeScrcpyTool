@@ -2,7 +2,7 @@
 
 package com.virogu.ui
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,7 +16,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -33,6 +32,7 @@ import com.virogu.core.bean.FileType
 import com.virogu.core.device.Device
 import com.virogu.core.tool.Tools
 import com.virogu.core.tool.manager.FolderManager
+import com.virogu.ui.view.BusyProcessView
 import com.virogu.ui.view.OptionButton
 import com.virogu.ui.view.SelectDeviceView
 import com.virogu.ui.view.TipsView
@@ -223,6 +223,7 @@ fun FileExplorerPager(
     ChmodFileDialog(showChmodDialog, currentSelect, fileExplorer)
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun ToolBarView(
     folderManager: FolderManager,
@@ -275,7 +276,7 @@ private fun ToolBarView(
                 deleteFile()
             }
             OptionButton(
-                "以root模式连接",
+                "挂载root",
                 enable = deviceConnected && !isBusy,
                 painter = Icon.Outlined.AdminPanelSettings
             ) {
@@ -289,21 +290,7 @@ private fun ToolBarView(
                 refresh(null)
             }
         }
-        if (isBusy) {
-            val infiniteTransition by rememberInfiniteTransition().animateFloat(
-                initialValue = 0f,
-                targetValue = 360f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(1000, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart
-                )
-            )
-            Icon(
-                modifier = Modifier.align(Alignment.CenterEnd).size(24.dp).rotate(infiniteTransition),
-                painter = Icon.Outlined.ClockLoader,
-                contentDescription = "运行状态"
-            )
-        }
+        BusyProcessView(modifier = Modifier.align(Alignment.CenterEnd).size(24.dp), isBusy = isBusy)
     }
 }
 

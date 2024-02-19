@@ -1,7 +1,6 @@
 package com.virogu.core.command
 
-import com.virogu.core.PlateForm
-import com.virogu.core.currentPlateForm
+import com.virogu.core.isDebug
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -20,20 +19,12 @@ open class BaseCommand {
     protected open val workDir: File? = null
     private val processMap = HashMap<Long, Process>()
 
-    val commonCmd by lazy {
-        when (currentPlateForm) {
-            is PlateForm.Windows -> arrayOf("cmd.exe", "/c")
-            is PlateForm.Linux -> arrayOf("bash", "-c")
-            else -> emptyArray()
-        }
-    }
-
     open suspend fun exec(
         vararg command: String,
         workDir: File? = this.workDir,
         env: Map<String, String>? = null,
         showLog: Boolean = false,
-        consoleLog: Boolean = false,
+        consoleLog: Boolean = isDebug,
         timeout: Long = 10L,
         charset: Charset = Charsets.UTF_8
     ): Result<String> = withContext(Dispatchers.IO) {
@@ -41,7 +32,7 @@ open class BaseCommand {
             if (command.isEmpty()) {
                 return@withContext Result.failure(IllegalArgumentException("command is empty!"))
             }
-            val process = ProcessBuilder(*commonCmd, *command).fixEnv(env, workDir).start().also { p ->
+            val process = ProcessBuilder(*command).fixEnv(env, workDir).start().also { p ->
                 addProcess(p)
                 p.onExit().thenApply {
                     removeProcess(it.pid())
@@ -98,7 +89,7 @@ open class BaseCommand {
             if (command.isEmpty()) {
                 return@withContext null
             }
-            val processBuilder = ProcessBuilder(*commonCmd, *command).fixEnv(env, workDir)
+            val processBuilder = ProcessBuilder(*command).fixEnv(env, workDir)
             val progress = processBuilder.start().also { p ->
                 addProcess(p)
                 p.onExit().thenApply {

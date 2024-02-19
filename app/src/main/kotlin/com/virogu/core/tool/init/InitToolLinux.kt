@@ -47,25 +47,21 @@ class InitToolLinux : InitToolDefault() {
         }
     }
 
-    private suspend fun chmodX(absolutePath: String) {
-        val runnable = cmd.exec(
-            "sh", "-c", "test -x '${absolutePath}' && echo '1' || echo '0'",
-        ).fold({
-            println("test -x ${absolutePath}, result: [$it]")
-            it.trim() == "1"
-        }, {
-            println("[$it]")
-            false
-        })
-        if (runnable) {
-            return
-        }
-        cmd.exec(
-            "chmod", "+x", absolutePath
-        ).onSuccess {
-            println("chmod +x ${absolutePath}, result: [$it]")
+    private suspend fun chmodX(absolutePath: String) = runCatching {
+        //val runnable = cmd.exec("test", "-x", "'${absolutePath}' && echo '1' || echo '0'").fold({
+        //    println("test -x ${absolutePath}, result: [$it]")
+        //    it.trim() == "1"
+        //}, {
+        //    println("test error [$it]")
+        //    false
+        //})
+        //if (runnable) {
+        //    return@runCatching
+        //}
+        cmd.exec("sh", "-c", "chmod +x '${absolutePath}'").onSuccess {
+            println("chmod +x ${absolutePath}, success: [$it]")
         }.onFailure {
-            println("chmod +x ${absolutePath}, result: [$it]")
+            println("chmod +x ${absolutePath}, fail: [$it]")
         }
     }
 

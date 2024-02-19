@@ -31,6 +31,13 @@ class AndroidDeviceScrcpyAbility(
         commonWorkDir.resolve("app")
     }
 
+    private val executable by lazy {
+        when (currentPlateForm) {
+            is PlateForm.Linux -> arrayOf("./scrcpy")
+            else -> arrayOf("cmd.exe", "/c", "scrcpy")
+        }
+    }
+
     private val environment: Map<String, String> by lazy {
         when (currentPlateForm) {
             is PlateForm.Linux -> mapOf(
@@ -51,7 +58,7 @@ class AndroidDeviceScrcpyAbility(
         val serial = device.serial
         val title = device.showName
         val command = arrayOf(
-            "scrcpy", "-s", serial, "--window-title=$title",
+            *executable, "-s", serial, "--window-title=$title",
             *commonConfig.scrcpyArgs().toTypedArray(),
             *config.scrcpyArgs().toTypedArray(),
         )

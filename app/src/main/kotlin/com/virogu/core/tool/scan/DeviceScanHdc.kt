@@ -83,7 +83,7 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
                 it.isOnline
             }
         } catch (e: Throwable) {
-            e.printStackTrace()
+            //e.printStackTrace()
             emptyList()
         }
         return list1 + list2

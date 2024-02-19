@@ -4,6 +4,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 
+const val isDebug = true
+
 val commonLogger: Logger by lazy {
     LoggerFactory.getLogger("CommonLogger")
 }

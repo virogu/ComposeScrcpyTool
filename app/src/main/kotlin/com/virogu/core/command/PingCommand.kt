@@ -16,13 +16,17 @@ class PingCommand : BaseCommand() {
         }
     }
 
+    private val ping: String = "ping"
+
+    private val pingArgs by lazy {
+        when (currentPlateForm) {
+            is PlateForm.Linux -> arrayOf("-c", "1")
+            else -> arrayOf("-n", "1")
+        }
+    }
+
     suspend fun ping(ip: String): Boolean {
-        val pingCommand: Array<String> = when (currentPlateForm) {
-            is PlateForm.Windows -> arrayOf("ping", ip, "-n", "1")
-            is PlateForm.Linux -> arrayOf("ping", ip, "-c", "1")
-            else -> null
-        } ?: return false
-        val ping = exec(*pingCommand, charset = charset).getOrNull()
+        val ping = exec(ping, ip, *pingArgs, charset = charset).getOrNull()
         return !(ping == null || !ping.contains("ttl=", true))
     }
 
