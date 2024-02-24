@@ -66,9 +66,9 @@ dependencies {
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(compose.desktop.currentOs)
     testImplementation(libs.kotlinx.coroutines.test)
-    //testImplementation(libs.junit.jupiter)
-    //testImplementation(libs.junit.jupiter.api)
-    //testImplementation(libs.junit.jupiter.engine)
+
+    testImplementation(files("libs\\hdc\\device-file-explorer-4.0.0.600.jar"))
+    testImplementation(files("libs\\hdc\\ohos-hdclib-4.0.0.600.jar"))
 }
 
 buildConfig {
