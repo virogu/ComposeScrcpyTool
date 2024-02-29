@@ -10,8 +10,8 @@ plugins {
 }
 
 val appBuildInfo: AppBuildInfo by project
-val javaVersion = JavaVersion.VERSION_21
-val javaVersionString = "21"
+val javaVersion = JavaVersion.VERSION_17
+val javaVersionString = "17"
 
 java {
     sourceCompatibility = javaVersion
