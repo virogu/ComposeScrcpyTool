@@ -18,6 +18,8 @@ open class BaseCommand {
 
     protected open val workDir: File? = null
     private val processMap = HashMap<Long, Process>()
+    protected var isActive = true
+        private set
 
     open suspend fun exec(
         vararg command: String,
@@ -162,12 +164,23 @@ open class BaseCommand {
     }
 
     fun destroy() {
+        isActive = false
+        runBlocking(Dispatchers.IO) {
+            try {
+                killServer()
+            } catch (_: Throwable) {
+            }
+        }
         synchronized(processMap) {
             processMap.onEach {
                 it.value.destroyRecursively()
             }
             processMap.clear()
         }
+    }
+
+    protected open suspend fun killServer() {
+
     }
 
     companion object {

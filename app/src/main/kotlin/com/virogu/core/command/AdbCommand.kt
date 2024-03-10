@@ -40,6 +40,9 @@ class AdbCommand : BaseCommand() {
         timeout: Long = 10L,
         charset: Charset = Charsets.UTF_8
     ): Result<String> {
+        if (!isActive) {
+            return Result.failure(IllegalStateException("server is not active"))
+        }
         return exec(
             *executable,
             *command,
@@ -50,4 +53,10 @@ class AdbCommand : BaseCommand() {
             charset = charset
         )
     }
+
+    override suspend fun killServer() {
+        super.killServer()
+        exec(*executable, "kill-server", consoleLog = true)
+    }
+
 }

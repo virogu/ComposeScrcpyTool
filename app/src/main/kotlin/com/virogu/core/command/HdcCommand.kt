@@ -36,6 +36,9 @@ class HdcCommand : BaseCommand() {
         timeout: Long = 10L,
         charset: Charset = Charset.forName("GBK")
     ): Result<String> {
+        if (!isActive) {
+            return Result.failure(IllegalStateException("server is not active"))
+        }
         return exec(
             *executable,
             *command,
@@ -45,6 +48,11 @@ class HdcCommand : BaseCommand() {
             timeout = timeout,
             charset = charset
         )
+    }
+
+    override suspend fun killServer() {
+        super.killServer()
+        exec(*executable, "kill", consoleLog = true)
     }
 
     companion object {
