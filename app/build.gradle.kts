@@ -95,6 +95,12 @@ buildConfig {
 compose.desktop {
     application {
         mainClass = "MainKt"
+        jvmArgs += listOf(
+            "-XX:+HeapDumpOnOutOfMemoryError",
+            "-Dfile.encoding=GBK",
+            "-XX:+UseParallelGC"
+        )
+        //args += listOf("-customArgument")
         nativeDistributions {
             modules("java.naming", "jdk.unsupported", "java.rmi", "java.management")
             //includeAllModules = true
@@ -102,7 +108,7 @@ compose.desktop {
                 println("resources: ${it.asFile.absolutePath}")
             })
             outputBaseDir.set(project.rootDir.resolve("out"))
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Msi, TargetFormat.Deb)
             packageName = appBuildInfo.programName
             vendor = appBuildInfo.packageVendor
             copyright = appBuildInfo.copyright
