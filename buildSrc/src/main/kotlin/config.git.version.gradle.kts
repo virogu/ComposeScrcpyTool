@@ -1,7 +1,7 @@
-﻿import java.io.ByteArrayOutputStream
+﻿import bean.AppBuildInfo
+import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
-import bean.AppBuildInfo
 
 val gitCommitCount: Int = with(ByteArrayOutputStream()) {
     use { os ->
@@ -13,7 +13,7 @@ val gitCommitCount: Int = with(ByteArrayOutputStream()) {
             standardOutput = os
         }
         val revision = os.toString().trim()
-        return@with 60 + revision.toInt()
+        return@with 10000 + revision.toInt()
     }
 }
 val buildFormatDate: String = with(SimpleDateFormat("yyMMdd")) {
@@ -32,7 +32,7 @@ val gitCommitShortId: String = with(ByteArrayOutputStream()) {
 }
 
 val packageVersionTriple: Triple<Int, Int, Int> by lazy {
-    val MAJOR = (gitCommitCount / 100 / 100).coerceAtLeast(1)
+    val MAJOR = (gitCommitCount / 100 / 100) + 1
     val MINOR = (gitCommitCount / 100 % 100)
     val PATCH = gitCommitCount % 100
     Triple(MAJOR, MINOR, PATCH)

@@ -18,7 +18,7 @@ private fun renameDistribution() {
             f.isFile && f.name.endsWith(".${it}")
         }?.forEach { f ->
             val newName = with(appBuildInfo) {
-                "${installProgramName}-${msiPackageVersion}-${gitCommitCount}_${gitCommitShortId}.${f.extension}"
+                "${installProgramName}-${msiPackageVersion}_${gitCommitShortId}.${f.extension}"
             }
             println("rename [${f.name}] to [$newName]")
             f.renameTo(File(f.parentFile, newName))
@@ -62,8 +62,7 @@ val zipDistributable by tasks.registering(Zip::class) {
     // installProgramName-msiPackageVersion-gitCommitCount_gitCommitShortid.zip
     with(appBuildInfo) {
         archiveBaseName.set(installProgramName)
-        archiveAppendix.set(msiPackageVersion)
-        archiveVersion.set("${gitCommitCount}_${gitCommitShortId}")
+        archiveVersion.set("${msiPackageVersion}_$gitCommitShortId")
         archiveExtension.set("zip")
     }
     destinationDirectory.set(outputDir.resolve("zip"))
