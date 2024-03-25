@@ -15,7 +15,6 @@ class ProcessManagerImpl(
 ) : ProcessManager {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val mutex = Mutex()
-    private val jobsMutex = Mutex()
     private val loadingJobs = mutableMapOf<String, Job>()
     private var mJob: Job? = null
 
@@ -113,31 +112,35 @@ class ProcessManagerImpl(
 
     private fun withLock(tag: String, block: suspend CoroutineScope.() -> Unit) {
         scope.launch {
+            isBusy.emit(true)
             mutex.withLock {
                 try {
                     block()
                 } catch (_: Throwable) {
-                } finally {
                 }
             }
         }.also { job ->
-            jobLock {
-                it[tag]?.cancel()
-                it[tag] = job
-            }
-            job.invokeOnCompletion {
-                jobLock {
-                    it.remove(tag)
-                }
-            }
+            addJob(tag, job)
         }
     }
 
-    private fun <T> jobLock(block: suspend CoroutineScope.(MutableMap<String, Job>) -> T) = runBlocking {
-        jobsMutex.withLock {
-            block(loadingJobs).also {
-                isBusy.emit(mutex.isLocked)
+    private fun addJob(tag: String, job: Job) {
+        synchronized(loadingJobs) {
+            loadingJobs.remove(tag)?.cancel()
+            job.invokeOnCompletion {
+                runBlocking(Dispatchers.IO) {
+                    isBusy.emit(mutex.isLocked)
+                }
+                removeJob(tag)
             }
+            loadingJobs[tag] = job
         }
     }
+
+    private fun removeJob(tag: String) {
+        synchronized(loadingJobs) {
+            loadingJobs.remove(tag)?.cancel()
+        }
+    }
+
 }

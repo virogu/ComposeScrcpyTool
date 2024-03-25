@@ -5,11 +5,8 @@ import com.virogu.core.config.ConfigStores
 import com.virogu.core.device.Device
 import com.virogu.core.tool.ssh.SSHTool
 import com.virogu.core.tool.ssh.SSHVerifyTools
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.apache.sshd.client.session.ClientSession
@@ -86,14 +83,16 @@ abstract class DeviceScanBase(
 
     protected fun withLock(block: suspend CoroutineScope.() -> Unit) {
         scope.launch {
+            isBusy.emit(true)
             mutex.withLock {
-                isBusy.emit(true)
                 try {
                     block()
                 } catch (_: Throwable) {
-                } finally {
-                    isBusy.emit(false)
                 }
+            }
+        }.invokeOnCompletion {
+            runBlocking(Dispatchers.IO) {
+                isBusy.emit(mutex.isLocked)
             }
         }
     }

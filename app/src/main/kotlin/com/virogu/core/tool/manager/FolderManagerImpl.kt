@@ -22,7 +22,6 @@ class FolderManagerImpl(
 ) : FolderManager {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val mutex = Mutex()
-    private val jobsMutex = Mutex()
     private val fileMapMutex = Mutex()
 
     private val fileChildMap: SnapshotStateMap<String, List<FileItem>> = mutableStateMapOf()
@@ -51,7 +50,7 @@ class FolderManagerImpl(
                 expandedMap.clear()
                 cancelAllJob()
                 refresh(null)
-            }.launchIn(scope)
+            }.launchIn(this)
         }
     }
 
@@ -147,7 +146,7 @@ class FolderManagerImpl(
     }
 
     override fun getChild(fileInfo: FileInfoItem): List<FileItem> {
-        //println("getChild ${fileInfo.path}")
+        println("getChild ${fileInfo.path}")
         if (currentDevice == null) {
             return listOf(FileTipsItem.Error(fileInfo.path, "未连接设备"))
         }
@@ -162,10 +161,7 @@ class FolderManagerImpl(
         if (children != null) {
             return children
         }
-        val existJob = jobLock {
-            it.containsKey(path)
-        }
-        if (existJob) {
+        if (getJob(path) != null) {
             return listOf(FileTipsItem.Info(path, "Loading..."))
         }
         withLock(path) {
@@ -230,33 +226,52 @@ class FolderManagerImpl(
 
     private fun withLock(tag: String, block: suspend CoroutineScope.() -> Unit) {
         scope.launch {
+            isBusy.emit(true)
             mutex.withLock {
-                //isBusy.emit(true)
                 try {
                     block()
                 } catch (_: Throwable) {
-                } finally {
-                    // isBusy.emit(false)
                 }
             }
         }.also { job ->
-            jobLock {
-                it[tag]?.cancel()
-                it[tag] = job
-            }
-            job.invokeOnCompletion {
-                jobLock {
-                    it.remove(tag)
-                }
-            }
+            addJob(tag, job)
         }
     }
 
-    private fun <T> jobLock(block: suspend CoroutineScope.(MutableMap<String, Job>) -> T) = runBlocking {
-        jobsMutex.withLock {
-            block(loadingJobs).also {
-                isBusy.emit(mutex.isLocked)
+    private fun addJob(tag: String, job: Job) {
+        synchronized(loadingJobs) {
+            loadingJobs.remove(tag)?.cancel()
+            job.invokeOnCompletion {
+                runBlocking(Dispatchers.IO) {
+                    isBusy.emit(mutex.isLocked)
+                }
+                removeJob(tag)
             }
+            loadingJobs[tag] = job
+        }
+    }
+
+    private fun getJob(tag: String): Job? {
+        synchronized(loadingJobs) {
+            return loadingJobs[tag]
+        }
+    }
+
+    private fun removeJob(tag: String) {
+        synchronized(loadingJobs) {
+            loadingJobs.remove(tag)?.cancel()
+        }
+    }
+
+    private fun cancelAllJob() {
+        synchronized(loadingJobs) {
+            loadingJobs.forEach { (_, v) ->
+                v.cancel()
+            }
+            loadingJobs.clear()
+        }
+        runBlocking(Dispatchers.IO) {
+            isBusy.emit(false)
         }
     }
 
@@ -265,15 +280,6 @@ class FolderManagerImpl(
     ) = runBlocking {
         fileMapMutex.withLock {
             block(fileChildMap)
-        }
-    }
-
-    private fun cancelAllJob() {
-        jobLock {
-            it.forEach { (_, v) ->
-                v.cancel()
-            }
-            it.clear()
         }
     }
 
