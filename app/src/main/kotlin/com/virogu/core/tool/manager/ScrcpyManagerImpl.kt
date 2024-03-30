@@ -86,7 +86,7 @@ class ScrcpyManagerImpl : ScrcpyManager {
             }
         }.invokeOnCompletion {
             runBlocking(Dispatchers.IO) {
-                isBusy.emit(mutex.isLocked)
+                isBusy.emit(false)
             }
         }
     }

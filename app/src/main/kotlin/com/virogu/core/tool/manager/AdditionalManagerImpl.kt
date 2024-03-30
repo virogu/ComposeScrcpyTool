@@ -52,7 +52,7 @@ class AdditionalManagerImpl(deviceScan: DeviceScan) : AdditionalManager {
             loadingJobs.remove(tag)?.cancel()
             job.invokeOnCompletion {
                 runBlocking(Dispatchers.IO) {
-                    isBusy.emit(mutex.isLocked)
+                    isBusy.emit(false)
                 }
                 removeJob(tag)
             }

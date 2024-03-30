@@ -121,11 +121,7 @@ private fun ApplicationScope.TrayView(
             |已启动设备：${startedSize.value}
             |自动刷新：${if (autoRefresh) "开" else "关"}
         """.trimMargin(),
-        onAction = {
-            if (state.isMinimized) {
-                state.isMinimized = false
-            }
-        },
+        onAction = { state.isMinimized = !state.isMinimized },
         menu = {
             CheckboxItem("窗口置顶", alwaysOnTop) {
                 onTopChanged(it)
