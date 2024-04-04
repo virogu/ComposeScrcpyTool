@@ -1,7 +1,7 @@
 package com.virogu.core.tool.manager
 
-import com.virogu.core.bean.ProcessInfo
 import com.virogu.core.device.Device
+import com.virogu.core.device.process.ProcessInfo
 import com.virogu.core.tool.init.InitTool
 import com.virogu.core.tool.scan.DeviceScan
 import kotlinx.coroutines.*

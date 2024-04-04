@@ -1,6 +1,6 @@
 package com.virogu.core.tool.manager
 
-import com.virogu.core.bean.ProcessInfo
+import com.virogu.core.device.process.ProcessInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow

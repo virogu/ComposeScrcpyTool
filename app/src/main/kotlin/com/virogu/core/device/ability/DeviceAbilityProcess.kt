@@ -1,6 +1,6 @@
 package com.virogu.core.device.ability
 
-import com.virogu.core.bean.ProcessInfo
+import com.virogu.core.device.process.ProcessInfo
 
 /**
  * @author Virogu

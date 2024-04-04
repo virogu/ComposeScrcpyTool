@@ -1,9 +1,9 @@
 package com.virogu.core.device.ability.ohos
 
-import com.virogu.core.bean.ProcessInfo
 import com.virogu.core.command.HdcCommand
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityProcess
+import com.virogu.core.device.process.ProcessInfo
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
@@ -18,6 +18,7 @@ class OhosDeviceProcessAbility(device: Device) : DeviceAbilityProcess {
     }
 
     override suspend fun refresh(): List<ProcessInfo> {
+        //hdc shell "aa dump -a"
         return emptyList()
     }
 
