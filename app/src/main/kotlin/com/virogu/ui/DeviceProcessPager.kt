@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -97,7 +99,7 @@ fun DeviceProcessPager(
                 ) {
                     processes.forEach {
                         item {
-                            ProcessItemView(it, currentSelect) {
+                            ProcessItemView(processTool, it, currentSelect) {
                                 currentSelect = it
                             }
                         }
@@ -218,13 +220,13 @@ private fun ProcessItemTitle(
                 }
             }
             Spacer(spacerModifier)
-            Box(boxModifier.weight(2f)) {
-                Row(tabModifier.align(Alignment.Center)) {
-                    Spacer(icModifier)
-                    Text("ABI", Modifier.align(Alignment.CenterVertically))
-                }
-            }
-            Spacer(spacerModifier)
+            //Box(boxModifier.weight(2f)) {
+            //    Row(tabModifier.align(Alignment.Center)) {
+            //        Spacer(icModifier)
+            //        Text("ABI", Modifier.align(Alignment.CenterVertically))
+            //    }
+            //}
+            //Spacer(spacerModifier)
             Box(boxModifier.weight(2f)) {
                 Row(tabModifier.align(Alignment.Center)) {
                     Spacer(icModifier)
@@ -245,6 +247,7 @@ private fun ProcessItemTitle(
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun ProcessItemView(
+    processTool: ProcessManager,
     processInfo: ProcessInfo,
     currentSelect: ProcessInfo?,
     selectProcess: (ProcessInfo?) -> Unit,
@@ -252,6 +255,7 @@ private fun ProcessItemView(
     val selected = remember(processInfo, currentSelect) {
         mutableStateOf(currentSelect?.pid == processInfo.pid)
     }
+    val clipboardManager = LocalClipboardManager.current
     val primaryColor = materialColors.primary.copy(alpha = 0.5f)
     var mouseEnter by remember { mutableStateOf(false) }
     val backgroundColor by remember(selected.value, mouseEnter) {
@@ -265,63 +269,90 @@ private fun ProcessItemView(
         mutableStateOf(c)
     }
 
-    Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
-        mouseEnter = true
-    }.onPointerEvent(PointerEventType.Exit) {
-        mouseEnter = false
-    }.onPointerEvent(PointerEventType.Press) {
-        selectProcess(processInfo)
-    }, backgroundColor = backgroundColor, elevation = 0.dp) {
-        Row(
-            modifier = Modifier.padding(8.dp).fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val modifier = Modifier.align(Alignment.CenterVertically).padding(horizontal = 4.dp)
-            val iconModifier = modifier.size(20.dp)
+    val contextMenuState = remember { ContextMenuState() }
+    LaunchedEffect(contextMenuState.status) {
+        if (contextMenuState.status is ContextMenuState.Status.Open) {
+            selectProcess(processInfo)
+        }
+    }
+    ContextMenuArea(state = contextMenuState, items = {
+        mutableListOf<ContextMenuItem>().apply {
+            ContextMenuItem("停止") {
+                processTool.killProcess(processInfo)
+                selectProcess(null)
+            }.also(::add)
+            ContextMenuItem("强行停止") {
+                processTool.forceStopProcess(processInfo)
+                selectProcess(null)
+            }.also(::add)
+            ContextMenuItem("复制包名") {
+                clipboardManager.setText(AnnotatedString(processInfo.packageName))
+            }.also(::add)
+            ContextMenuItem("复制PID") {
+                clipboardManager.setText(AnnotatedString(processInfo.pid))
+            }.also(::add)
+        }
+    }) {
+        Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
+            mouseEnter = true
+        }.onPointerEvent(PointerEventType.Exit) {
+            mouseEnter = false
+        }.onPointerEvent(PointerEventType.Press) {
+            selectProcess(processInfo)
+        }.onPointerEvent(PointerEventType.Release) {
+            mouseEnter = false
+        }, backgroundColor = backgroundColor, elevation = 0.dp) {
             Row(
-                modifier = modifier.weight(6f), horizontalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier.padding(8.dp).fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    modifier = iconModifier,
-                    painter = Icon.Outlined.SmartPhone,
-                    contentDescription = "icon smartphone"
-                )
-                TooltipArea(
-                    tooltip = {
-                        Card(elevation = 4.dp) {
-                            Text(text = processInfo.processName, modifier = Modifier.padding(8.dp))
-                        }
-                    },
-                    modifier = modifier.weight(1f),
-                    delayMillis = 500,
+                val modifier = Modifier.align(Alignment.CenterVertically).padding(horizontal = 4.dp)
+                val iconModifier = modifier.size(20.dp)
+                Row(
+                    modifier = modifier.weight(6f), horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(
-                        text = processInfo.processName,
-                        modifier = modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    Icon(
+                        modifier = iconModifier,
+                        painter = Icon.Outlined.SmartPhone,
+                        contentDescription = "icon smartphone"
                     )
+                    TooltipArea(
+                        tooltip = {
+                            Card(elevation = 4.dp) {
+                                Text(text = processInfo.processName, modifier = Modifier.padding(8.dp))
+                            }
+                        },
+                        modifier = modifier.weight(1f),
+                        delayMillis = 500,
+                    ) {
+                        Text(
+                            text = processInfo.processName,
+                            modifier = modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
+                Text(
+                    text = processInfo.pid,
+                    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.End,
+                )
+                //Text(
+                //    text = processInfo.abi,
+                //    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                //    textAlign = TextAlign.End,
+                //)
+                Text(
+                    text = processInfo.user,
+                    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.End,
+                )
+                //Text(
+                //    text = processInfo.lastRss,
+                //    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                //    textAlign = TextAlign.End,
+                //)
             }
-            Text(
-                text = processInfo.pid,
-                modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.End,
-            )
-            Text(
-                text = processInfo.abi,
-                modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.End,
-            )
-            Text(
-                text = processInfo.user,
-                modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.End,
-            )
-            //Text(
-            //    text = processInfo.lastRss,
-            //    modifier = modifier.weight(2f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-            //    textAlign = TextAlign.End,
-            //)
         }
     }
 }

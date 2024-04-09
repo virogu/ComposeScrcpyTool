@@ -33,7 +33,7 @@ class HdcCommand : BaseCommand() {
         env: Map<String, String>? = null,
         showLog: Boolean = false,
         consoleLog: Boolean = isDebug,
-        timeout: Long = 10L,
+        timeout: Long = 5L,
         charset: Charset = Charset.forName("GBK")
     ): Result<String> {
         if (!isActive) {

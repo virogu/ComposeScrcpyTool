@@ -1,26 +1,22 @@
 package com.virogu.core.tool.manager
 
 import com.virogu.core.bean.ScrcpyConfig
-import com.virogu.core.commonWorkDir
 import com.virogu.core.device.Device
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
 
 class ScrcpyManagerImpl : ScrcpyManager {
-
     private val mutex = Mutex()
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val scrcpyMap = HashMap<String, Process>()
-
-    private val workDir: File by lazy {
-        File(commonWorkDir, "app")
-    }
 
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
@@ -78,14 +74,12 @@ class ScrcpyManagerImpl : ScrcpyManager {
     private fun withLock(block: suspend CoroutineScope.() -> Unit) {
         scope.launch {
             isBusy.emit(true)
-            mutex.withLock {
-                try {
+            try {
+                mutex.withLock {
                     block()
-                } catch (_: Throwable) {
                 }
-            }
-        }.invokeOnCompletion {
-            runBlocking(Dispatchers.IO) {
+            } catch (_: Throwable) {
+            } finally {
                 isBusy.emit(false)
             }
         }

@@ -4,18 +4,16 @@ import com.virogu.core.device.Device
 import com.virogu.core.device.process.ProcessInfo
 import com.virogu.core.tool.init.InitTool
 import com.virogu.core.tool.scan.DeviceScan
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class ProcessManagerImpl(
     private val initTool: InitTool,
     deviceScan: DeviceScan,
-) : ProcessManager {
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val mutex = Mutex()
-    private val loadingJobs = mutableMapOf<String, Job>()
+) : BaseJobManager(), ProcessManager {
     private var mJob: Job? = null
 
     @Volatile
@@ -76,8 +74,8 @@ class ProcessManagerImpl(
     }
 
     override fun refresh() {
-        withLock("refresh") {
-            val device = currentDevice ?: return@withLock
+        startJob("refresh") {
+            val device = currentDevice ?: return@startJob
             refreshProcess(device)
         }
     }
@@ -89,16 +87,16 @@ class ProcessManagerImpl(
     }
 
     override fun killProcess(info: ProcessInfo) {
-        withLock("kill ${info.pid}") {
-            val device = currentDevice ?: return@withLock
+        startJob("kill ${info.pid}") {
+            val device = currentDevice ?: return@startJob
             device.processAbility.killProcess(info).toast()
             refreshProcess(device)
         }
     }
 
     override fun forceStopProcess(info: ProcessInfo) {
-        withLock("force stop ${info.packageName}") {
-            val device = currentDevice ?: return@withLock
+        startJob("force stop ${info.packageName}") {
+            val device = currentDevice ?: return@startJob
             device.processAbility.forceStopProcess(info).toast()
             refreshProcess(device)
         }
@@ -109,38 +107,4 @@ class ProcessManagerImpl(
             tipsFlow.emit(it)
         }
     }
-
-    private fun withLock(tag: String, block: suspend CoroutineScope.() -> Unit) {
-        scope.launch {
-            isBusy.emit(true)
-            mutex.withLock {
-                try {
-                    block()
-                } catch (_: Throwable) {
-                }
-            }
-        }.also { job ->
-            addJob(tag, job)
-        }
-    }
-
-    private fun addJob(tag: String, job: Job) {
-        synchronized(loadingJobs) {
-            loadingJobs.remove(tag)?.cancel()
-            job.invokeOnCompletion {
-                runBlocking(Dispatchers.IO) {
-                    isBusy.emit(false)
-                }
-                removeJob(tag)
-            }
-            loadingJobs[tag] = job
-        }
-    }
-
-    private fun removeJob(tag: String) {
-        synchronized(loadingJobs) {
-            loadingJobs.remove(tag)?.cancel()
-        }
-    }
-
 }

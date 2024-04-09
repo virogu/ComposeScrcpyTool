@@ -14,45 +14,6 @@ data class ProcessInfoAndroid(
 ) : ProcessInfo {
     //val lastRss: String = params["lastRss"].orEmpty()
     override val abi: String = params["mRequiredAbi"] ?: params["requiredAbi"].orEmpty()
-
-    companion object {
-        fun parse(info: String): List<ProcessInfo> = info.runCatching {
-            val matches = Regex("""(?s)(APP|PERS)\*\s+(.*?)(\*|PID mappings:)""").findAll(this)
-            if (matches.count() <= 0) {
-                return emptyList()
-            }
-            matches.mapNotNull { matchesResult ->
-                val process = matchesResult.groupValues[2]
-                val first = process.reader().readLines().firstOrNull()?.trim() ?: return@mapNotNull null
-                //UID 1000 ProcessRecord{a0f6d00 727:com.microsoft.windows.systemapp/u0a48}
-                val baseInfo = Regex("""\S+\s+(\d+)\s+ProcessRecord\{(\S+)\s+(\d+):(\S+)/(\S+)}(.*)""").find(first)
-                    ?: return@mapNotNull null
-                val uid = baseInfo.groupValues.getOrNull(1) ?: return@mapNotNull null
-                val pid = baseInfo.groupValues.getOrNull(3) ?: return@mapNotNull null
-                val processName = baseInfo.groupValues.getOrNull(4) ?: return@mapNotNull null
-                val packageName = processName.split(":").firstOrNull() ?: return@mapNotNull null
-                val user: String = baseInfo.groupValues.getOrNull(5).orEmpty().let {
-                    if (it.first().isDigit()) {
-                        it.toIntOrNull()?.toString() ?: "0"
-                    } else {
-                        val m = Regex("""(.*?)(\d+)(.*?)""").find(it)
-                        m?.groupValues?.getOrNull(2) ?: "0"
-                    }
-                }
-                val maps = Regex("""\s*(\w+)=(\{[^{}]*}|\S+)\s*""").findAll(process).associate { kv ->
-                    kv.groupValues[1] to kv.groupValues[2]
-                }
-                ProcessInfoAndroid(
-                    user = user,
-                    uid = uid,
-                    pid = pid,
-                    processName = processName,
-                    packageName = packageName,
-                    params = maps
-                )
-            }.toList()
-        }.getOrNull().orEmpty()
-    }
 }
 
 /**

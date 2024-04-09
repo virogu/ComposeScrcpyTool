@@ -27,19 +27,18 @@ open class BaseCommand {
         env: Map<String, String>? = null,
         showLog: Boolean = false,
         consoleLog: Boolean = isDebug,
-        timeout: Long = 10L,
+        timeout: Long = 5L,
         charset: Charset = Charsets.UTF_8
     ): Result<String> = withContext(Dispatchers.IO) {
+        var process: Process? = null
         try {
+            this.coroutineContext.job.invokeOnCompletion {
+                process?.destroyRecursively()
+            }
             if (command.isEmpty()) {
                 return@withContext Result.failure(IllegalArgumentException("command is empty!"))
             }
-            val process = ProcessBuilder(*command).fixEnv(env, workDir).start().also { p ->
-                addProcess(p)
-                p.onExit().thenApply {
-                    removeProcess(it.pid())
-                }
-            }
+            process = ProcessBuilder(*command).fixEnv(env, workDir).start()
             val s = async {
                 BufferedReader(InputStreamReader(process.inputStream, charset)).use {
                     buildString {
@@ -57,7 +56,7 @@ open class BaseCommand {
             }
             if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
                 logger.debug("\n[${process.pid()}] [$cmdString] time out after ${timeout}s")
-                process.destroyRecursively()
+                //process.destroyRecursively()
             }
             //val inputStreamReader = InputStreamReader(process.inputStream, charset)
             val result = s.await()
@@ -71,7 +70,9 @@ open class BaseCommand {
             return@withContext Result.success(result)
         } catch (e: Throwable) {
             //e.printStackTrace()
+            process?.destroyRecursively()
             if (e is CancellationException) {
+                logger.debug("job canceled, pid: ${process?.pid()}")
                 return@withContext Result.success("")
             }
             logger.error("run error. $e")
@@ -87,17 +88,13 @@ open class BaseCommand {
         charset: Charset = Charsets.UTF_8,
         onReadLine: suspend (String) -> Unit,
     ): Process? = withContext(Dispatchers.IO) {
+        var progress: Process? = null
         try {
             if (command.isEmpty()) {
                 return@withContext null
             }
             val processBuilder = ProcessBuilder(*command).fixEnv(env, workDir)
-            val progress = processBuilder.start().also { p ->
-                addProcess(p)
-                p.onExit().thenApply {
-                    removeProcess(it.pid())
-                }
-            }
+            progress = processBuilder.start()
             scope.launch {
                 BufferedReader(progress.inputReader(charset)).use {
                     it.lineSequence().forEach { s ->
@@ -113,6 +110,7 @@ open class BaseCommand {
             }
             return@withContext progress
         } catch (e: Throwable) {
+            progress?.destroyRecursively()
             logger.warn("执行失败, ${e.localizedMessage}")
             e.printStackTrace()
             return@withContext null
@@ -141,18 +139,18 @@ open class BaseCommand {
         | ------ """.trimMargin()
     }
 
-    private fun addProcess(process: Process) {
-        synchronized(processMap) {
-            processMap[process.pid()]?.destroyRecursively()
-            processMap[process.pid()] = process
-        }
-    }
+    //private fun addProcess(process: Process) {
+    //    synchronized(processMap) {
+    //        processMap[process.pid()]?.destroyRecursively()
+    //        processMap[process.pid()] = process
+    //    }
+    //}
 
-    private fun removeProcess(pid: Long) {
-        synchronized(processMap) {
-            processMap.remove(pid)?.destroyRecursively()
-        }
-    }
+    //private fun removeProcess(pid: Long) {
+    //    synchronized(processMap) {
+    //        processMap.remove(pid)?.destroyRecursively()
+    //    }
+    //}
 
     private fun Process.destroyRecursively() {
         descendants().forEach {

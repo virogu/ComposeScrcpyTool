@@ -10,8 +10,10 @@ import com.virogu.core.bean.FileTipsItem
 import com.virogu.core.device.Device
 import com.virogu.core.tool.init.InitTool
 import com.virogu.core.tool.scan.DeviceScan
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
@@ -19,14 +21,11 @@ import java.io.File
 class FolderManagerImpl(
     private val initTool: InitTool,
     deviceScan: DeviceScan,
-) : FolderManager {
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val mutex = Mutex()
+) : BaseJobManager(), FolderManager {
     private val fileMapMutex = Mutex()
 
     private val fileChildMap: SnapshotStateMap<String, List<FileItem>> = mutableStateMapOf()
     private val expandedMap = mutableStateMapOf<String, Boolean>()
-    private val loadingJobs = mutableMapOf<String, Job>()
 
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val tipsFlow = MutableSharedFlow<String>()
@@ -49,6 +48,7 @@ class FolderManagerImpl(
             selectedOnlineDevice.onEach {
                 expandedMap.clear()
                 cancelAllJob()
+                isBusy.emit(false)
                 refresh(null)
             }.launchIn(this)
         }
@@ -93,8 +93,8 @@ class FolderManagerImpl(
     }
 
     override fun restartWithRoot() {
-        withLock("restartWithRoot") {
-            val device = currentDevice ?: return@withLock
+        startJob("restartWithRoot") {
+            val device = currentDevice ?: return@startJob
             val s = device.folderAbility.remount()
             if (s.isNotEmpty()) {
                 tipsFlow.emit(s)
@@ -105,8 +105,8 @@ class FolderManagerImpl(
     override fun createDir(path: String, newFile: String) {
         val tag = "create dir $newFile in $path"
         println(tag)
-        withLock(tag) {
-            val device = currentDevice ?: return@withLock
+        startJob(tag) {
+            val device = currentDevice ?: return@startJob
             device.folderAbility.createDir(path, newFile).onSuccess {
                 refresh(path)
             }.onFailure {
@@ -119,8 +119,8 @@ class FolderManagerImpl(
     override fun createFile(path: String, newFile: String) {
         val tag = "create file $newFile in $path"
         println(tag)
-        withLock(tag) {
-            val device = currentDevice ?: return@withLock
+        startJob(tag) {
+            val device = currentDevice ?: return@startJob
             device.folderAbility.createFile(path, newFile).onSuccess {
                 refresh(path)
             }.onFailure {
@@ -133,8 +133,8 @@ class FolderManagerImpl(
     override fun deleteFile(file: FileInfoItem, onDeleted: suspend () -> Unit) {
         val path = file.path
         val tag = "delete $path"
-        withLock(tag) {
-            val device = currentDevice ?: return@withLock
+        startJob(tag) {
+            val device = currentDevice ?: return@startJob
             device.folderAbility.deleteFile(file).onSuccess {
                 refresh(file.parentPath)
                 onDeleted()
@@ -146,7 +146,7 @@ class FolderManagerImpl(
     }
 
     override fun getChild(fileInfo: FileInfoItem): List<FileItem> {
-        println("getChild ${fileInfo.path}")
+        //println("getChild ${fileInfo.path}")
         if (currentDevice == null) {
             return listOf(FileTipsItem.Error(fileInfo.path, "未连接设备"))
         }
@@ -164,31 +164,31 @@ class FolderManagerImpl(
         if (getJob(path) != null) {
             return listOf(FileTipsItem.Info(path, "Loading..."))
         }
-        withLock(path) {
-            val device = currentDevice ?: return@withLock
+        startJob(path) {
+            val device = currentDevice ?: return@startJob
             refreshFileChild(device, path)
         }
         return listOf(FileTipsItem.Info(path, "Loading..."))
     }
 
     override fun getFileDetails(fileInfo: FileInfoItem) {
-        withLock("get file detail info") {
-            val device = currentDevice ?: return@withLock
+        startJob("get file detail info") {
+            val device = currentDevice ?: return@startJob
             val s = device.folderAbility.getFileDetail(fileInfo)
             tipsFlow.emit(s)
         }
     }
 
     override fun pullFile(fromFile: List<FileInfoItem>, toLocalFile: File) {
-        withLock("pull file") {
-            val device = currentDevice ?: return@withLock
+        startJob("pull file") {
+            val device = currentDevice ?: return@startJob
             if (!toLocalFile.isDirectory) {
                 tipsFlow.emit("[${toLocalFile.absolutePath}]不是目录")
-                return@withLock
+                return@startJob
             }
             if (!toLocalFile.exists()) {
                 tipsFlow.emit("[${toLocalFile.absolutePath}]不存在")
-                return@withLock
+                return@startJob
             }
             val s = device.folderAbility.pullFile(fromFile, toLocalFile)
             tipsFlow.emit(s)
@@ -196,11 +196,11 @@ class FolderManagerImpl(
     }
 
     override fun pushFile(toFile: FileInfoItem, fromLocalFiles: List<File>) {
-        withLock("push file") {
-            val device = currentDevice ?: return@withLock
+        startJob("push file") {
+            val device = currentDevice ?: return@startJob
             if (!toFile.isDirectory) {
                 tipsFlow.emit("[${toFile.path}]不是目录")
-                return@withLock
+                return@startJob
             }
             val s = device.folderAbility.pushFile(toFile, fromLocalFiles)
             tipsFlow.emit(s)
@@ -209,8 +209,8 @@ class FolderManagerImpl(
     }
 
     override fun chmod(fileInfo: FileInfoItem, permission: String) {
-        withLock("chmod file") {
-            val device = currentDevice ?: return@withLock
+        startJob("chmod file") {
+            val device = currentDevice ?: return@startJob
             val s = device.folderAbility.chmod(fileInfo, permission)
             tipsFlow.emit(s)
             refresh(fileInfo.parentPath)
@@ -221,57 +221,6 @@ class FolderManagerImpl(
         val list = device.folderAbility.refreshPath(path).getOrNull().orEmpty()
         fileMapLock { map ->
             map[path] = list
-        }
-    }
-
-    private fun withLock(tag: String, block: suspend CoroutineScope.() -> Unit) {
-        scope.launch {
-            isBusy.emit(true)
-            mutex.withLock {
-                try {
-                    block()
-                } catch (_: Throwable) {
-                }
-            }
-        }.also { job ->
-            addJob(tag, job)
-        }
-    }
-
-    private fun addJob(tag: String, job: Job) {
-        synchronized(loadingJobs) {
-            loadingJobs.remove(tag)?.cancel()
-            job.invokeOnCompletion {
-                runBlocking(Dispatchers.IO) {
-                    isBusy.emit(false)
-                }
-                removeJob(tag)
-            }
-            loadingJobs[tag] = job
-        }
-    }
-
-    private fun getJob(tag: String): Job? {
-        synchronized(loadingJobs) {
-            return loadingJobs[tag]
-        }
-    }
-
-    private fun removeJob(tag: String) {
-        synchronized(loadingJobs) {
-            loadingJobs.remove(tag)?.cancel()
-        }
-    }
-
-    private fun cancelAllJob() {
-        synchronized(loadingJobs) {
-            loadingJobs.forEach { (_, v) ->
-                v.cancel()
-            }
-            loadingJobs.clear()
-        }
-        runBlocking(Dispatchers.IO) {
-            isBusy.emit(false)
         }
     }
 
