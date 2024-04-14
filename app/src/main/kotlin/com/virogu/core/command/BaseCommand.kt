@@ -32,9 +32,6 @@ open class BaseCommand {
     ): Result<String> = withContext(Dispatchers.IO) {
         var process: Process? = null
         try {
-            this.coroutineContext.job.invokeOnCompletion {
-                process?.destroyRecursively()
-            }
             if (command.isEmpty()) {
                 return@withContext Result.failure(IllegalArgumentException("command is empty!"))
             }
@@ -56,7 +53,7 @@ open class BaseCommand {
             }
             if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
                 logger.debug("\n[${process.pid()}] [$cmdString] time out after ${timeout}s")
-                //process.destroyRecursively()
+                throw CancellationException("time out after ${timeout}s")
             }
             //val inputStreamReader = InputStreamReader(process.inputStream, charset)
             val result = s.await()

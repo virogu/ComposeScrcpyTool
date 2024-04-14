@@ -256,20 +256,10 @@ private fun ProcessItemView(
         mutableStateOf(currentSelect?.pid == processInfo.pid)
     }
     val clipboardManager = LocalClipboardManager.current
-    val primaryColor = materialColors.primary.copy(alpha = 0.5f)
     var mouseEnter by remember { mutableStateOf(false) }
-    val backgroundColor by remember(selected.value, mouseEnter) {
-        val c = if (selected.value) {
-            primaryColor.copy(alpha = 0.5f)
-        } else if (mouseEnter) {
-            primaryColor.copy(alpha = 0.2f)
-        } else {
-            Color.Transparent
-        }
-        mutableStateOf(c)
-    }
-
+    val backgroundColor by rememberItemBackground(selected.value, mouseEnter)
     val contextMenuState = remember { ContextMenuState() }
+
     LaunchedEffect(contextMenuState.status) {
         if (contextMenuState.status is ContextMenuState.Status.Open) {
             selectProcess(processInfo)

@@ -32,7 +32,7 @@ fun LogListView(
     logList: SnapshotStateList<ILoggingEvent>,
     state: LazyListState,
     adapter: ScrollbarAdapter,
-    reverseLayout: Boolean = true,
+    reverseLayout: Boolean = false,
     verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
 ) {

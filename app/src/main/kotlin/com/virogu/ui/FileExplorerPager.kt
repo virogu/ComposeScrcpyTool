@@ -16,7 +16,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
@@ -397,18 +396,8 @@ private fun FileInfoItemView(
     val getFileDetails by rememberUpdatedState {
         folderManager.getFileDetails(fileInfo)
     }
-    val primaryColor = materialColors.primary.copy(alpha = 0.5f)
     var mouseEnter by remember { mutableStateOf(false) }
-    val backgroundColor by remember(selected.value, mouseEnter) {
-        val c = if (selected.value) {
-            primaryColor.copy(alpha = 0.5f)
-        } else if (mouseEnter) {
-            primaryColor.copy(alpha = 0.2f)
-        } else {
-            Color.Transparent
-        }
-        mutableStateOf(c)
-    }
+    val backgroundColor by rememberItemBackground(selected.value, mouseEnter)
     val contextMenuState = remember { ContextMenuState() }
     LaunchedEffect(contextMenuState.status) {
         if (contextMenuState.status is ContextMenuState.Status.Open) {
