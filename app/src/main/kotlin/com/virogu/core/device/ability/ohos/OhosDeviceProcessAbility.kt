@@ -32,11 +32,14 @@ class OhosDeviceProcessAbility(private val device: Device) : DeviceAbilityProces
     }
 
     override suspend fun killProcess(info: ProcessInfo): Result<String> {
-        return Result.success("")
+        return forceStopProcess(info)
     }
 
     override suspend fun forceStopProcess(info: ProcessInfo): Result<String> {
-        return Result.success("")
+        return cmd.hdc(
+            "-t", device.serial, "shell",
+            "aa force-stop ${info.packageName}"
+        )
     }
 
     private fun parse(pidInfo: String, bundleInfo: String): List<ProcessInfoOhos> {
