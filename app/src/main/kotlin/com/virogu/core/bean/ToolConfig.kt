@@ -14,5 +14,6 @@ data class HistoryDevice(
 
 @Serializable
 data class SimpleConfig(
-    val autoRefreshAdbDevice: Boolean = true
+    val autoRefresh: Boolean = true,
+    val enableHdc: Boolean = false,
 )

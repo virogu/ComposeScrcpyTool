@@ -6,6 +6,7 @@ import com.virogu.core.device.Device
 import com.virogu.core.device.DeviceEntityOhos
 import com.virogu.core.device.DevicePlatform
 import com.virogu.core.tool.ssh.SSHTool
+import kotlinx.coroutines.flow.*
 import org.apache.sshd.client.session.ClientSession
 import org.kodein.di.DI
 import org.kodein.di.conf.global
@@ -22,10 +23,23 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
     private val cmd: HdcCommand by DI.global.instance()
     protected val hdcCmd get() = cmd
 
+    private val enableHdcFlow: StateFlow<Boolean> = configStores.simpleConfigStore.simpleConfig.map {
+        it.enableHdc
+    }.onEach {
+        if (!it) {
+            disconnectHdc()
+            cmd.killServer()
+        }
+    }.stateIn(scope, SharingStarted.Eagerly, false)
+    private val enableHdc get() = enableHdcFlow.value
+
     override suspend fun doConnect(ip: String, port: Int): Boolean {
         val success = super.doConnect(ip, port)
         if (success) {
             return true
+        }
+        if (!enableHdc) {
+            return false
         }
         logger.info("try hdc connect")
         cmd.hdc("tconn", "${ip}:${port}", "-remove", consoleLog = true)
@@ -43,6 +57,9 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
 
     override suspend fun refreshDevice(): List<Device> {
         val list1 = super.refreshDevice()
+        if (!enableHdc) {
+            return list1
+        }
         val list2 = try {
             val process = cmd.hdc("list", "targets", "-v", timeout = 2, consoleLog = false).getOrThrow()
             val result = process.split("\n")
@@ -99,6 +116,10 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
 
     override suspend fun doDisConnectAll() {
         super.doDisConnectAll()
+        disconnectHdc()
+    }
+
+    private suspend fun disconnectHdc() {
         connectedDevice.value.filter {
             it.platform == DevicePlatform.OpenHarmony
         }.forEach {
@@ -111,16 +132,20 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
         if (r) {
             return true
         }
+        if (!enableHdc) {
+            logger.warn("如需连接Harmony设备，请勾选 [启用Hdc]")
+            return false
+        }
         ssh.exec(
             session, "param set persist.hdc.mode all",
             "param set persist.hdc.port $port",
             //"hdcd -b"
         ).onSuccess {
-            logger.info("open hdc tcp port success")
+            logger.info("open hdc port [$port] success")
             logger.info("需要重启设备，请重启设备后重新连接")
             ssh.exec(session, "reboot")
-        }.onFailure { e ->
-            logger.info("open hdc tcp port fail:\n$e")
+        }.onFailure {
+            logger.info("open hdc port [$port] fail: ${it.localizedMessage}")
         }
         return false
     }

@@ -60,9 +60,9 @@ abstract class DeviceScanAdb(configStores: ConfigStores) : DeviceScanBase(config
             "start adbd"
         ).onSuccess {
             r = true
-            logger.info("open adb port success")
-        }.onFailure { e ->
-            logger.info("open adb port fail:\n$e")
+            logger.info("open adb port [$port] success")
+        }.onFailure {
+            logger.info("open adb port [$port] fail: ${it.localizedMessage}")
         }
         return r
     }

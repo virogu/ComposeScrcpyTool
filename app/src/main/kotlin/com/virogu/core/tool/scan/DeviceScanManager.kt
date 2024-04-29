@@ -13,7 +13,7 @@ class DeviceScanManager(
     configStores: ConfigStores,
 ) : DeviceScanHdc(configStores) {
     private val autoRefresh = configStores.simpleConfigStore.simpleConfig.map {
-        it.autoRefreshAdbDevice
+        it.autoRefresh
     }.stateIn(scope, SharingStarted.Eagerly, true)
 
     private var mJob: Job? = null

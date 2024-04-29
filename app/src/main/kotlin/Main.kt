@@ -110,10 +110,12 @@ private fun ApplicationScope.TrayView(
     val onTopChanged by rememberUpdatedState(onAlwaysOnTopChanged)
 
     val simpleConfig = simpleConfigStore.simpleConfig.collectAsState()
-    val autoRefresh by remember(simpleConfig.value.autoRefreshAdbDevice) {
-        mutableStateOf(simpleConfig.value.autoRefreshAdbDevice)
+    val autoRefresh by remember(simpleConfig.value.autoRefresh) {
+        mutableStateOf(simpleConfig.value.autoRefresh)
     }
-
+    val enableHdc by remember(simpleConfig.value.enableHdc) {
+        mutableStateOf(simpleConfig.value.enableHdc)
+    }
     Tray(
         icon = icon,
         tooltip = """ScrcpyTool
@@ -144,7 +146,10 @@ private fun ApplicationScope.TrayView(
                 }
             }
             CheckboxItem("自动刷新", autoRefresh) {
-                simpleConfigStore.updateSimpleConfig(simpleConfig.value.copy(autoRefreshAdbDevice = !autoRefresh))
+                simpleConfigStore.updateSimpleConfig(simpleConfig.value.copy(autoRefresh = !autoRefresh))
+            }
+            CheckboxItem("启用Hdc", enableHdc) {
+                simpleConfigStore.updateSimpleConfig(simpleConfig.value.copy(enableHdc = !enableHdc))
             }
             Separator()
             Item("退出", onClick = ::exit)

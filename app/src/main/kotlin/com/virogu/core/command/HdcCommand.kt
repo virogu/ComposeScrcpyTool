@@ -50,7 +50,7 @@ class HdcCommand : BaseCommand() {
         )
     }
 
-    override suspend fun killServer() {
+    public override suspend fun killServer() {
         super.killServer()
         exec(*executable, "kill", consoleLog = true)
     }
