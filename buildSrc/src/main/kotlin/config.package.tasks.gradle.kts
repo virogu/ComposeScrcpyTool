@@ -45,21 +45,8 @@ val cleanPackDir by tasks.registering {
 val zipDistributable by tasks.registering(Zip::class) {
     group = "package"
     mustRunAfter("createDistributable")
-    outputDir.resolve("zip").takeIf {
-        it.exists()
-    }?.apply {
-        println("clear path:[${this.path}]")
-        deleteRecursively()
-    }
-    group = "package"
     val path = outputDir.resolve("app/${appBuildInfo.installProgramName}")
-    from(path.path) {
-        //include {
-        //    println("found file [${it.path}]")
-        //    true
-        //}
-    }
-    // installProgramName-msiPackageVersion-gitCommitCount_gitCommitShortid.zip
+    from(path.path)
     with(appBuildInfo) {
         archiveBaseName.set(installProgramName)
         archiveVersion.set("${msiPackageVersion}_$gitCommitShortId")
