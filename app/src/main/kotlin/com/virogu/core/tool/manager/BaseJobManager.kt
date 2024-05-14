@@ -38,18 +38,20 @@ abstract class BaseJobManager {
                 isBusy.emit(true)
                 try {
                     block()
-                } catch (_: Throwable) {
+                } catch (e: Throwable) {
+                    e.printStackTrace()
                 } finally {
                     isBusy.emit(false)
                 }
             }
+            if (!job.isActive) {
+                return@synchronized
+            }
+            activeJobs[tag] = job
             job.invokeOnCompletion {
                 synchronized(activeJobs) {
                     activeJobs.remove(tag)
                 }
-            }
-            if (job.isActive) {
-                activeJobs[tag] = job
             }
         }
     }

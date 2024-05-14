@@ -28,6 +28,7 @@ class DeviceScanManager(
             delay(100)
             autoRefresh.onEach(::autoRefreshChanged).launchIn(this)
             innerRefreshDevices()
+            afterStarted()
         }
     }
 
@@ -68,27 +69,27 @@ class DeviceScanManager(
                     doConnect(ip, port)
                 }
             }
-            innerRefreshDevices()
+            innerRefreshDevices(true)
         }
     }
 
     override fun disconnect(device: Device) {
         withLock {
             doDisConnect(device)
-            innerRefreshDevices()
+            innerRefreshDevices(true)
         }
     }
 
     override fun refresh() {
         withLock {
-            innerRefreshDevices()
+            innerRefreshDevices(true)
         }
     }
 
     override fun disconnectAll() {
         withLock {
             doDisConnectAll()
-            innerRefreshDevices()
+            innerRefreshDevices(true)
         }
     }
 
@@ -102,8 +103,8 @@ class DeviceScanManager(
         innerRefreshDevices()
     }
 
-    private suspend fun innerRefreshDevices() {
-        val list = refreshDevice()
+    private suspend fun innerRefreshDevices(showLog: Boolean = false) {
+        val list = refreshDevice(showLog)
         devices.emit(list)
     }
 

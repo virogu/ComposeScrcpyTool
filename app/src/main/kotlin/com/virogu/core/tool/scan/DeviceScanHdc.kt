@@ -25,13 +25,20 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
 
     private val enableHdcFlow: StateFlow<Boolean> = configStores.simpleConfigStore.simpleConfig.map {
         it.enableHdc
-    }.onEach {
-        if (!it) {
-            disconnectHdc()
-            cmd.killServer()
-        }
     }.stateIn(scope, SharingStarted.Eagerly, false)
     private val enableHdc get() = enableHdcFlow.value
+
+    override suspend fun afterStarted() {
+        super.afterStarted()
+        enableHdcFlow.onEach {
+            if (!it) {
+                disconnectHdc()
+                cmd.killServer()
+            } else {
+                cmd.startServer()
+            }
+        }.launchIn(scope)
+    }
 
     override suspend fun doConnect(ip: String, port: Int): Boolean {
         val success = super.doConnect(ip, port)
@@ -55,13 +62,13 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
         return !failed
     }
 
-    override suspend fun refreshDevice(): List<Device> {
-        val list1 = super.refreshDevice()
+    override suspend fun refreshDevice(showLog: Boolean): List<Device> {
+        val list1 = super.refreshDevice(showLog)
         if (!enableHdc) {
             return list1
         }
         val list2 = try {
-            val process = cmd.hdc("list", "targets", "-v", timeout = 2, consoleLog = false).getOrThrow()
+            val process = cmd.hdc("list", "targets", "-v", timeout = 2, consoleLog = showLog).getOrThrow()
             val result = process.split("\n")
             result.mapNotNull { line ->
                 //192.168.5.128:10178   TCP     Offline                 hdc
@@ -80,10 +87,10 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
                     if (!isOnline) {
                         return@mapNotNull null
                     }
-                    val apiVersion = hdcGetProp(serial, OHOS_API_VERSION)
-                    val releaseName = hdcGetProp(serial, OHOS_FULL_NAME)
-                    val product = hdcGetProp(serial, OHOS_PRODUCT_NAME)
-                    val model = hdcGetProp(serial, OHOS_MODEL_NAME)
+                    val apiVersion = hdcGetProp(showLog, serial, OHOS_API_VERSION)
+                    val releaseName = hdcGetProp(showLog, serial, OHOS_FULL_NAME)
+                    val product = hdcGetProp(showLog, serial, OHOS_PRODUCT_NAME)
+                    val model = hdcGetProp(showLog, serial, OHOS_MODEL_NAME)
                     DeviceEntityOhos(
                         serial = serial,
                         status = status,
@@ -150,10 +157,15 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
         return false
     }
 
-    private suspend fun hdcGetProp(serial: String, prop: String, default: String = "Unknown"): String {
+    private suspend fun hdcGetProp(
+        showLog: Boolean,
+        serial: String,
+        prop: String,
+        default: String = "Unknown"
+    ): String {
         return cmd.hdc(
             "-t", serial, "shell",
-            "param", "get", prop, timeout = 1, consoleLog = false
+            "param", "get", prop, timeout = 1, consoleLog = showLog
         ).getOrNull()?.takeUnless {
             it.isEmpty() || it.contains("fail", ignoreCase = true)
         } ?: default

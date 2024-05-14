@@ -134,6 +134,10 @@ val Icon.Outlined.KeyboardDoubleArrowDown: Painter
     @Composable
     get() = fromResource("icons/ic_keyboard_double_arrow_down.svg")
 
+val Icon.Outlined.Screenshot: Painter
+    @Composable
+    get() = fromResource("icons/ic_screenshot.svg")
+
 val Icon.Outlined.DragPan: Painter
     @Composable
     get() = fromResource("icons/ic_drag_pan.svg")

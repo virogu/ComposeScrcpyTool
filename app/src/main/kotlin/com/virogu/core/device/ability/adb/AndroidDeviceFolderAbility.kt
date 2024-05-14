@@ -137,7 +137,8 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
             cmd.adb(
                 "-s", serial,
                 "pull", f.path, toLocalFile.absolutePath,
-                showLog = true
+                showLog = true,
+                timeout = 0L
             ).onSuccess {
                 appendLine(it)
             }.onFailure {

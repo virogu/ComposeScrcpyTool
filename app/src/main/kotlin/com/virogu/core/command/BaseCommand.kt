@@ -35,25 +35,27 @@ open class BaseCommand {
             if (command.isEmpty()) {
                 return@withContext Result.failure(IllegalArgumentException("command is empty!"))
             }
-            process = ProcessBuilder(*command).fixEnv(env, workDir).start()
-            val s = async {
-                BufferedReader(InputStreamReader(process.inputStream, charset)).use {
-                    buildString {
-                        it.lineSequence().forEach { s ->
-                            appendLine(s)
-                        }
-                    }.trim()
-                }
-            }
             val cmdString = command.joinToString(" ")
             if (showLog) {
                 logger.info("\n[${cmdString}] wait")
             } else if (consoleLog) {
                 logger.debug("\n[${cmdString}] wait")
             }
-            if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
-                logger.debug("\n[${process.pid()}] [$cmdString] time out after ${timeout}s")
-                throw CancellationException("time out after ${timeout}s")
+            process = ProcessBuilder(*command).fixEnv(env, workDir).start()
+            val s = async {
+                buildString {
+                    BufferedReader(InputStreamReader(process.inputStream, charset)).forEachLine { s ->
+                        appendLine(s)
+                    }
+                }.trim()
+            }
+            if (timeout <= 0) {
+                process.waitFor()
+            } else {
+                if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
+                    logger.debug("\n[${process.pid()}] [$cmdString] time out after ${timeout}s")
+                    throw CancellationException("time out after ${timeout}s")
+                }
             }
             //val inputStreamReader = InputStreamReader(process.inputStream, charset)
             val result = s.await()
@@ -174,7 +176,11 @@ open class BaseCommand {
         }
     }
 
-    protected open suspend fun killServer() {
+    open suspend fun startServer() {
+
+    }
+
+    open suspend fun killServer() {
 
     }
 

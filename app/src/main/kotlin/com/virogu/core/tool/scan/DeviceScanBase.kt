@@ -43,6 +43,10 @@ abstract class DeviceScanBase(
 
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
+    protected open suspend fun afterStarted() {
+
+    }
+
     abstract suspend fun doConnect(ip: String, port: Int): Boolean
 
     abstract suspend fun doDisConnect(device: Device)
@@ -51,7 +55,7 @@ abstract class DeviceScanBase(
 
     abstract suspend fun doOpenTcpPort(ssh: SSHTool, session: ClientSession, port: Int): Boolean
 
-    abstract suspend fun refreshDevice(): List<Device>
+    abstract suspend fun refreshDevice(showLog: Boolean = false): List<Device>
 
     protected suspend fun openTcpPort(ip: String, port: Int): Boolean {
         logger.info("try open device port, $ip:$port")

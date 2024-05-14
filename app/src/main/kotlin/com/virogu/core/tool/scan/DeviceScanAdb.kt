@@ -67,8 +67,8 @@ abstract class DeviceScanAdb(configStores: ConfigStores) : DeviceScanBase(config
         return r
     }
 
-    override suspend fun refreshDevice(): List<Device> = try {
-        val process = cmd.adb("devices", "-l", showLog = false, consoleLog = false).getOrThrow()
+    override suspend fun refreshDevice(showLog: Boolean): List<Device> = try {
+        val process = cmd.adb("devices", "-l", showLog = false, consoleLog = showLog).getOrThrow()
         val result = process.split("\n")
         result.mapNotNull { line ->
             //127.0.0.1:58526        device product:windows_x86_64 model:Subsystem_for_Android_TM_ device:windows_x86_64 transport_id:5
