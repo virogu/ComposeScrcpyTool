@@ -1,6 +1,7 @@
 package com.virogu.core.device.ability.ohos
 
 import com.virogu.core.bean.Additional
+import com.virogu.core.bean.Additional.*
 import com.virogu.core.bean.FileInfoItem
 import com.virogu.core.bean.FileType
 import com.virogu.core.command.HdcCommand
@@ -25,20 +26,26 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
         private val logger: Logger = LoggerFactory.getLogger(this::class.java)
     }
 
+    //@ohos.multimodalInput.keyCode
     override suspend fun exec(additional: Additional) {
         try {
             val commands: List<Array<String>> = when (additional) {
-                Additional.ScreenShot -> {
+                ScreenShot -> {
                     doSnapshot()
                     return
                 }
 
-                else -> {
-                    emptyList()
-                }
+                StatusBar -> listOf()
+                PowerButton -> listOf(arrayOf("shell", "uinput -K -d 18 -u 18"))
+                VolumePlus -> listOf(arrayOf("shell", "uinput -K -d 16 -u 16"))
+                VolumeReduce -> listOf(arrayOf("shell", "uinput -K -d 17 -u 17"))
+                TaskManagement -> listOf(arrayOf("shell", "uinput -K -d 2717 -u 2717"))
+                Menu -> listOf(arrayOf("shell", "uinput -K -d 2067 -u 2067"))
+                Home -> listOf(arrayOf("shell", "uinput -K -d 1 -u 1"))
+                Back -> listOf(arrayOf("shell", "uinput -K -d 2 -u 2"))
             }
             commands.forEach { command ->
-                cmd.hdc(*command, consoleLog = true)
+                cmd.hdc("-t", serial, *command, consoleLog = true)
                 delay(20)
             }
         } catch (e: Throwable) {

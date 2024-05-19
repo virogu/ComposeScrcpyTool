@@ -33,21 +33,21 @@ class AndroidDeviceAdditionalAbility(private val device: Device) : DeviceAbility
     override suspend fun exec(additional: Additional) {
         try {
             val commands = when (additional) {
-                Additional.StatusBar -> listOf(arrayOf("-s", serial, "shell", "input keyevent 83"))
-                Additional.PowerButton -> listOf(arrayOf("-s", serial, "shell", "input keyevent 26"))
-                Additional.VolumePlus -> listOf(arrayOf("-s", serial, "shell", "input keyevent 24"))
-                Additional.VolumeReduce -> listOf(arrayOf("-s", serial, "shell", "input keyevent 25"))
-                Additional.TaskManagement -> listOf(arrayOf("-s", serial, "shell", "input keyevent 187"))
-                Additional.Menu -> listOf(arrayOf("-s", serial, "shell", "input keyevent 82"))
-                Additional.Home -> listOf(arrayOf("-s", serial, "shell", "input keyevent 3"))
-                Additional.Back -> listOf(arrayOf("-s", serial, "shell", "input keyevent 4"))
+                Additional.StatusBar -> listOf(arrayOf("shell", "input keyevent 83"))
+                Additional.PowerButton -> listOf(arrayOf("shell", "input keyevent 26"))
+                Additional.VolumePlus -> listOf(arrayOf("shell", "input keyevent 24"))
+                Additional.VolumeReduce -> listOf(arrayOf("shell", "input keyevent 25"))
+                Additional.TaskManagement -> listOf(arrayOf("shell", "input keyevent 187"))
+                Additional.Menu -> listOf(arrayOf("shell", "input keyevent 82"))
+                Additional.Home -> listOf(arrayOf("shell", "input keyevent 3"))
+                Additional.Back -> listOf(arrayOf("shell", "input keyevent 4"))
                 Additional.ScreenShot -> {
                     doSnapshot()
                     return
                 }
             }
             commands.forEach { command ->
-                cmd.adb(*command, consoleLog = true)
+                cmd.adb("-s", serial, *command, consoleLog = true)
                 delay(20)
             }
         } catch (e: Throwable) {
