@@ -55,8 +55,8 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
 
     private suspend fun doSnapshot() {
         val saveDir = getScreenSavePath()
-        val r = cmd.hdc("-t", serial, "shell", "snapshot_display").getOrThrow()
-        val regex = Regex("/data/snapshot_[\\d-]+_[\\d-]+.jpeg")
+        val r = cmd.hdc("-t", serial, "shell", "snapshot_display", consoleLog = true).getOrThrow()
+        val regex = Regex("""/\S+\.jpeg""")
         val matchResult = regex.find(r)
         val screenFile = matchResult?.value ?: throw IllegalStateException("截图失败: $r")
         val item = FileInfoItem(path = screenFile, type = FileType.FILE)

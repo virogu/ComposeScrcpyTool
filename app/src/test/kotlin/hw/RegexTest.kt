@@ -62,4 +62,20 @@ internal class RegexTest {
             println(it)
         }
     }
+
+
+    @Test
+    fun snapshotRegexTest() {
+        val r = """
+        process: set filename to /data/local/tmp/snapshot_2024-04-24_16-26-59.jpeg
+        process: display 0: width 800, height 1280
+        snapshot: pixel format is: 3
+        snapshot: convert rgba8888 to rgb888 successfully.
+
+        success: snapshot display 0 , write to /data/local/tmp/snapshot_2024-04-24_16-26-59.jpeg as jpeg, width 800, height 1280
+    """.trimIndent()
+        val regex = Regex("""/\S+\.jpeg""")
+        val matchResult = regex.find(r)
+        println("value: ${matchResult?.value}")
+    }
 }
