@@ -2,13 +2,12 @@ package com.virogu.core.command
 
 import com.virogu.core.isDebug
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.BufferedReader
 import java.io.File
-import java.io.InputStreamReader
 import java.nio.charset.Charset
-import java.util.concurrent.TimeUnit
 
 /**
  * @author Virogu
@@ -20,6 +19,7 @@ open class BaseCommand {
     private val processMap = HashMap<Long, Process>()
     protected var isActive = true
         private set
+    private val mutex = Mutex()
 
     open suspend fun exec(
         vararg command: String,
@@ -29,53 +29,68 @@ open class BaseCommand {
         consoleLog: Boolean = isDebug,
         timeout: Long = 5L,
         charset: Charset = Charsets.UTF_8
-    ): Result<String> = withContext(Dispatchers.IO) {
-        var process: Process? = null
-        try {
-            if (command.isEmpty()) {
-                return@withContext Result.failure(IllegalArgumentException("command is empty!"))
-            }
-            val cmdString = command.joinToString(" ")
-            if (showLog) {
-                logger.info("\n[${cmdString}] wait")
-            } else if (consoleLog) {
-                logger.debug("\n[${cmdString}] wait")
-            }
-            process = ProcessBuilder(*command).fixEnv(env, workDir).start()
-            val s = async {
-                buildString {
-                    BufferedReader(InputStreamReader(process.inputStream, charset)).forEachLine { s ->
-                        appendLine(s)
-                    }
-                }.trim()
-            }
-            if (timeout <= 0) {
-                process.waitFor()
-            } else {
-                if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
-                    logger.debug("\n[${process.pid()}] [$cmdString] time out after ${timeout}s")
-                    throw CancellationException("time out after ${timeout}s")
+    ): Result<String> = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            var process: Process? = null
+            try {
+                if (command.isEmpty()) {
+                    return@withContext Result.failure(IllegalArgumentException("command is empty!"))
                 }
+                val cmdString = command.joinToString(" ")
+                if (showLog) {
+                    logger.info("\n[${cmdString}] wait")
+                } else if (consoleLog) {
+                    logger.debug("\n[${cmdString}] wait")
+                }
+                process = ProcessBuilder(*command).fixEnv(env, workDir).start()
+                val s = async {
+                    process.inputReader(charset).use {
+                        val builder = StringBuilder()
+                        while (isActive) {
+                            if (it.ready()) {
+                                builder.appendLine(it.readText())
+                                logger.debug("\n[${process.pid()}] [$cmdString] read finish")
+                                break
+                            }
+                            if (!process.isAlive) {
+                                if (it.ready()) {
+                                    logger.debug("\n[${process.pid()}] [$cmdString] read line last")
+                                    builder.appendLine(it.readText())
+                                }
+                                logger.debug("\n[${process.pid()}] [$cmdString] not alive")
+                                break
+                            }
+                        }
+                        builder.toString().trim()
+                    }
+                }
+                //if (timeout <= 0) {
+                //    process.waitFor()
+                //} else {
+                //    if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
+                //        logger.debug("\n[${process.pid()}] [$cmdString] time out after ${timeout}s")
+                //        throw CancellationException("time out after ${timeout}s")
+                //    }
+                //}
+                val result = s.await()
+                if (showLog) {
+                    val msg = "\n" + formatLog(cmdString, result)
+                    logger.info(msg)
+                } else if (consoleLog) {
+                    val msg = "\n" + formatLog(cmdString, result)
+                    logger.debug(msg)
+                }
+                return@withContext Result.success(result)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                process?.destroyRecursively()
+                if (e is CancellationException) {
+                    logger.debug("job canceled, pid: ${process?.pid()}")
+                    return@withContext Result.success("")
+                }
+                logger.error("run error. $e")
+                return@withContext Result.failure(e)
             }
-            //val inputStreamReader = InputStreamReader(process.inputStream, charset)
-            val result = s.await()
-            if (showLog) {
-                val msg = "\n" + formatLog(cmdString, result)
-                logger.info(msg)
-            } else if (consoleLog) {
-                val msg = "\n" + formatLog(cmdString, result)
-                logger.debug(msg)
-            }
-            return@withContext Result.success(result)
-        } catch (e: Throwable) {
-            //e.printStackTrace()
-            process?.destroyRecursively()
-            if (e is CancellationException) {
-                logger.debug("job canceled, pid: ${process?.pid()}")
-                return@withContext Result.success("")
-            }
-            logger.error("run error. $e")
-            return@withContext Result.failure(e)
         }
     }
 
@@ -95,7 +110,7 @@ open class BaseCommand {
             val processBuilder = ProcessBuilder(*command).fixEnv(env, workDir)
             progress = processBuilder.start()
             scope.launch {
-                BufferedReader(progress.inputReader(charset)).use {
+                progress.inputReader(charset).use {
                     it.lineSequence().forEach { s ->
                         println(s)
                         if (!isActive) {
@@ -126,8 +141,6 @@ open class BaseCommand {
             val ev = environment()
             ev.putAll(it)
         }
-        val f = File("")
-        f.deleteRecursively()
         return this
     }
 

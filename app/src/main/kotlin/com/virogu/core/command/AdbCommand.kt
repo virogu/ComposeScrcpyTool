@@ -4,8 +4,6 @@ import com.virogu.core.PlateForm
 import com.virogu.core.commonWorkDir
 import com.virogu.core.currentPlateForm
 import com.virogu.core.isDebug
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -16,7 +14,6 @@ import java.nio.charset.Charset
  * @since 2024-03-27 下午 5:19
  **/
 class AdbCommand : BaseCommand() {
-    private val mutex = Mutex()
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(this::class.java)
@@ -42,7 +39,7 @@ class AdbCommand : BaseCommand() {
         consoleLog: Boolean = isDebug,
         timeout: Long = 5L,
         charset: Charset = Charsets.UTF_8
-    ): Result<String> = mutex.withLock {
+    ): Result<String> {
         if (!isActive) {
             return Result.failure(IllegalStateException("server is not active"))
         }

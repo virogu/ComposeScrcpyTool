@@ -2,8 +2,6 @@ package com.virogu.core.command
 
 import com.virogu.core.PlateForm
 import com.virogu.core.currentPlateForm
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.nio.charset.Charset
 
 /**
@@ -11,8 +9,6 @@ import java.nio.charset.Charset
  * @since 2024-03-27 下午 6:23
  **/
 class PingCommand : BaseCommand() {
-    private val mutex = Mutex()
-
     private val charset: Charset by lazy {
         when (currentPlateForm) {
             is PlateForm.Windows -> Charset.forName("GBK")
@@ -29,7 +25,7 @@ class PingCommand : BaseCommand() {
         }
     }
 
-    suspend fun ping(ip: String): Boolean = mutex.withLock {
+    suspend fun ping(ip: String): Boolean {
         val ping = exec(ping, ip, *pingArgs, charset = charset).getOrNull()
         return !(ping == null || !ping.contains("ttl=", true))
     }
