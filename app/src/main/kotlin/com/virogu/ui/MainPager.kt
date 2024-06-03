@@ -12,31 +12,34 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Notification
+import androidx.compose.ui.window.TrayState
 import androidx.compose.ui.window.WindowState
 import com.virogu.core.tool.Tools
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import theme.Construction
 import theme.Icon
 import theme.materialColors
+import java.awt.SystemTray
 
 @Composable
 fun MainPager(
     window: ComposeWindow,
     windowState: WindowState,
+    trayState: TrayState,
     pagerController: PagerNavController<Pager>,
     tools: Tools
 ) {
     Row(Modifier.fillMaxSize()) {
         Column(Modifier.wrapContentWidth().fillMaxHeight()) {
             MenuView(pagerController, modifier = Modifier.weight(1f))
-            AuxiliaryToolView(tools)
+            AuxiliaryToolView(trayState, tools)
         }
         Spacer(Modifier.fillMaxHeight().width(1.dp).background(materialColors.onSurface.copy(alpha = 0.3f)))
         PagerContainerView(window, windowState, pagerController, tools)
@@ -116,10 +119,19 @@ private fun PagerContainerView(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AuxiliaryToolView(
+    trayState: TrayState,
     tools: Tools,
     modifier: Modifier = Modifier
 ) {
     val showAuxiliaryTool = remember { mutableStateOf(false) }
+    if (SystemTray.isSupported()) {
+        val auxiliaryTool = tools.additionalManager
+        LaunchedEffect(Unit) {
+            auxiliaryTool.notification.onEach {
+                trayState.sendNotification(Notification("ScrcpyTool", it, Notification.Type.Info))
+            }.launchIn(this)
+        }
+    }
     Column(
         modifier = modifier.wrapContentWidth().padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)

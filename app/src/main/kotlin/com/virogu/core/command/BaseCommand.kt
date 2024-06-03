@@ -8,6 +8,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.charset.Charset
+import java.util.concurrent.TimeUnit
 
 /**
  * @author Virogu
@@ -49,7 +50,6 @@ open class BaseCommand {
                         while (isActive) {
                             if (it.ready()) {
                                 builder.appendLine(it.readText())
-                                logger.debug("\n[${process.pid()}] [$cmdString] read finish")
                                 break
                             }
                             if (!process.isAlive) {
@@ -57,21 +57,20 @@ open class BaseCommand {
                                     logger.debug("\n[${process.pid()}] [$cmdString] read line last")
                                     builder.appendLine(it.readText())
                                 }
-                                logger.debug("\n[${process.pid()}] [$cmdString] not alive")
                                 break
                             }
                         }
                         builder.toString().trim()
                     }
                 }
-                //if (timeout <= 0) {
-                //    process.waitFor()
-                //} else {
-                //    if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
-                //        logger.debug("\n[${process.pid()}] [$cmdString] time out after ${timeout}s")
-                //        throw CancellationException("time out after ${timeout}s")
-                //    }
-                //}
+                if (timeout <= 0) {
+                    process.waitFor()
+                } else {
+                    if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
+                        logger.debug("\n[${process.pid()}] [$cmdString] time out after ${timeout}s")
+                        throw CancellationException("time out after ${timeout}s")
+                    }
+                }
                 val result = s.await()
                 if (showLog) {
                     val msg = "\n" + formatLog(cmdString, result)

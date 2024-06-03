@@ -16,7 +16,7 @@ abstract class DeviceAbilityAdditional {
     private val screenPath get() = configStores.scrcpyConfigStore.scrcpyConfigFlow.value.commonConfig.recordPath
     private val screenSaveDir get() = File(screenPath)
 
-    abstract suspend fun exec(additional: Additional)
+    abstract suspend fun exec(additional: Additional): String
 
     protected fun getScreenSavePath(): File {
         if (screenPath.isEmpty()) {

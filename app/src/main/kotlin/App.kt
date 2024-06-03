@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
+import androidx.compose.ui.window.TrayState
 import androidx.compose.ui.window.WindowScope
 import androidx.compose.ui.window.WindowState
 import com.virogu.core.tool.Tools
@@ -37,6 +38,7 @@ fun WindowScope.App(
     window: ComposeWindow,
     applicationScope: ApplicationScope,
     state: WindowState,
+    trayState: TrayState,
     pagerController: PagerNavController<Pager>,
     tools: Tools
 ) {
@@ -47,7 +49,7 @@ fun WindowScope.App(
             mutableStateOf(initState.value.success)
         }
         if (initStateSuccess) {
-            MainPager(window, state, pagerController, tools)
+            MainPager(window, state, trayState, pagerController, tools)
         } else {
             InitPager(initState)
         }

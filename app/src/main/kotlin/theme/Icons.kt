@@ -146,6 +146,14 @@ val Icon.Outlined.MoreHorizon: Painter
     @Composable
     get() = fromResource("icons/ic_more_horiz.svg")
 
+val Icon.Outlined.Keep: Painter
+    @Composable
+    get() = fromResource("icons/ic_keep.svg")
+
+val Icon.Outlined.KeepOf: Painter
+    @Composable
+    get() = fromResource("icons/ic_keep_off.svg")
+
 val Icon.Outlined.ContentCopy: Painter
     @Composable
     get() = fromResource("icons/ic_content_copy.svg")

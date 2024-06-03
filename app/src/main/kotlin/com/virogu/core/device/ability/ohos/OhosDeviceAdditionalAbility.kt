@@ -27,12 +27,11 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
     }
 
     //@ohos.multimodalInput.keyCode
-    override suspend fun exec(additional: Additional) {
+    override suspend fun exec(additional: Additional): String {
         try {
             val commands: List<Array<String>> = when (additional) {
                 ScreenShot -> {
-                    doSnapshot()
-                    return
+                    return doSnapshot()
                 }
 
                 StatusBar -> listOf()
@@ -48,12 +47,14 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
                 cmd.hdc("-t", serial, *command, consoleLog = true)
                 delay(20)
             }
+            return ""
         } catch (e: Throwable) {
             logger.warn(e.localizedMessage)
+            return "操作失败: ${e.localizedMessage}"
         }
     }
 
-    private suspend fun doSnapshot() {
+    private suspend fun doSnapshot(): String {
         val saveDir = getScreenSavePath()
         val r = cmd.hdc("-t", serial, "shell", "snapshot_display", consoleLog = true).getOrThrow()
         val regex = Regex("""/\S+\.jpeg""")
@@ -62,6 +63,7 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
         val item = FileInfoItem(path = screenFile, type = FileType.FILE)
         device.folderAbility.pullFile(listOf(item), saveDir)
         device.folderAbility.deleteFile(item)
+        return "截图已保存至 ${saveDir.path}"
     }
 
 }

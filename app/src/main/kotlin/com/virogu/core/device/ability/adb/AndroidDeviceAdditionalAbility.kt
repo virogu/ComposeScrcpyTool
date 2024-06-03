@@ -30,7 +30,7 @@ class AndroidDeviceAdditionalAbility(private val device: Device) : DeviceAbility
         private val logger: Logger = LoggerFactory.getLogger(this::class.java)
     }
 
-    override suspend fun exec(additional: Additional) {
+    override suspend fun exec(additional: Additional): String {
         try {
             val commands = when (additional) {
                 Additional.StatusBar -> listOf(arrayOf("shell", "input keyevent 83"))
@@ -42,25 +42,27 @@ class AndroidDeviceAdditionalAbility(private val device: Device) : DeviceAbility
                 Additional.Home -> listOf(arrayOf("shell", "input keyevent 3"))
                 Additional.Back -> listOf(arrayOf("shell", "input keyevent 4"))
                 Additional.ScreenShot -> {
-                    doSnapshot()
-                    return
+                    return doSnapshot()
                 }
             }
             commands.forEach { command ->
                 cmd.adb("-s", serial, *command, consoleLog = true)
                 delay(20)
             }
+            return ""
         } catch (e: Throwable) {
             logger.warn(e.localizedMessage)
+            return "操作失败: ${e.localizedMessage}"
         }
     }
 
-    private suspend fun doSnapshot() {
+    private suspend fun doSnapshot(): String {
         val saveDir = getScreenSavePath()
         val screenFile = "/sdcard/IMG_${localFormatTime}.png"
         cmd.adb("-s", serial, "shell", "screencap", "-p", screenFile)
         val item = FileInfoItem(path = screenFile, type = FileType.FILE)
         device.folderAbility.pullFile(listOf(item), saveDir)
         device.folderAbility.deleteFile(item)
+        return "截图已保存至 ${saveDir.path}"
     }
 }

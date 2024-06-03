@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.*
@@ -18,10 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.virogu.core.bean.Additional
 import com.virogu.core.tool.Tools
-import theme.Icon
-import theme.Logo
-import theme.MainTheme
-import theme.MoreHorizon
+import theme.*
 
 /**
  * Created by Virogu
@@ -59,21 +57,50 @@ fun AuxiliaryToolWindow(
     ) {
         MainTheme {
             Column(Modifier.fillMaxSize()) {
-                ToolBar(alwaysOnTop)
+                ToolBar(alwaysOnTop, show)
                 ToolsView(tools, Modifier.align(Alignment.CenterHorizontally))
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun WindowScope.ToolBar(alwaysOnTop: MutableState<Boolean>) = WindowDraggableArea {
-    Box(Modifier.fillMaxWidth().height(30.dp).background(Color.Black.copy(0.2f))) {
-        Icon(
-            modifier = Modifier.size(20.dp).align(Alignment.Center),
-            painter = Icon.Outlined.MoreHorizon,
-            contentDescription = "移动",
-        )
+private fun WindowScope.ToolBar(
+    alwaysOnTop: MutableState<Boolean>,
+    show: MutableState<Boolean>
+) {
+    Column {
+        val modifier = Modifier.fillMaxWidth().height(30.dp).background(Color.Black.copy(0.2f))
+        WindowDraggableArea {
+            Box(modifier) {
+                TooltipArea(
+                    modifier = Modifier.align(Alignment.Center),
+                    tooltip = {
+                        Card(elevation = 4.dp) {
+                            Text(
+                                text = if (alwaysOnTop.value) "取消置顶" else "置顶",
+                                modifier = Modifier.padding(10.dp)
+                            )
+                        }
+                    },
+                    delayMillis = 500, // in milliseconds
+                ) {
+                    Icon(
+                        modifier = Modifier.size(20.dp).align(Alignment.Center).onClick(
+                            onDoubleClick = {
+                                show.value = false
+                            }, onClick = {
+                                alwaysOnTop.value = !alwaysOnTop.value
+                            }
+                        ),
+                        painter = if (alwaysOnTop.value) Icon.Outlined.KeepOf else Icon.Outlined.Keep,
+                        contentDescription = "置顶",
+                    )
+
+                }
+            }
+        }
     }
 }
 

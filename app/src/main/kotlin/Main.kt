@@ -70,6 +70,7 @@ private fun startApplication() = application {
         ),
         Pager.DeviceConnection
     )
+    val trayState = rememberTrayState()
 
     Window(
         onCloseRequest = ::exit,
@@ -79,10 +80,10 @@ private fun startApplication() = application {
         alwaysOnTop = alwaysOnTop,
         icon = icon,
     ) {
-        App(window, this@application, state, pagerController, tools)
+        App(window, this@application, state, trayState, pagerController, tools)
     }
     if (SystemTray.isSupported()) {
-        TrayView(icon, tools, state, alwaysOnTop) {
+        TrayView(trayState, icon, tools, state, alwaysOnTop) {
             setAlwaysOnTop(it)
         }
     }
@@ -90,6 +91,7 @@ private fun startApplication() = application {
 
 @Composable
 private fun ApplicationScope.TrayView(
+    trayState: TrayState,
     icon: Painter,
     tools: Tools,
     state: WindowState,
@@ -118,6 +120,7 @@ private fun ApplicationScope.TrayView(
     }
     Tray(
         icon = icon,
+        state = trayState,
         tooltip = """ScrcpyTool
             |已连接设备：${connectedSize.value}
             |已启动设备：${startedSize.value}
@@ -148,7 +151,7 @@ private fun ApplicationScope.TrayView(
             CheckboxItem("自动刷新", autoRefresh) {
                 simpleConfigStore.updateSimpleConfig(simpleConfig.value.copy(autoRefresh = !autoRefresh))
             }
-            CheckboxItem("启用Hdc", enableHdc) {
+            CheckboxItem("启用hdc", enableHdc) {
                 simpleConfigStore.updateSimpleConfig(simpleConfig.value.copy(enableHdc = !enableHdc))
             }
             Separator()
