@@ -3,9 +3,13 @@ package com.virogu.core.tool.manager
 import com.virogu.core.bean.Additional
 import com.virogu.core.tool.scan.DeviceScan
 import kotlinx.coroutines.flow.*
+import org.kodein.di.DI
+import org.kodein.di.conf.global
+import org.kodein.di.instance
 
 class AdditionalManagerImpl(deviceScan: DeviceScan) : BaseJobManager(), AdditionalManager {
-    override val notification = MutableSharedFlow<String>()
+
+    private val notification by DI.global.instance<MutableSharedFlow<String>>("notification")
 
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
@@ -22,6 +26,7 @@ class AdditionalManagerImpl(deviceScan: DeviceScan) : BaseJobManager(), Addition
             val device = currentDevice ?: return@startJob
             val r = device.additionalAbility.exec(additional)
             if (r.isNotEmpty()) {
+                notification
                 notification.emit(r)
             }
         }

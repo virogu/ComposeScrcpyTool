@@ -19,8 +19,10 @@ import com.virogu.core.tool.scan.DeviceScan
 import com.virogu.core.tool.scan.DeviceScanManager
 import com.virogu.core.tool.ssh.SSHTool
 import com.virogu.core.tool.ssh.SSHToolImpl
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 class ToolImpl : Tools {
+    override val notification = MutableSharedFlow<String>()
 
     override val configStores: ConfigStores = ConfigStoreImpl()
 

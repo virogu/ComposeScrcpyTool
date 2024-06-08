@@ -13,12 +13,14 @@ import com.virogu.core.tool.manager.ProcessManager
 import com.virogu.core.tool.manager.ScrcpyManager
 import com.virogu.core.tool.scan.DeviceScan
 import com.virogu.core.tool.ssh.SSHTool
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 interface Tools {
     val initTool: InitTool
     val configStores: ConfigStores
     val deviceScan: DeviceScan
     val logTool: LogTool
+    val notification: MutableSharedFlow<String>
 
     val sshTool: SSHTool
 

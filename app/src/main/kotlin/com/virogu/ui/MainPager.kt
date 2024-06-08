@@ -125,9 +125,8 @@ private fun AuxiliaryToolView(
 ) {
     val showAuxiliaryTool = remember { mutableStateOf(false) }
     if (SystemTray.isSupported()) {
-        val auxiliaryTool = tools.additionalManager
         LaunchedEffect(Unit) {
-            auxiliaryTool.notification.onEach {
+            tools.notification.onEach {
                 trayState.sendNotification(Notification("ScrcpyTool", it, Notification.Type.Info))
             }.launchIn(this)
         }

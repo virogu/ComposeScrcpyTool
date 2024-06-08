@@ -11,6 +11,7 @@ import com.virogu.core.tool.log.LogTool
 import com.virogu.core.tool.manager.ScrcpyManager
 import com.virogu.core.tool.scan.DeviceScan
 import com.virogu.core.tool.ssh.SSHTool
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton
 import org.kodein.di.conf.global
@@ -28,6 +29,9 @@ fun initDi(
     init = true
     DI.global.addConfig {
         val tools = ToolImpl()
+        bindSingleton<MutableSharedFlow<String>>("notification") {
+            tools.notification
+        }
         val configStores = tools.configStores
         bindSingleton<Tools> {
             tools
