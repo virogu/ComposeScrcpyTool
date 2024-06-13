@@ -55,7 +55,6 @@ class AdbCommand : BaseCommand() {
     }
 
     override suspend fun killServer() {
-        super.killServer()
         exec(*executable, "kill-server", consoleLog = true)
     }
 

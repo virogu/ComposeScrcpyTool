@@ -51,12 +51,10 @@ class HdcCommand : BaseCommand() {
     }
 
     override suspend fun startServer() {
-        super.startServer()
         exec(*executable, "start", consoleLog = true)
     }
 
     override suspend fun killServer() {
-        super.killServer()
         exec(*executable, "kill", consoleLog = true)
     }
 

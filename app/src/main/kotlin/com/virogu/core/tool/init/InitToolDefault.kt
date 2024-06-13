@@ -36,11 +36,11 @@ open class InitToolDefault : InitTool {
             }
             afterInit()
             commonLogger.info("InitTool init finish, spend ${System.currentTimeMillis() - t}ms")
+            initStateFlow.emit(InitState.Success)
         }
     }
 
     protected open suspend fun doInit() {
-        initStateFlow.emit(InitState.Success)
     }
 
     private suspend fun afterInit() = runCatching {

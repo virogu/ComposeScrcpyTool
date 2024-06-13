@@ -14,7 +14,6 @@ class InitToolLinux : InitToolDefault() {
 
     override suspend fun doInit() {
         innerInit()
-        initStateFlow.emit(InitState.Success)
     }
 
     private suspend fun innerInit() = runCatching {

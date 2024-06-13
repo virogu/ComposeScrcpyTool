@@ -49,14 +49,13 @@ open class BaseCommand {
                         val builder = StringBuilder()
                         while (isActive) {
                             if (it.ready()) {
+                                logger.debug("\n[${process.pid()}] [$cmdString] read")
                                 builder.appendLine(it.readText())
+                                logger.debug("\n[${process.pid()}] [$cmdString] read finish")
                                 break
                             }
                             if (!process.isAlive) {
-                                if (it.ready()) {
-                                    logger.debug("\n[${process.pid()}] [$cmdString] read line last")
-                                    builder.appendLine(it.readText())
-                                }
+                                logger.debug("\n[${process.pid()}] [$cmdString] not alive")
                                 break
                             }
                         }

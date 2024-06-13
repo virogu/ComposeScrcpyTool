@@ -25,10 +25,10 @@ class DeviceScanManager(
             logger.info("等待程序初始化")
             initTool.waitStart()
             logger.info("初始化成功")
-            delay(100)
-            autoRefresh.onEach(::autoRefreshChanged).launchIn(this)
-            innerRefreshDevices()
+            delay(1000)
             afterStarted()
+            delay(1000)
+            autoRefresh.onEach(::autoRefreshChanged).launchIn(this)
         }
     }
 
@@ -40,11 +40,11 @@ class DeviceScanManager(
         }
         refreshJob = scope.launch {
             while (isActive) {
-                delay(10_000)
                 if (!autoRefresh.value) {
                     return@launch
                 }
                 autoRefresh()
+                delay(10_000)
             }
         }
     }
@@ -103,7 +103,7 @@ class DeviceScanManager(
         innerRefreshDevices()
     }
 
-    private suspend fun innerRefreshDevices(showLog: Boolean = false) {
+    private suspend fun innerRefreshDevices(showLog: Boolean = true) {
         val list = refreshDevice(showLog)
         devices.emit(list)
     }
