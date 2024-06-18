@@ -25,7 +25,7 @@ abstract class DeviceScanBase(
     private val sshTool: SSHTool by DI.global.instance()
     protected val pingCommand: PingCommand by DI.global.instance()
 
-    private val mutex = Mutex()
+    protected val mutex = Mutex()
     protected val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     protected val devices: MutableStateFlow<List<Device>> = MutableStateFlow(emptyList())
 
@@ -93,6 +93,7 @@ abstract class DeviceScanBase(
             isBusy.emit(true)
             try {
                 mutex.withLock {
+                    isBusy.emit(true)
                     block()
                 }
             } catch (_: Throwable) {

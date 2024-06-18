@@ -5,6 +5,7 @@ import com.virogu.core.device.Device
 import com.virogu.core.tool.init.InitTool
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -100,7 +101,9 @@ class DeviceScanManager(
         if (!initTool.initStateFlow.value.success) {
             return
         }
-        innerRefreshDevices()
+        mutex.withLock {
+            innerRefreshDevices()
+        }
     }
 
     private suspend fun innerRefreshDevices(showLog: Boolean = true) {

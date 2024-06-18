@@ -73,9 +73,9 @@ class ScrcpyManagerImpl : ScrcpyManager {
 
     private fun withLock(block: suspend CoroutineScope.() -> Unit) {
         scope.launch {
-            isBusy.emit(true)
             try {
                 mutex.withLock {
+                    isBusy.emit(true)
                     block()
                 }
             } catch (_: Throwable) {
