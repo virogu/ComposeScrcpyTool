@@ -2,7 +2,12 @@ package com.virogu.ui.view
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -16,6 +21,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.IntSize
@@ -47,7 +53,8 @@ fun TipsView(
     }
     var mouseEnter by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
-
+    val listState = rememberLazyListState()
+    val listAdapter = rememberScrollbarAdapter(scrollState = listState)
     LaunchedEffect(Unit) {
         tipsFlow.onEach {
             tips = it.trim()
@@ -76,7 +83,7 @@ fun TipsView(
             elevation = 8.dp
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().wrapContentHeight().heightIn(60.dp, 200.dp)
                     .defaultMinSize(minHeight = 50.dp)
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -84,17 +91,20 @@ fun TipsView(
             ) {
                 Icon(Icons.Outlined.Info, "info")
                 Spacer(Modifier.size(4.dp))
-                Text(tips, Modifier.weight(1f))
-                //TextButton(onClick = {
-                //    clipboardManager.setText(AnnotatedString(tips))
-                //}, modifier = Modifier.align(Alignment.CenterVertically)) {
-                //    Text("复制")
-                //}
-                //TextButton(onClick = {
-                //    showTips = false
-                //}, modifier = Modifier.align(Alignment.CenterVertically)) {
-                //    Text("清除")
-                //}
+                var lazyColumnHeight by remember { mutableStateOf(0) }
+                LazyColumn(Modifier.weight(1f).onGloballyPositioned {
+                    lazyColumnHeight = it.size.height
+                }, state = listState) {
+                    item {
+                        SelectionContainer {
+                            Text(tips)
+                        }
+                    }
+                }
+                VerticalScrollbar(
+                    modifier = Modifier.width(8.dp).height(lazyColumnHeight.dp),
+                    adapter = listAdapter
+                )
                 IconButton({
                     clipboardManager.setText(AnnotatedString(tips))
                 }) {
@@ -105,17 +115,8 @@ fun TipsView(
                 }) {
                     Icon(Icons.Default.Close, "关闭")
                 }
-                //Button(
-                //    onClick = { showTips = false },
-                //    modifier = Modifier.size(35.dp),
-                //    shape = CircleShape,
-                //    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
-                //    contentPadding = PaddingValues(4.dp),
-                //    elevation = ButtonDefaults.elevation(defaultElevation = 0.dp)
-                //) {
-                //    Icon(Icons.Default.Close, "关闭")
-                //}
             }
+
         }
     }
 }
