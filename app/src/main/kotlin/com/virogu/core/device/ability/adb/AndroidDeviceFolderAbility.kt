@@ -22,10 +22,10 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         private val cmd: AdbCommand by DI.global.instance<AdbCommand>()
     }
 
-    private val serial = device.serial
+    private val target = arrayOf("-s", device.serial)
 
     override suspend fun remount(): String = buildString {
-        cmd.adb("-s", serial, "root").onSuccess {
+        cmd.adb(*target, "root").onSuccess {
             if (it.isNotEmpty()) {
                 appendLine(it)
             }
@@ -33,7 +33,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
             it.printStackTrace()
             appendLine("restart with root fail")
         }
-        cmd.adb("-s", serial, "remount").onSuccess {
+        cmd.adb(*target, "remount").onSuccess {
             if (it.isNotEmpty()) {
                 appendLine(it)
             }
@@ -44,7 +44,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     }
 
     override suspend fun refreshPath(path: String): Result<List<FileItem>> = cmd.adb(
-        "-s", serial, "shell",
+        *target, "shell",
         "ls", "-h", "-g", "-L", path
     ).map {
         val lines = it.trim().split("\n")
@@ -60,7 +60,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     }
 
     override suspend fun createDir(dir: String, newFile: String): Result<String> = cmd.adb(
-        "-s", serial, "shell", "mkdir '${dir}/${newFile}'",
+        *target, "shell", "mkdir '${dir}/${newFile}'",
         showLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
@@ -72,7 +72,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
 
 
     override suspend fun createFile(dir: String, newFile: String): Result<String> = cmd.adb(
-        "-s", serial, "shell", "touch '${dir}/${newFile}'",
+        *target, "shell", "touch '${dir}/${newFile}'",
         showLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
@@ -83,7 +83,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     }
 
     override suspend fun deleteFile(fileItem: FileInfoItem): Result<String> = cmd.adb(
-        "-s", serial, "shell", "rm -r '${fileItem.path}'",
+        *target, "shell", "rm -r '${fileItem.path}'",
         showLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
@@ -103,7 +103,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         appendLine()
         appendLine("修改时间: ${fileItem.modificationTime}")
         cmd.adb(
-            "-s", serial,
+            *target,
             "shell", "md5sum", fileItem.path
         ).onSuccess {
             it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
@@ -117,7 +117,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
             appendLine("获取MD5信息失败 ${it.localizedMessage}")
         }
         cmd.adb(
-            "-s", serial,
+            *target,
             "shell", "sha1sum", fileItem.path
         ).onSuccess {
             it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
@@ -135,7 +135,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     override suspend fun pullFile(fromFile: List<FileInfoItem>, toLocalFile: File): String = buildString {
         fromFile.forEach { f ->
             cmd.adb(
-                "-s", serial,
+                *target,
                 "pull", f.path, toLocalFile.absolutePath,
                 showLog = true,
                 timeout = 0L
@@ -155,7 +155,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
                 arrayOf(f.absolutePath, "${toFile.path}/${f.name}")
             }
             cmd.adb(
-                "-s", serial,
+                *target,
                 "push", *args,
                 showLog = true
             ).onSuccess {
@@ -168,7 +168,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
 
     override suspend fun chmod(fileInfo: FileInfoItem, permission: String): String = buildString {
         cmd.adb(
-            "-s", serial, "shell",
+            *target, "shell",
             "chmod", permission, fileInfo.path,
             showLog = true
         ).onSuccess {

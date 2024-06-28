@@ -21,9 +21,9 @@ import java.time.format.DateTimeFormatter
  * @since 2024-03-27 下午 8:47
  **/
 class AndroidDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdditional() {
-    private val serial = device.serial
     private val timeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
     private val localFormatTime get() = LocalDateTime.now().format(timeFormatter)
+    private val target = arrayOf("-s", device.serial)
 
     companion object {
         private val cmd: AdbCommand by DI.global.instance<AdbCommand>()
@@ -46,7 +46,7 @@ class AndroidDeviceAdditionalAbility(private val device: Device) : DeviceAbility
                 }
             }
             commands.forEach { command ->
-                cmd.adb("-s", serial, *command, consoleLog = true)
+                cmd.adb(*target, *command, consoleLog = true)
                 delay(20)
             }
             return ""
@@ -59,7 +59,7 @@ class AndroidDeviceAdditionalAbility(private val device: Device) : DeviceAbility
     private suspend fun doSnapshot(): String {
         val saveDir = getScreenSavePath()
         val screenFile = "/sdcard/IMG_${localFormatTime}.png"
-        cmd.adb("-s", serial, "shell", "screencap", "-p", screenFile)
+        cmd.adb(*target, "shell", "screencap", "-p", screenFile)
         val item = FileInfoItem(path = screenFile, type = FileType.FILE)
         device.folderAbility.pullFile(listOf(item), saveDir)
         device.folderAbility.deleteFile(item)

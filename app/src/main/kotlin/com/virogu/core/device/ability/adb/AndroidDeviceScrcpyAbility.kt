@@ -27,6 +27,8 @@ class AndroidDeviceScrcpyAbility(
         private val logger: Logger = LoggerFactory.getLogger(this::class.java)
     }
 
+    private val target = arrayOf("-s", device.serial)
+
     private val workDir: File by lazy {
         commonWorkDir.resolve("app")
     }
@@ -58,7 +60,7 @@ class AndroidDeviceScrcpyAbility(
         val serial = device.serial
         val title = device.showName
         val command = arrayOf(
-            *executable, "-s", serial, "--window-title=$title",
+            *executable, *target, "--window-title=$title",
             *commonConfig.scrcpyArgs().toTypedArray(),
             *config.scrcpyArgs().toTypedArray(),
         )

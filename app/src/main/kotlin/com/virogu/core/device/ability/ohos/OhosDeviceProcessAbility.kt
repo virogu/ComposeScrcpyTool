@@ -18,16 +18,12 @@ class OhosDeviceProcessAbility(private val device: Device) : DeviceAbilityProces
         private val cmd: HdcCommand by DI.global.instance<HdcCommand>()
     }
 
+    private val target = arrayOf("-t", device.serial)
+
     override suspend fun refresh(): List<ProcessInfo> {
         //hdc shell "aa dump -a"
-        val pidInfo = cmd.hdc(
-            "-t", device.serial,
-            "shell", "ps -ef"
-        ).getOrNull() ?: return emptyList()
-        val bundleInfo = cmd.hdc(
-            "-t", device.serial, "shell",
-            "aa dump -a | grep 'bundle name'"
-        ).getOrNull() ?: return emptyList()
+        val pidInfo = cmd.hdc(*target, "shell", "ps -ef").getOrNull() ?: return emptyList()
+        val bundleInfo = cmd.hdc(*target, "shell", "aa dump -a | grep 'bundle name'").getOrNull() ?: return emptyList()
         return parse(pidInfo = pidInfo, bundleInfo = bundleInfo)
     }
 
@@ -36,10 +32,7 @@ class OhosDeviceProcessAbility(private val device: Device) : DeviceAbilityProces
     }
 
     override suspend fun forceStopProcess(info: ProcessInfo): Result<String> {
-        return cmd.hdc(
-            "-t", device.serial, "shell",
-            "aa force-stop ${info.packageName}"
-        )
+        return cmd.hdc(*target, "shell", "aa force-stop ${info.packageName}")
     }
 
     private fun parse(pidInfo: String, bundleInfo: String): List<ProcessInfoOhos> {

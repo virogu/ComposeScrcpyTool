@@ -26,6 +26,8 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
         private val logger: Logger = LoggerFactory.getLogger(this::class.java)
     }
 
+    private val target = arrayOf("-t", device.serial)
+
     //@ohos.multimodalInput.keyCode
     override suspend fun exec(additional: Additional): String {
         try {
@@ -44,7 +46,7 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
                 Back -> listOf(arrayOf("shell", "uinput -K -d 2 -u 2"))
             }
             commands.forEach { command ->
-                cmd.hdc("-t", serial, *command, consoleLog = true)
+                cmd.hdc(*target, *command, consoleLog = true)
                 delay(20)
             }
             return ""
@@ -56,7 +58,7 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
 
     private suspend fun doSnapshot(): String {
         val saveDir = getScreenSavePath()
-        val r = cmd.hdc("-t", serial, "shell", "snapshot_display", consoleLog = true).getOrThrow()
+        val r = cmd.hdc(*target, "shell", "snapshot_display", consoleLog = true).getOrThrow()
         val regex = Regex("""/\S+\.jpeg""")
         val matchResult = regex.find(r)
         val screenFile = matchResult?.value ?: throw IllegalStateException("截图失败: $r")

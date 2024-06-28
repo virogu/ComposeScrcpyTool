@@ -18,38 +18,26 @@ class AndroidDeviceProcessAbility(private val device: Device) : DeviceAbilityPro
         private val cmd: AdbCommand by DI.global.instance<AdbCommand>()
     }
 
+    private val target = arrayOf("-s", device.serial)
+
     override suspend fun refresh(): List<ProcessInfo> {
         return refresh1()
     }
 
     override suspend fun killProcess(info: ProcessInfo): Result<String> {
-        return cmd.adb(
-            "-s", device.serial, "shell",
-            "am", "kill", info.packageName,
-            consoleLog = true
-        )
+        return cmd.adb(*target, "shell", "am", "kill", info.packageName, consoleLog = true)
     }
 
     override suspend fun forceStopProcess(info: ProcessInfo): Result<String> {
-        return cmd.adb(
-            "-s", device.serial, "shell",
-            "am", "force-stop", info.packageName,
-            consoleLog = true
-        )
+        return cmd.adb(*target, "shell", "am", "force-stop", info.packageName, consoleLog = true)
     }
 
     private suspend fun refresh1(): List<ProcessInfo> {
-        return cmd.adb(
-            "-s", device.serial,
-            "shell", "am dump -a | grep 'PID #'"
-        ).map(::parse1).getOrNull().orEmpty()
+        return cmd.adb(*target, "shell", "am dump -a | grep 'PID #'").map(::parse1).getOrNull().orEmpty()
     }
 
     private suspend fun refresh2(): List<ProcessInfo> {
-        return cmd.adb(
-            "-s", device.serial,
-            "shell", "dumpsys activity processes"
-        ).map(::parse2).getOrNull().orEmpty()
+        return cmd.adb(*target, "shell", "dumpsys activity processes").map(::parse2).getOrNull().orEmpty()
     }
 
     //am dump -a | grep 'PID #'

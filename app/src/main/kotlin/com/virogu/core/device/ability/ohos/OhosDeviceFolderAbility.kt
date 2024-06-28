@@ -23,12 +23,14 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         private const val DEBUG = true
     }
 
-    private val serial = device.serial
+    private val target = arrayOf("-t", device.serial)
 
     override suspend fun remount(): String = buildString {
-        cmd.hdc("-t", serial, "target", "mount", consoleLog = DEBUG).onSuccess {
+        cmd.hdc(*target, "shell", "mount -o rw,remount /", consoleLog = DEBUG).onSuccess {
             if (it.isNotEmpty()) {
                 appendLine(it)
+            } else {
+                appendLine("mount / success")
             }
         }.onFailure {
             it.printStackTrace()
@@ -37,7 +39,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     }
 
     override suspend fun refreshPath(path: String): Result<List<FileItem>> = cmd.hdc(
-        "-t", serial, "shell",
+        *target, "shell",
         "ls", "-h", "-g", "-L", path.ifEmpty { "/" }, consoleLog = DEBUG
     ).map {
         val lines = it.trim().split("\n")
@@ -53,7 +55,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     }
 
     override suspend fun createDir(dir: String, newFile: String): Result<String> = cmd.hdc(
-        "-t", serial, "shell", "mkdir -p '${dir}/${newFile}'",
+        *target, "shell", "mkdir -p '${dir}/${newFile}'",
         showLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
@@ -65,7 +67,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
 
 
     override suspend fun createFile(dir: String, newFile: String): Result<String> = cmd.hdc(
-        "-t", serial, "shell", "touch '${dir}/${newFile}'",
+        *target, "shell", "touch '${dir}/${newFile}'",
         showLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
@@ -76,7 +78,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     }
 
     override suspend fun deleteFile(fileItem: FileInfoItem): Result<String> = cmd.hdc(
-        "-t", serial, "shell", "rm -r '${fileItem.path}'",
+        *target, "shell", "rm -r '${fileItem.path}'",
         showLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
@@ -96,7 +98,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         appendLine()
         appendLine("修改时间: ${fileItem.modificationTime}")
         cmd.hdc(
-            "-t", serial,
+            *target,
             "shell", "md5sum", fileItem.path, consoleLog = DEBUG
         ).onSuccess {
             it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
@@ -110,7 +112,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
             appendLine("获取MD5信息失败 ${it.localizedMessage}")
         }
         cmd.hdc(
-            "-t", serial,
+            *target,
             "shell", "sha1sum", fileItem.path, consoleLog = DEBUG
         ).onSuccess {
             it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
@@ -128,7 +130,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     override suspend fun pullFile(fromFile: List<FileInfoItem>, toLocalFile: File): String = buildString {
         fromFile.forEach { f ->
             cmd.hdc(
-                "-t", serial,
+                *target,
                 "file", "recv", "-a", "\"${f.path}\"", "\"${toLocalFile.absolutePath}\"",
                 showLog = true
             ).onSuccess {
@@ -147,7 +149,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
                 arrayOf("\"${f.absolutePath}\"", "\"${toFile.path}/${f.name}\"")
             }
             cmd.hdc(
-                "-t", serial,
+                *target,
                 "file", "send", *args,
                 showLog = true
             ).onSuccess {
@@ -160,7 +162,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
 
     override suspend fun chmod(fileInfo: FileInfoItem, permission: String): String = buildString {
         cmd.hdc(
-            "-t", serial, "shell",
+            *target, "shell",
             "chmod", permission, fileInfo.path,
             showLog = true
         ).onSuccess {
