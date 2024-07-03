@@ -40,7 +40,7 @@ class AdbCommand : BaseCommand() {
         timeout: Long = 5L,
         charset: Charset = Charsets.UTF_8
     ): Result<String> {
-        if (!isActive) {
+        if (!active) {
             return Result.failure(IllegalStateException("server is not active"))
         }
         return exec(

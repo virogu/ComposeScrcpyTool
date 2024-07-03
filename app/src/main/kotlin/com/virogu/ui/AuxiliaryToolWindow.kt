@@ -94,7 +94,7 @@ private fun WindowScope.ToolBar(
                                 alwaysOnTop.value = !alwaysOnTop.value
                             }
                         ),
-                        painter = if (alwaysOnTop.value) Icon.Outlined.KeepOf else Icon.Outlined.Keep,
+                        painter = if (alwaysOnTop.value) Icon.Outlined.Keep else Icon.Outlined.KeepOf,
                         contentDescription = "置顶",
                     )
 

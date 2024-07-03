@@ -1,6 +1,7 @@
 package com.virogu.core.command
 
 import com.virogu.core.isDebug
+import com.virogu.core.projectTmpDir
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 /**
  * @author Virogu
@@ -18,9 +20,13 @@ open class BaseCommand {
 
     protected open val workDir: File? = null
     private val processMap = HashMap<Long, Process>()
-    protected var isActive = true
+    protected var active = true
         private set
     private val mutex = Mutex()
+
+    private val tmpDir by lazy {
+        projectTmpDir
+    }
 
     open suspend fun exec(
         vararg command: String,
@@ -33,6 +39,8 @@ open class BaseCommand {
     ): Result<String> = mutex.withLock {
         withContext(Dispatchers.IO) {
             var process: Process? = null
+            val random = Random.nextLong(100000, 999999)
+            val redirectFile = File(tmpDir, "${System.currentTimeMillis()}_${random}")
             try {
                 if (command.isEmpty()) {
                     return@withContext Result.failure(IllegalArgumentException("command is empty!"))
@@ -43,25 +51,11 @@ open class BaseCommand {
                 } else if (consoleLog) {
                     logger.debug("\n[${cmdString}] wait")
                 }
-                process = ProcessBuilder(*command).fixEnv(env, workDir).start()
-                val s = async {
-                    process.inputReader(charset).use {
-                        val builder = StringBuilder()
-                        while (isActive) {
-                            if (it.ready()) {
-                                logger.debug("\n[${process.pid()}] [$cmdString] read")
-                                builder.appendLine(it.readText())
-                                logger.debug("\n[${process.pid()}] [$cmdString] read finish")
-                                break
-                            }
-                            if (!process.isAlive) {
-                                logger.debug("\n[${process.pid()}] [$cmdString] not alive")
-                                break
-                            }
-                        }
-                        builder.toString().trim()
-                    }
-                }
+                // 将执行结果重定向到一个临时文件，执行结束后读取这个文件的内容，再把文件删除
+                // 因为执行hdc命令时，inputStream read时总是会卡死
+                // 这样操作虽然仍无法避免hdc inputStream卡死，但是卡死时不会影响正常运行，只是这个临时文件被hdc进程锁死无法删除
+                // 程序正常关闭时会kill掉hdc服务，从而释放相关被锁定的文件，下次程序启动会自动清空临时目录
+                process = ProcessBuilder(*command).fixEnv(env, workDir, redirectFile).start()
                 if (timeout <= 0) {
                     process.waitFor()
                 } else {
@@ -70,7 +64,7 @@ open class BaseCommand {
                         throw CancellationException("time out after ${timeout}s")
                     }
                 }
-                val result = s.await()
+                val result = redirectFile.readText(charset).trim()
                 if (showLog) {
                     val msg = "\n" + formatLog(cmdString, result)
                     logger.info(msg)
@@ -80,14 +74,22 @@ open class BaseCommand {
                 }
                 return@withContext Result.success(result)
             } catch (e: Throwable) {
-                e.printStackTrace()
-                process?.destroyRecursively()
                 if (e is CancellationException) {
                     logger.debug("job canceled, pid: ${process?.pid()}")
                     return@withContext Result.success("")
                 }
+                e.printStackTrace()
                 logger.error("run error. $e")
                 return@withContext Result.failure(e)
+            } finally {
+                process?.destroyRecursively()
+                redirectFile.takeIf {
+                    it.exists()
+                }?.delete()?.also {
+                    if (!it) {
+                        logger.debug("delete tmp file ${redirectFile.name} fail")
+                    }
+                }
             }
         }
     }
@@ -131,10 +133,18 @@ open class BaseCommand {
 
     private fun ProcessBuilder.fixEnv(
         extraEnv: Map<String, String>? = null,
-        workDir: File? = null
+        workDir: File? = null,
+        redirectFile: File? = null
     ): ProcessBuilder {
         directory(workDir)
-        redirectErrorStream(true)
+        if (redirectFile != null) {
+            redirectOutput(ProcessBuilder.Redirect.INHERIT)
+
+            redirectOutput(redirectFile)
+            redirectError(redirectFile)
+        } else {
+            redirectErrorStream(true)
+        }
         extraEnv?.also {
             val ev = environment()
             ev.putAll(it)
@@ -149,19 +159,6 @@ open class BaseCommand {
         | ------ """.trimMargin()
     }
 
-    //private fun addProcess(process: Process) {
-    //    synchronized(processMap) {
-    //        processMap[process.pid()]?.destroyRecursively()
-    //        processMap[process.pid()] = process
-    //    }
-    //}
-
-    //private fun removeProcess(pid: Long) {
-    //    synchronized(processMap) {
-    //        processMap.remove(pid)?.destroyRecursively()
-    //    }
-    //}
-
     private fun Process.destroyRecursively() {
         descendants().forEach {
             //println("destroy child [${it.pid()}]")
@@ -172,7 +169,7 @@ open class BaseCommand {
     }
 
     fun destroy() {
-        isActive = false
+        active = false
         runBlocking(Dispatchers.IO) {
             try {
                 killServer()

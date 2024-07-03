@@ -87,10 +87,10 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
                     if (!isOnline) {
                         return@mapNotNull null
                     }
-                    val apiVersion = hdcGetProp(showLog, serial, OHOS_API_VERSION)
-                    val releaseName = hdcGetProp(showLog, serial, OHOS_FULL_NAME)
-                    val product = hdcGetProp(showLog, serial, OHOS_PRODUCT_NAME)
-                    val model = hdcGetProp(showLog, serial, OHOS_MODEL_NAME)
+                    val apiVersion = hdcGetProp(serial, OHOS_API_VERSION)
+                    val releaseName = hdcGetProp(serial, OHOS_FULL_NAME)
+                    val product = hdcGetProp(serial, OHOS_PRODUCT_NAME)
+                    val model = hdcGetProp(serial, OHOS_MODEL_NAME)
                     DeviceEntityOhos(
                         serial = serial,
                         status = status,
@@ -158,10 +158,10 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
     }
 
     private suspend fun hdcGetProp(
-        showLog: Boolean,
         serial: String,
         prop: String,
-        default: String = "Unknown"
+        default: String = "Unknown",
+        showLog: Boolean = false,
     ): String {
         return cmd.hdc(
             "-t", serial, "shell",

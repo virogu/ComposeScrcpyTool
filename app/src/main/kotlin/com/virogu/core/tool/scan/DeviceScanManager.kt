@@ -106,7 +106,7 @@ class DeviceScanManager(
         }
     }
 
-    private suspend fun innerRefreshDevices(showLog: Boolean = true) {
+    private suspend fun innerRefreshDevices(showLog: Boolean = false) {
         val list = refreshDevice(showLog)
         devices.emit(list)
     }

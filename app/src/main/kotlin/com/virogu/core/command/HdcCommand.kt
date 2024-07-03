@@ -36,7 +36,7 @@ class HdcCommand : BaseCommand() {
         timeout: Long = 5L,
         charset: Charset = Charset.forName("GBK")
     ): Result<String> {
-        if (!isActive) {
+        if (!active) {
             return Result.failure(IllegalStateException("server is not active"))
         }
         return exec(

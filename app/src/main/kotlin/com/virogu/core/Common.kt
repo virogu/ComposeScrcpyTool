@@ -81,21 +81,15 @@ val projectDataDir: File by lazy {
     File(userRootConfigDir, "scrcpy-tool")
 }
 
-fun MutableMap<String, String>.appendCommonEnv(): MutableMap<String, String> {
-    //put("LANG", "en_US.UTF-8")
-    //put("LC_ALL", "en_US.UTF-8")
-    //val (key, split) = when (currentPlateForm) {
-    //    is PlateForm.Windows -> Pair("Path", ";")
-    //    is PlateForm.Linux -> Pair("PATH", ":")
-    //    else -> return this
-    //}
-    //val path = buildString {
-    //    append(File(commonWorkDir, "app").absolutePath)
-    //    get(key)?.let {
-    //        append(split)
-    //        append(it)
-    //    }
-    //}
-    //put(key, path)
-    return this
+val projectTmpDir: File by lazy {
+    File(userRootConfigDir, "scrcpy-tool/tmp").also {
+        it.deleteRecursively()
+        commonLogger.debug("clear tmp dir: ${it.path}")
+        it.listFiles()?.also { files ->
+            commonLogger.info("tmp residual files: \n${files.map { f -> f.name }}")
+        }
+        it.mkdirs()
+        commonLogger.debug("mkdir tmp dir: ${it.path}")
+
+    }
 }

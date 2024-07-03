@@ -20,7 +20,7 @@ import java.util.regex.Pattern
 class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     companion object {
         private val cmd: HdcCommand by DI.global.instance<HdcCommand>()
-        private const val DEBUG = true
+        private const val DEBUG = false
     }
 
     private val target = arrayOf("-t", device.serial)
