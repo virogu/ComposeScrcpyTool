@@ -138,8 +138,6 @@ open class BaseCommand {
     ): ProcessBuilder {
         directory(workDir)
         if (redirectFile != null) {
-            redirectOutput(ProcessBuilder.Redirect.INHERIT)
-
             redirectOutput(redirectFile)
             redirectError(redirectFile)
         } else {

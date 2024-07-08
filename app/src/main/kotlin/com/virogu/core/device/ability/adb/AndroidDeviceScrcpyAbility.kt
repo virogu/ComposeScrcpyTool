@@ -57,7 +57,6 @@ class AndroidDeviceScrcpyAbility(
         commonConfig: ScrcpyConfig.CommonConfig,
         config: ScrcpyConfig.Config
     ): Process? {
-        val serial = device.serial
         val title = device.showName
         val command = arrayOf(
             *executable, *target, "--window-title=$title",
