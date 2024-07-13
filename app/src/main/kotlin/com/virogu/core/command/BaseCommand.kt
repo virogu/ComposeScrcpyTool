@@ -28,19 +28,26 @@ open class BaseCommand {
         projectTmpDir
     }
 
+    private val defaultRedirectFile: File
+        get() {
+            val random = Random.nextLong(100000, 999999)
+            return File(tmpDir, "${System.currentTimeMillis()}_${random}")
+        }
+
     open suspend fun exec(
         vararg command: String,
         workDir: File? = this.workDir,
+        redirectFile: File? = null,
         env: Map<String, String>? = null,
         showLog: Boolean = false,
         consoleLog: Boolean = isDebug,
         timeout: Long = 5L,
         charset: Charset = Charsets.UTF_8
     ): Result<String> = mutex.withLock {
+        val redirect = redirectFile ?: defaultRedirectFile
+        val autoDeleteRedirect = redirectFile == null
         withContext(Dispatchers.IO) {
             var process: Process? = null
-            val random = Random.nextLong(100000, 999999)
-            val redirectFile = File(tmpDir, "${System.currentTimeMillis()}_${random}")
             try {
                 if (command.isEmpty()) {
                     return@withContext Result.failure(IllegalArgumentException("command is empty!"))
@@ -55,7 +62,7 @@ open class BaseCommand {
                 // 因为执行hdc命令时，inputStream read时总是会卡死
                 // 这样操作虽然仍无法避免hdc inputStream卡死，但是卡死时不会影响正常运行，只是这个临时文件被hdc进程锁死无法删除
                 // 程序正常关闭时会kill掉hdc服务，从而释放相关被锁定的文件，下次程序启动会自动清空临时目录
-                process = ProcessBuilder(*command).fixEnv(env, workDir, redirectFile).start()
+                process = ProcessBuilder(*command).fixEnv(env, workDir, redirect).start()
                 if (timeout <= 0) {
                     process.waitFor()
                 } else {
@@ -64,7 +71,11 @@ open class BaseCommand {
                         throw CancellationException("time out after ${timeout}s")
                     }
                 }
-                val result = redirectFile.readText(charset).trim()
+                val result = if (autoDeleteRedirect) {
+                    redirect.readText(charset).trim()
+                } else {
+                    ""
+                }
                 if (showLog) {
                     val msg = "\n" + formatLog(cmdString, result)
                     logger.info(msg)
@@ -83,11 +94,11 @@ open class BaseCommand {
                 return@withContext Result.failure(e)
             } finally {
                 process?.destroyRecursively()
-                redirectFile.takeIf {
-                    it.exists()
+                redirect.takeIf {
+                    autoDeleteRedirect && it.exists()
                 }?.delete()?.also {
                     if (!it) {
-                        logger.debug("delete tmp file ${redirectFile.name} fail")
+                        logger.debug("delete tmp file ${redirect.name} fail")
                     }
                 }
             }
@@ -134,12 +145,12 @@ open class BaseCommand {
     private fun ProcessBuilder.fixEnv(
         extraEnv: Map<String, String>? = null,
         workDir: File? = null,
-        redirectFile: File? = null
+        redirect: File? = null
     ): ProcessBuilder {
         directory(workDir)
-        if (redirectFile != null) {
-            redirectOutput(redirectFile)
-            redirectError(redirectFile)
+        if (redirect != null) {
+            redirectOutput(redirect)
+            redirectError(redirect)
         } else {
             redirectErrorStream(true)
         }

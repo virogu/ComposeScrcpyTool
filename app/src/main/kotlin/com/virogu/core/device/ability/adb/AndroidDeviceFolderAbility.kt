@@ -61,7 +61,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
 
     override suspend fun createDir(dir: String, newFile: String): Result<String> = cmd.adb(
         *target, "shell", "mkdir '${dir}/${newFile}'",
-        showLog = true
+        consoleLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
             throw IllegalStateException(it)
@@ -73,7 +73,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
 
     override suspend fun createFile(dir: String, newFile: String): Result<String> = cmd.adb(
         *target, "shell", "touch '${dir}/${newFile}'",
-        showLog = true
+        consoleLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
             throw IllegalStateException(it)
@@ -84,7 +84,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
 
     override suspend fun deleteFile(fileItem: FileInfoItem): Result<String> = cmd.adb(
         *target, "shell", "rm -r '${fileItem.path}'",
-        showLog = true
+        consoleLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
             throw IllegalStateException(it)
@@ -137,7 +137,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
             cmd.adb(
                 *target,
                 "pull", f.path, toLocalFile.absolutePath,
-                showLog = true,
+                consoleLog = true,
                 timeout = 0L
             ).onSuccess {
                 appendLine(it)
@@ -157,7 +157,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
             cmd.adb(
                 *target,
                 "push", *args,
-                showLog = true
+                consoleLog = true
             ).onSuccess {
                 appendLine(it)
             }.onFailure {
@@ -170,7 +170,7 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         cmd.adb(
             *target, "shell",
             "chmod", permission, fileInfo.path,
-            showLog = true
+            consoleLog = true
         ).onSuccess {
             if (it.isNotBlank()) {
                 appendLine(it)

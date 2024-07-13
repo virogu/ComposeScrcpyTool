@@ -13,13 +13,14 @@ import org.kodein.di.conf.global
 import org.kodein.di.instance
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  * @author Virogu
  * @since 2024-03-27 下午 8:47
  **/
 class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdditional() {
-    private val serial = device.serial
 
     companion object {
         private val cmd: HdcCommand by DI.global.instance<HdcCommand>()
@@ -27,6 +28,8 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
     }
 
     private val target = arrayOf("-t", device.serial)
+    private val timeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
+    private val localFormatTime get() = LocalDateTime.now().format(timeFormatter)
 
     //@ohos.multimodalInput.keyCode
     override suspend fun exec(additional: Additional): String {
@@ -58,10 +61,18 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
 
     private suspend fun doSnapshot(): String {
         val saveDir = getScreenSavePath()
-        val r = cmd.hdc(*target, "shell", "snapshot_display", consoleLog = true).getOrThrow()
-        val regex = Regex("""/\S+\.jpeg""")
-        val matchResult = regex.find(r)
-        val screenFile = matchResult?.value ?: throw IllegalStateException("截图失败: $r")
+        val fileName = "IMG_${localFormatTime}.jpeg"
+        val screenFile = "/data/local/tmp/$fileName"
+        val r = cmd.hdc(*target, "shell", "snapshot_display", "-f", screenFile, consoleLog = true).getOrNull().orEmpty()
+        if (!r.contains("success", ignoreCase = true)) {
+            if (r.contains("error, 13", ignoreCase = true)) {
+                return "截图失败, 可能临时目录/data/local/tmp被删除，请重启设备"
+            }
+            return "截图失败: $r"
+        }
+        //val regex = Regex("""/\S+\.jpeg""")
+        //val matchResult = regex.find(r)
+        //val screenFile = matchResult?.value ?: throw IllegalStateException("截图失败: $r")
         val item = FileInfoItem(path = screenFile, type = FileType.FILE)
         device.folderAbility.pullFile(listOf(item), saveDir)
         device.folderAbility.deleteFile(item)

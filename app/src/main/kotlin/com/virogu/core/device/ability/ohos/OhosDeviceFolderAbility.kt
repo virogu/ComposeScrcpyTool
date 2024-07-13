@@ -56,7 +56,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
 
     override suspend fun createDir(dir: String, newFile: String): Result<String> = cmd.hdc(
         *target, "shell", "mkdir -p '${dir}/${newFile}'",
-        showLog = true
+        consoleLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
             throw IllegalStateException(it)
@@ -68,7 +68,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
 
     override suspend fun createFile(dir: String, newFile: String): Result<String> = cmd.hdc(
         *target, "shell", "touch '${dir}/${newFile}'",
-        showLog = true
+        consoleLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
             throw IllegalStateException(it)
@@ -79,7 +79,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
 
     override suspend fun deleteFile(fileItem: FileInfoItem): Result<String> = cmd.hdc(
         *target, "shell", "rm -r '${fileItem.path}'",
-        showLog = true
+        consoleLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
             throw IllegalStateException(it)
@@ -132,7 +132,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
             cmd.hdc(
                 *target,
                 "file", "recv", "-a", "\"${f.path}\"", "\"${toLocalFile.absolutePath}\"",
-                showLog = true
+                consoleLog = true
             ).onSuccess {
                 appendLine(it)
             }.onFailure {
@@ -151,7 +151,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
             cmd.hdc(
                 *target,
                 "file", "send", *args,
-                showLog = true
+                consoleLog = true
             ).onSuccess {
                 appendLine(it)
             }.onFailure {
@@ -164,7 +164,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         cmd.hdc(
             *target, "shell",
             "chmod", permission, fileInfo.path,
-            showLog = true
+            consoleLog = true
         ).onSuccess {
             if (it.isNotBlank()) {
                 appendLine(it)

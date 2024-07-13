@@ -58,8 +58,16 @@ class AndroidDeviceAdditionalAbility(private val device: Device) : DeviceAbility
 
     private suspend fun doSnapshot(): String {
         val saveDir = getScreenSavePath()
-        val screenFile = "/sdcard/IMG_${localFormatTime}.png"
-        cmd.adb(*target, "shell", "screencap", "-p", screenFile)
+        val fileName = "IMG_${localFormatTime}.png"
+        //cmd.adb(*target, "shell", "screencap", redirectFile = File(saveDir, fileName), autoDeleteRedirectFile = false)
+        val screenFile = "/data/local/tmp/$fileName"
+        val r = cmd.adb(*target, "shell", "screencap", "-p", screenFile, consoleLog = true).getOrNull() ?: "error"
+        if (r.contains("error", ignoreCase = true)) {
+            if (r.contains("No such file or directory", ignoreCase = true)) {
+                return "截图失败, 可能临时目录/data/local/tmp被删除，请重启设备"
+            }
+            return "截图失败: $r"
+        }
         val item = FileInfoItem(path = screenFile, type = FileType.FILE)
         device.folderAbility.pullFile(listOf(item), saveDir)
         device.folderAbility.deleteFile(item)
