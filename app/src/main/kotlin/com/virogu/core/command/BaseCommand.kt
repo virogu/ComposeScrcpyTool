@@ -96,11 +96,7 @@ open class BaseCommand {
                 process?.destroyRecursively()
                 redirect.takeIf {
                     autoDeleteRedirect && it.exists()
-                }?.delete()?.also {
-                    if (!it) {
-                        logger.debug("delete tmp file ${redirect.name} fail")
-                    }
-                }
+                }?.delete()
             }
         }
     }
@@ -152,7 +148,8 @@ open class BaseCommand {
             redirectOutput(redirect)
             redirectError(redirect)
         } else {
-            redirectErrorStream(true)
+            redirectOutput(ProcessBuilder.Redirect.DISCARD)
+            redirectError(ProcessBuilder.Redirect.DISCARD)
         }
         extraEnv?.also {
             val ev = environment()

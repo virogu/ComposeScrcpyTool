@@ -1,8 +1,6 @@
 package com.virogu.core.device.ability.adb
 
 import com.virogu.core.bean.Additional
-import com.virogu.core.bean.FileInfoItem
-import com.virogu.core.bean.FileType
 import com.virogu.core.command.AdbCommand
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityAdditional
@@ -12,6 +10,7 @@ import org.kodein.di.conf.global
 import org.kodein.di.instance
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -59,18 +58,11 @@ class AndroidDeviceAdditionalAbility(private val device: Device) : DeviceAbility
     private suspend fun doSnapshot(): String {
         val saveDir = getScreenSavePath()
         val fileName = "IMG_${localFormatTime}.png"
-        //cmd.adb(*target, "shell", "screencap", redirectFile = File(saveDir, fileName), autoDeleteRedirectFile = false)
-        val screenFile = "/data/local/tmp/$fileName"
-        val r = cmd.adb(*target, "shell", "screencap", "-p", screenFile, consoleLog = true).getOrNull() ?: "error"
-        if (r.contains("error", ignoreCase = true)) {
-            if (r.contains("No such file or directory", ignoreCase = true)) {
-                return "截图失败, 可能临时目录/data/local/tmp被删除，请重启设备"
-            }
-            return "截图失败: $r"
+        val screenFile = File(saveDir, fileName).absolutePath
+        val screen = cmd.adb(*target, "exec-out", "screencap", "-p", ">", screenFile).getOrNull() ?: "error"
+        if (screen.isNotEmpty()) {
+            return "截图失败: $screen"
         }
-        val item = FileInfoItem(path = screenFile, type = FileType.FILE)
-        device.folderAbility.pullFile(listOf(item), saveDir)
-        device.folderAbility.deleteFile(item)
-        return "截图已保存至 ${saveDir.path}"
+        return "截图已保存至 $screenFile"
     }
 }

@@ -76,7 +76,7 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
         val item = FileInfoItem(path = screenFile, type = FileType.FILE)
         device.folderAbility.pullFile(listOf(item), saveDir)
         device.folderAbility.deleteFile(item)
-        return "截图已保存至 ${saveDir.path}"
+        return "截图已保存至 ${saveDir.path}\\$fileName"
     }
 
 }

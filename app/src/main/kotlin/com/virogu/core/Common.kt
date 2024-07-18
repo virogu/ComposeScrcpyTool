@@ -82,7 +82,7 @@ val projectDataDir: File by lazy {
 }
 
 val projectTmpDir: File by lazy {
-    File(userRootConfigDir, "scrcpy-tool/tmp").also {
+    File(projectDataDir, "tmp").also {
         it.deleteRecursively()
         commonLogger.debug("clear tmp dir: ${it.path}")
         it.listFiles()?.also { files ->
