@@ -88,17 +88,17 @@ abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configS
                         return@mapNotNull null
                     }
                     val apiVersion = hdcGetProp(serial, OHOS_API_VERSION)
-                    val releaseName = hdcGetProp(serial, OHOS_FULL_NAME)
-                    val product = hdcGetProp(serial, OHOS_PRODUCT_NAME)
+                    //val releaseName = hdcGetProp(serial, OHOS_FULL_NAME)
+                    //val product = hdcGetProp(serial, OHOS_PRODUCT_NAME)
                     val model = hdcGetProp(serial, OHOS_MODEL_NAME)
                     DeviceEntityOhos(
                         serial = serial,
                         status = status,
-                        product = product,
+                        product = "",
                         model = model,
                         apiVersion = apiVersion,
-                        version = releaseName,
-                        device = product,
+                        version = "",
+                        device = "",
                         desc = model,
                         isOnline = true,
                     )

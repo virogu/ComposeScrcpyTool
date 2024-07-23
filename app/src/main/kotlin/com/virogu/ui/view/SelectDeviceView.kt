@@ -7,8 +7,7 @@ import androidx.compose.ui.Modifier
 import com.virogu.core.device.Device
 import com.virogu.core.tool.Tools
 import theme.dropdownMenuItemPadding
-import theme.textFieldContentPadding
-import views.OutlinedTextField
+import views.OutlinedText
 
 /**
  * Created by Virogu
@@ -29,14 +28,10 @@ fun SelectDeviceView(
         onExpandedChange = { expanded = !expanded },
         modifier = modifier,
     ) {
-        OutlinedTextField(
+        OutlinedText(
             modifier = Modifier.fillMaxSize(),
-            readOnly = true,
-            singleLine = true,
             value = currentDevice?.showName.orEmpty(),
-            onValueChange = {},
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            contentPadding = textFieldContentPadding()
         )
         ExposedDropdownMenu(
             expanded = expanded,

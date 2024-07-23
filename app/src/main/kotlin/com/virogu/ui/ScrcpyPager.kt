@@ -24,9 +24,8 @@ import com.virogu.core.tool.Tools
 import com.virogu.core.tool.manager.ScrcpyManager
 import com.virogu.ui.view.FileSelectView
 import theme.materialColors
-import theme.textFieldContentPadding
 import theme.textFieldHeight
-import views.OutlinedTextField
+import views.OutlinedText
 import javax.swing.JFileChooser
 
 @Composable
@@ -307,15 +306,11 @@ private fun <T> DropMenuConfigView(
             },
             modifier = Modifier.fillMaxSize(),
         ) {
-            OutlinedTextField(
+            OutlinedText(
                 modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically),
                 textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
-                readOnly = true,
-                singleLine = true,
                 enabled = enabled,
                 value = currentValueFormat(currentValue),
-                onValueChange = {},
-                contentPadding = textFieldContentPadding()
             )
             ExposedDropdownMenu(
                 expanded = expanded,

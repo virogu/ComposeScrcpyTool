@@ -25,8 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import theme.FileFolder
 import theme.Icon
-import theme.textFieldContentPadding
-import views.OutlinedTextField
+import views.OutlinedText
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
@@ -90,7 +89,7 @@ fun FileSelectView(
             interactionSource.emit(FocusInteraction.Unfocus(focus))
         }
     }
-    OutlinedTextField(
+    OutlinedText(
         modifier = modifier.onExternalDrag(
             onDragStart = {
                 dragging = true
@@ -141,10 +140,7 @@ fun FileSelectView(
                 }
             }
         ),
-        readOnly = true,
-        singleLine = true,
         value = text,
-        onValueChange = {},
         interactionSource = interactionSource,
         trailingIcon = {
             IconButton({
@@ -158,7 +154,6 @@ fun FileSelectView(
                 )
             }
         },
-        contentPadding = textFieldContentPadding()
     )
 }
 

@@ -33,6 +33,7 @@ import com.virogu.core.tool.log.LogTool
 import com.virogu.ui.view.LogListView
 import logger
 import theme.*
+import views.OutlinedText
 import views.OutlinedTextField
 import views.modifier.onEnterKey
 
@@ -173,7 +174,6 @@ fun ConnectDeviceView(
                         Text(text = "IP")
                     },
                     colors = TextFieldDefaults.outlinedTextFieldColors(textColor = contentColorFor(MaterialTheme.colors.background)),
-                    contentPadding = textFieldContentPadding()
                 )
                 OutlinedTextField(
                     value = port.value.toString(),
@@ -193,7 +193,6 @@ fun ConnectDeviceView(
                         Text(text = "端口")
                     },
                     colors = TextFieldDefaults.outlinedTextFieldColors(textColor = contentColorFor(MaterialTheme.colors.background)),
-                    contentPadding = textFieldContentPadding()
                 )
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded, onIconClick = { expanded = !expanded })
             }
@@ -278,14 +277,10 @@ fun DeviceListView(
             onExpandedChange = { expanded = !expanded },
             modifier = Modifier.textFieldHeight().weight(1f).align(Alignment.CenterVertically),
         ) {
-            OutlinedTextField(
+            OutlinedText(
                 modifier = Modifier.fillMaxSize(),
-                readOnly = true,
-                singleLine = true,
                 value = current.value?.showName.orEmpty(),
-                onValueChange = {},
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                contentPadding = textFieldContentPadding()
             )
             ExposedDropdownMenu(
                 expanded = expanded,
@@ -348,7 +343,6 @@ fun DeviceView(tools: Tools) {
                     overflow = TextOverflow.Ellipsis
                 )
             },
-            contentPadding = textFieldContentPadding()
         )
         TextButton(
             onClick = updateDescAction,

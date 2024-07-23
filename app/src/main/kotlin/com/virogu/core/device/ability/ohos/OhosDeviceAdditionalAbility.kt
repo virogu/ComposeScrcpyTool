@@ -43,7 +43,7 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
                 PowerButton -> listOf(arrayOf("shell", "uinput -K -d 18 -u 18"))
                 VolumePlus -> listOf(arrayOf("shell", "uinput -K -d 16 -u 16"))
                 VolumeReduce -> listOf(arrayOf("shell", "uinput -K -d 17 -u 17"))
-                TaskManagement -> listOf(arrayOf("shell", "uinput -K -d 2717 -u 2717"))
+                TaskManagement -> listOf(arrayOf("shell", "uinput -K -d 3 -u 3"))
                 Menu -> listOf(arrayOf("shell", "uinput -K -d 2067 -u 2067"))
                 Home -> listOf(arrayOf("shell", "uinput -K -d 1 -u 1"))
                 Back -> listOf(arrayOf("shell", "uinput -K -d 2 -u 2"))
