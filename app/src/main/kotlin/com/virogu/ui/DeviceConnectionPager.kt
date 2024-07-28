@@ -96,7 +96,7 @@ fun ConnectDeviceView(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         val historyDevicesStore = tools.configStores.historyDevicesStore
-        val connectTool = tools.deviceScan
+        val connectTool = tools.deviceConnect
         val isBusy = connectTool.isBusy.collectAsState()
         val history = historyDevicesStore.historyDeviceFlow.collectAsState()
 
@@ -264,7 +264,7 @@ fun DeviceListView(
     tools: Tools,
 ) {
     Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
-        val connectTool = tools.deviceScan
+        val connectTool = tools.deviceConnect
         val isBusy = connectTool.isBusy.collectAsState()
         val current = connectTool.currentSelectedDevice.collectAsState()
         val devices = connectTool.connectedDevice.collectAsState()
@@ -311,7 +311,7 @@ fun DeviceListView(
 
 @Composable
 fun DeviceView(tools: Tools) {
-    val connectTool = tools.deviceScan
+    val connectTool = tools.deviceConnect
     val isBusy = connectTool.isBusy.collectAsState()
     val current = connectTool.currentSelectedDevice.collectAsState()
 

@@ -8,8 +8,8 @@ import com.virogu.core.bean.FileInfoItem
 import com.virogu.core.bean.FileItem
 import com.virogu.core.bean.FileTipsItem
 import com.virogu.core.device.Device
+import com.virogu.core.tool.connect.DeviceConnect
 import com.virogu.core.tool.init.InitTool
-import com.virogu.core.tool.scan.DeviceScan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -20,7 +20,7 @@ import java.io.File
 
 class FolderManagerImpl(
     private val initTool: InitTool,
-    deviceScan: DeviceScan,
+    deviceConnect: DeviceConnect,
 ) : BaseJobManager(), FolderManager {
     private val fileMapMutex = Mutex()
 
@@ -30,7 +30,7 @@ class FolderManagerImpl(
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val tipsFlow = MutableSharedFlow<String>()
 
-    private val selectedOnlineDevice = deviceScan.currentSelectedDevice.map {
+    private val selectedOnlineDevice = deviceConnect.currentSelectedDevice.map {
         it?.takeIf {
             it.isOnline
         }

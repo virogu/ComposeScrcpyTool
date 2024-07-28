@@ -2,8 +2,8 @@ package com.virogu.core.tool.manager
 
 import com.virogu.core.device.Device
 import com.virogu.core.device.process.ProcessInfo
+import com.virogu.core.tool.connect.DeviceConnect
 import com.virogu.core.tool.init.InitTool
-import com.virogu.core.tool.scan.DeviceScan
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class ProcessManagerImpl(
     private val initTool: InitTool,
-    deviceScan: DeviceScan,
+    deviceConnect: DeviceConnect,
 ) : BaseJobManager(), ProcessManager {
     private var mJob: Job? = null
 
@@ -21,7 +21,7 @@ class ProcessManagerImpl(
 
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-    private val selectedOnlineDevice = deviceScan.currentSelectedDevice.map {
+    private val selectedOnlineDevice = deviceConnect.currentSelectedDevice.map {
         it?.takeIf {
             it.isOnline
         }

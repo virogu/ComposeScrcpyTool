@@ -1,4 +1,4 @@
-package com.virogu.core.tool.scan
+package com.virogu.core.tool.connect
 
 import com.virogu.core.config.ConfigStores
 import com.virogu.core.device.Device
@@ -9,10 +9,10 @@ import kotlinx.coroutines.sync.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class DeviceScanManager(
+class DeviceConnectManager(
     private val initTool: InitTool,
     configStores: ConfigStores,
-) : DeviceScanHdc(configStores) {
+) : DeviceConnectHdc(configStores) {
     private val autoRefresh = configStores.simpleConfigStore.simpleConfig.map {
         it.autoRefresh
     }.stateIn(scope, SharingStarted.Eagerly, true)

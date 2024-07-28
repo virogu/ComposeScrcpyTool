@@ -1,4 +1,4 @@
-package com.virogu.core.tool.scan
+package com.virogu.core.tool.connect
 
 import com.virogu.core.command.PingCommand
 import com.virogu.core.config.ConfigStores
@@ -19,9 +19,9 @@ import org.kodein.di.instance
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-abstract class DeviceScanBase(
+abstract class DeviceConnectBase(
     protected val configStores: ConfigStores,
-) : DeviceScan {
+) : DeviceConnect {
     private val sshTool: SSHTool by DI.global.instance()
     protected val pingCommand: PingCommand by DI.global.instance()
 
@@ -104,7 +104,7 @@ abstract class DeviceScanBase(
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(DeviceScanBase::class.java)
+        private val logger: Logger = LoggerFactory.getLogger(DeviceConnectBase::class.java)
     }
 
 }

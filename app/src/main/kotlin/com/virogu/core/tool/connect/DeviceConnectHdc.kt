@@ -1,4 +1,4 @@
-package com.virogu.core.tool.scan
+package com.virogu.core.tool.connect
 
 import com.virogu.core.command.HdcCommand
 import com.virogu.core.config.ConfigStores
@@ -19,7 +19,7 @@ import java.util.regex.Pattern
  * @author Virogu
  * @since 2024-03-27 下午 5:59
  **/
-abstract class DeviceScanHdc(configStores: ConfigStores) : DeviceScanAdb(configStores) {
+abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(configStores) {
     private val cmd: HdcCommand by DI.global.instance()
     protected val hdcCmd get() = cmd
 

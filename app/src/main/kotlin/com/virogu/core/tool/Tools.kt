@@ -5,20 +5,20 @@ import com.virogu.core.command.BaseCommand
 import com.virogu.core.command.HdcCommand
 import com.virogu.core.command.PingCommand
 import com.virogu.core.config.ConfigStores
+import com.virogu.core.tool.connect.DeviceConnect
 import com.virogu.core.tool.init.InitTool
 import com.virogu.core.tool.log.LogTool
 import com.virogu.core.tool.manager.AdditionalManager
 import com.virogu.core.tool.manager.FolderManager
 import com.virogu.core.tool.manager.ProcessManager
 import com.virogu.core.tool.manager.ScrcpyManager
-import com.virogu.core.tool.scan.DeviceScan
 import com.virogu.core.tool.ssh.SSHTool
 import kotlinx.coroutines.flow.MutableSharedFlow
 
 interface Tools {
     val initTool: InitTool
     val configStores: ConfigStores
-    val deviceScan: DeviceScan
+    val deviceConnect: DeviceConnect
     val logTool: LogTool
     val notification: MutableSharedFlow<String>
 

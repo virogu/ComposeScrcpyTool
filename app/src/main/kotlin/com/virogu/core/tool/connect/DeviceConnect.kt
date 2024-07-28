@@ -1,14 +1,20 @@
-package com.virogu.core.tool.scan
+package com.virogu.core.tool.connect
 
 import com.virogu.core.device.Device
 import kotlinx.coroutines.flow.StateFlow
 
-interface DeviceScan {
+interface DeviceConnect {
     val connectedDevice: StateFlow<List<Device>>
     val currentSelectedDevice: StateFlow<Device?>
     val isBusy: StateFlow<Boolean>
 
     fun start()
+
+    fun stop()
+
+    fun refresh()
+
+    fun updateCurrentDesc(desc: String)
 
     fun selectDevice(device: Device)
 
@@ -16,12 +22,5 @@ interface DeviceScan {
 
     fun disconnect(device: Device)
 
-    fun refresh()
-
-    fun updateCurrentDesc(desc: String)
-
     fun disconnectAll()
-
-    fun stop()
-
 }

@@ -98,8 +98,8 @@ private fun ApplicationScope.TrayView(
     alwaysOnTop: Boolean,
     onAlwaysOnTopChanged: (Boolean) -> Unit
 ) {
-    val connectedDevice = tools.deviceScan.connectedDevice.collectAsState()
-    val currentDevice = tools.deviceScan.currentSelectedDevice.collectAsState()
+    val connectedDevice = tools.deviceConnect.connectedDevice.collectAsState()
+    val currentDevice = tools.deviceConnect.currentSelectedDevice.collectAsState()
     val startedDevice = tools.scrcpyManager.activeDevicesFLow.collectAsState()
     val connectedSize = remember(connectedDevice.value.size) {
         mutableStateOf(connectedDevice.value.size)
@@ -144,7 +144,7 @@ private fun ApplicationScope.TrayView(
                         device.showName,
                         device.serial == currentDevice.value?.serial
                     ) {
-                        tools.deviceScan.selectDevice(device)
+                        tools.deviceConnect.selectDevice(device)
                     }
                 }
             }

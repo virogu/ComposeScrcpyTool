@@ -44,7 +44,7 @@ fun DeviceProcessPager(
     tools: Tools,
 ) {
     val processTool = tools.processTool
-    val currentDevice by tools.deviceScan.currentSelectedDevice.collectAsState()
+    val currentDevice by tools.deviceConnect.currentSelectedDevice.collectAsState()
 
     val listState = rememberLazyListState()
     val scrollAdapter = rememberScrollbarAdapter(listState)

@@ -30,7 +30,7 @@ import javax.swing.JFileChooser
 
 @Composable
 fun ScrcpyView(window: ComposeWindow, tools: Tools) {
-    val connectTool = tools.deviceScan
+    val connectTool = tools.deviceConnect
     val scrcpyTool = tools.scrcpyManager
     val configTool = tools.configStores.scrcpyConfigStore
 

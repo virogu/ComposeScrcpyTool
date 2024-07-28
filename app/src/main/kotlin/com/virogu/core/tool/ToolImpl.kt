@@ -8,6 +8,8 @@ import com.virogu.core.command.PingCommand
 import com.virogu.core.config.ConfigStores
 import com.virogu.core.config.impl.ConfigStoreImpl
 import com.virogu.core.currentPlateForm
+import com.virogu.core.tool.connect.DeviceConnect
+import com.virogu.core.tool.connect.DeviceConnectManager
 import com.virogu.core.tool.init.InitTool
 import com.virogu.core.tool.init.InitToolDefault
 import com.virogu.core.tool.init.InitToolLinux
@@ -15,8 +17,6 @@ import com.virogu.core.tool.init.InitToolWindows
 import com.virogu.core.tool.log.LogTool
 import com.virogu.core.tool.log.LogToolImpl
 import com.virogu.core.tool.manager.*
-import com.virogu.core.tool.scan.DeviceScan
-import com.virogu.core.tool.scan.DeviceScanManager
 import com.virogu.core.tool.ssh.SSHTool
 import com.virogu.core.tool.ssh.SSHToolImpl
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -48,23 +48,23 @@ class ToolImpl : Tools {
 
     override val scrcpyManager: ScrcpyManager = ScrcpyManagerImpl()
 
-    override val deviceScan: DeviceScan = DeviceScanManager(initTool, configStores)
+    override val deviceConnect: DeviceConnect = DeviceConnectManager(initTool, configStores)
 
-    override val folderManager: FolderManager = FolderManagerImpl(initTool, deviceScan)
+    override val folderManager: FolderManager = FolderManagerImpl(initTool, deviceConnect)
 
-    override val processTool: ProcessManager = ProcessManagerImpl(initTool, deviceScan)
+    override val processTool: ProcessManager = ProcessManagerImpl(initTool, deviceConnect)
 
-    override val additionalManager: AdditionalManager = AdditionalManagerImpl(deviceScan)
+    override val additionalManager: AdditionalManager = AdditionalManagerImpl(deviceConnect)
 
     override fun start() {
         logTool.start()
         initTool.init()
-        deviceScan.start()
+        deviceConnect.start()
     }
 
     override fun stop() {
         scrcpyManager.disConnect()
-        deviceScan.stop()
+        deviceConnect.stop()
         baseCommand.destroy()
         pingCommand.destroy()
         hdcCommand.destroy()

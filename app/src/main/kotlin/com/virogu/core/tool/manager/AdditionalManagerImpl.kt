@@ -1,19 +1,19 @@
 package com.virogu.core.tool.manager
 
 import com.virogu.core.bean.Additional
-import com.virogu.core.tool.scan.DeviceScan
+import com.virogu.core.tool.connect.DeviceConnect
 import kotlinx.coroutines.flow.*
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
 
-class AdditionalManagerImpl(deviceScan: DeviceScan) : BaseJobManager(), AdditionalManager {
+class AdditionalManagerImpl(deviceConnect: DeviceConnect) : BaseJobManager(), AdditionalManager {
 
     private val notification by DI.global.instance<MutableSharedFlow<String>>("notification")
 
     override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-    override val selectedOnlineDevice = deviceScan.currentSelectedDevice.map {
+    override val selectedOnlineDevice = deviceConnect.currentSelectedDevice.map {
         it?.takeIf {
             it.isOnline
         }

@@ -1,4 +1,4 @@
-package com.virogu.core.tool.scan
+package com.virogu.core.tool.connect
 
 import com.virogu.core.command.AdbCommand
 import com.virogu.core.config.ConfigStores
@@ -18,7 +18,7 @@ import java.util.regex.Pattern
  * @author Virogu
  * @since 2024-03-27 下午 5:59
  **/
-abstract class DeviceScanAdb(configStores: ConfigStores) : DeviceScanBase(configStores) {
+abstract class DeviceConnectAdb(configStores: ConfigStores) : DeviceConnectBase(configStores) {
     private val cmd: AdbCommand by DI.global.instance()
     protected val adbCmd get() = cmd
 

@@ -19,7 +19,7 @@ import views.OutlinedText
 fun SelectDeviceView(
     modifier: Modifier = Modifier, currentDevice: Device?, tools: Tools
 ) {
-    val connectTool = tools.deviceScan
+    val connectTool = tools.deviceConnect
     val devices = connectTool.connectedDevice.collectAsState()
     var expanded by remember { mutableStateOf(false) }
 

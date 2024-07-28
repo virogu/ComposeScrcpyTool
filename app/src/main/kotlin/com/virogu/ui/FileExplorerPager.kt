@@ -46,7 +46,7 @@ fun FileExplorerPager(
 ) {
     val fileExplorer = tools.folderManager
     val scrollAdapter = rememberScrollbarAdapter(fileListState)
-    val currentDevice by tools.deviceScan.currentSelectedDevice.collectAsState()
+    val currentDevice by tools.deviceConnect.currentSelectedDevice.collectAsState()
     var currentSelect: FileInfoItem? by remember(currentDevice) {
         mutableStateOf(null)
     }

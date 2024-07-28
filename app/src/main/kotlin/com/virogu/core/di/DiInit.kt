@@ -7,9 +7,9 @@ import com.virogu.core.command.PingCommand
 import com.virogu.core.config.*
 import com.virogu.core.tool.ToolImpl
 import com.virogu.core.tool.Tools
+import com.virogu.core.tool.connect.DeviceConnect
 import com.virogu.core.tool.log.LogTool
 import com.virogu.core.tool.manager.ScrcpyManager
-import com.virogu.core.tool.scan.DeviceScan
 import com.virogu.core.tool.ssh.SSHTool
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.kodein.di.DI
@@ -66,8 +66,8 @@ fun initDi(
         bindSingleton<SSHTool> {
             tools.sshTool
         }
-        bindSingleton<DeviceScan> {
-            tools.deviceScan
+        bindSingleton<DeviceConnect> {
+            tools.deviceConnect
         }
         bindSingleton<LogTool> {
             tools.logTool
