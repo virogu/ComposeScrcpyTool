@@ -7,6 +7,7 @@ import com.virogu.core.device.ability.DeviceAbilityScrcpy
 import com.virogu.core.device.ability.adb.AndroidDeviceAdditionalAbility
 import com.virogu.core.device.ability.adb.AndroidDeviceFolderAbility
 import com.virogu.core.device.ability.adb.AndroidDeviceProcessAbility
+import com.virogu.core.device.ability.adb.AndroidDeviceScrcpyAbility
 
 /**
  * @author Virogu
@@ -47,12 +48,8 @@ data class DeviceEntityAndroid(
     }
 
     override val folderAbility: DeviceAbilityFolder = AndroidDeviceFolderAbility(this)
-
     override val processAbility: DeviceAbilityProcess = AndroidDeviceProcessAbility(this)
-
-    override val scrcpyAbility: DeviceAbilityScrcpy =
-        com.virogu.core.device.ability.adb.AndroidDeviceScrcpyAbility(this)
-
+    override val scrcpyAbility: DeviceAbilityScrcpy = AndroidDeviceScrcpyAbility(this)
     override val additionalAbility: DeviceAbilityAdditional = AndroidDeviceAdditionalAbility(this)
 
     override fun copy(

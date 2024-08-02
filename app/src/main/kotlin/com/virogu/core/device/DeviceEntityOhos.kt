@@ -49,11 +49,8 @@ data class DeviceEntityOhos(
     }
 
     override val folderAbility: DeviceAbilityFolder = OhosDeviceFolderAbility(this)
-
     override val processAbility: DeviceAbilityProcess = OhosDeviceProcessAbility(this)
-
     override val scrcpyAbility: DeviceAbilityScrcpy = OhosDeviceScrcpyAbility(this)
-
     override val additionalAbility: DeviceAbilityAdditional = OhosDeviceAdditionalAbility(this)
 
     override fun copy(

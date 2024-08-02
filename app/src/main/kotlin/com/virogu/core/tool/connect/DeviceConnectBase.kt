@@ -35,7 +35,6 @@ abstract class DeviceConnectBase(
     ) { deviceDesc, device ->
         device.map {
             it.copy(desc = deviceDesc[it.serial].orEmpty())
-            it
         }
     }.distinctUntilChanged().onEach(::onDeviceConnectedChanged).stateIn(scope, SharingStarted.Eagerly, emptyList())
 
