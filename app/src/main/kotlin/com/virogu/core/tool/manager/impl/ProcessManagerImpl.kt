@@ -1,9 +1,10 @@
-package com.virogu.core.tool.manager
+package com.virogu.core.tool.manager.impl
 
 import com.virogu.core.device.Device
 import com.virogu.core.device.process.ProcessInfo
 import com.virogu.core.tool.connect.DeviceConnect
 import com.virogu.core.tool.init.InitTool
+import com.virogu.core.tool.manager.ProcessManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -41,6 +42,7 @@ class ProcessManagerImpl(
         scope.launch {
             initTool.waitStart()
             selectedOnlineDevice.onEach {
+                processListFlow.emit(emptyList())
                 initJob()
             }.launchIn(scope)
         }
@@ -49,7 +51,6 @@ class ProcessManagerImpl(
     private fun initJob() {
         mJob?.cancel()
         mJob = scope.launch {
-            processListFlow.emit(emptyList())
             if (!active) {
                 return@launch
             }
@@ -82,7 +83,6 @@ class ProcessManagerImpl(
 
     private suspend fun refreshProcess(device: Device) {
         val process = device.processAbility.refresh()
-        delay(10)
         processListFlow.emit(process)
     }
 

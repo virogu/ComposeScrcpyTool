@@ -1,4 +1,4 @@
-package com.virogu.core.tool.manager
+package com.virogu.core.tool.manager.impl
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow

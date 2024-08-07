@@ -1,7 +1,8 @@
-package com.virogu.core.tool.manager
+package com.virogu.core.tool.manager.impl
 
 import com.virogu.core.bean.Additional
 import com.virogu.core.tool.connect.DeviceConnect
+import com.virogu.core.tool.manager.AdditionalManager
 import kotlinx.coroutines.flow.*
 import org.kodein.di.DI
 import org.kodein.di.conf.global

@@ -1,7 +1,8 @@
-package com.virogu.core.tool.manager
+package com.virogu.core.tool.manager.impl
 
 import com.virogu.core.bean.ScrcpyConfig
 import com.virogu.core.device.Device
+import com.virogu.core.tool.manager.ScrcpyManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

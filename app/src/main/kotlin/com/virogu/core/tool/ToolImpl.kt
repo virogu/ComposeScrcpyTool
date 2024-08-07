@@ -16,7 +16,14 @@ import com.virogu.core.tool.init.InitToolLinux
 import com.virogu.core.tool.init.InitToolWindows
 import com.virogu.core.tool.log.LogTool
 import com.virogu.core.tool.log.LogToolImpl
-import com.virogu.core.tool.manager.*
+import com.virogu.core.tool.manager.AdditionalManager
+import com.virogu.core.tool.manager.FolderManager
+import com.virogu.core.tool.manager.ProcessManager
+import com.virogu.core.tool.manager.ScrcpyManager
+import com.virogu.core.tool.manager.impl.AdditionalManagerImpl
+import com.virogu.core.tool.manager.impl.FolderManagerImpl
+import com.virogu.core.tool.manager.impl.ProcessManagerImpl
+import com.virogu.core.tool.manager.impl.ScrcpyManagerImpl
 import com.virogu.core.tool.ssh.SSHTool
 import com.virogu.core.tool.ssh.SSHToolImpl
 import kotlinx.coroutines.flow.MutableSharedFlow

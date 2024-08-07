@@ -1,6 +1,6 @@
 @file:Suppress("GrazieInspection")
 
-package com.virogu.core.tool.manager
+package com.virogu.core.tool.manager.impl
 
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
@@ -10,6 +10,7 @@ import com.virogu.core.bean.FileTipsItem
 import com.virogu.core.device.Device
 import com.virogu.core.tool.connect.DeviceConnect
 import com.virogu.core.tool.init.InitTool
+import com.virogu.core.tool.manager.FolderManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
