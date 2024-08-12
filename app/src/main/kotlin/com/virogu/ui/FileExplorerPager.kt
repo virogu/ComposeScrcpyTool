@@ -143,7 +143,7 @@ fun FileExplorerPager(
             SelectDeviceView(
                 Modifier.textFieldHeight().align(Alignment.CenterHorizontally).padding(horizontal = 16.dp),
                 currentDevice,
-                tools
+                tools.deviceConnect
             )
             ToolBarView(
                 folderManager = tools.folderManager,

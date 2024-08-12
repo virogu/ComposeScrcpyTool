@@ -85,7 +85,8 @@ fun DeviceProcessPager(
         ) {
             SelectDeviceView(
                 Modifier.textFieldHeight().align(Alignment.CenterHorizontally).padding(horizontal = 16.dp),
-                currentDevice, tools
+                currentDevice,
+                tools.deviceConnect
             )
             ToolBarView(tools.processTool, currentDevice, currentSelect) {
                 currentSelect = it

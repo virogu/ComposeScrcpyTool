@@ -31,9 +31,9 @@ import com.virogu.core.bean.HistoryDevice
 import com.virogu.core.tool.Tools
 import com.virogu.core.tool.log.LogTool
 import com.virogu.ui.view.LogListView
+import com.virogu.ui.view.SelectDeviceView
 import logger
 import theme.*
-import views.OutlinedText
 import views.OutlinedTextField
 import views.modifier.onEnterKey
 
@@ -257,7 +257,6 @@ fun ConnectDeviceView(
 
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun DeviceListView(
     windowState: WindowState,
@@ -267,38 +266,12 @@ fun DeviceListView(
         val connectTool = tools.deviceConnect
         val isBusy = connectTool.isBusy.collectAsState()
         val current = connectTool.currentSelectedDevice.collectAsState()
-        val devices = connectTool.connectedDevice.collectAsState()
-
-        var expanded by remember { mutableStateOf(false) }
-
         Text("设备列表", modifier = Modifier.width(80.dp).align(Alignment.CenterVertically))
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
+        SelectDeviceView(
             modifier = Modifier.textFieldHeight().weight(1f).align(Alignment.CenterVertically),
-        ) {
-            OutlinedText(
-                modifier = Modifier.fillMaxSize(),
-                value = current.value?.showName.orEmpty(),
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-                devices.value.forEach {
-                    DropdownMenuItem(
-                        onClick = {
-                            connectTool.selectDevice(it)
-                            expanded = false
-                        },
-                        contentPadding = dropdownMenuItemPadding(),
-                    ) {
-                        Text(text = it.showName)
-                    }
-                }
-            }
-        }
+            currentDevice = current.value,
+            connectTool = connectTool
+        )
         TextButton(
             onClick = connectTool::refresh,
             enabled = !isBusy.value,

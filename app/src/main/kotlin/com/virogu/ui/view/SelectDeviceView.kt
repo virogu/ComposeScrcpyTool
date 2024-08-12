@@ -5,7 +5,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.virogu.core.device.Device
-import com.virogu.core.tool.Tools
+import com.virogu.core.tool.connect.DeviceConnect
 import theme.dropdownMenuItemPadding
 import views.OutlinedText
 
@@ -17,9 +17,10 @@ import views.OutlinedText
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SelectDeviceView(
-    modifier: Modifier = Modifier, currentDevice: Device?, tools: Tools
+    modifier: Modifier = Modifier,
+    currentDevice: Device?,
+    connectTool: DeviceConnect
 ) {
-    val connectTool = tools.deviceConnect
     val devices = connectTool.connectedDevice.collectAsState()
     var expanded by remember { mutableStateOf(false) }
 
