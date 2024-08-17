@@ -308,7 +308,7 @@ private fun <T> DropMenuConfigView(
         ) {
             OutlinedText(
                 modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically),
-                textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+                textAlign = TextAlign.Center,
                 enabled = enabled,
                 value = currentValueFormat(currentValue),
             )

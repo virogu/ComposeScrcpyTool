@@ -87,9 +87,7 @@ data class ScrcpyConfig(
         M8("8M"),
         M20("20M"),
         M50("50M"),
-        M100("100M"),
-        M200("200M"),
-        M500("500M"),
+        M100("100M")
     }
 
     enum class VideoCodec(val value: String) {
