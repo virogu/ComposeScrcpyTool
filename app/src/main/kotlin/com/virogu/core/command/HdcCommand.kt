@@ -14,6 +14,8 @@ import java.nio.charset.Charset
  * @since 2024-03-27 下午 5:15
  **/
 class HdcCommand : BaseCommand() {
+    @Volatile
+    private var started: Boolean = false
 
     override val workDir: File by lazy {
         commonWorkDir.resolve("app").also {
@@ -37,7 +39,10 @@ class HdcCommand : BaseCommand() {
         charset: Charset = Charset.forName("GBK")
     ): Result<String> {
         if (!active) {
-            return Result.failure(IllegalStateException("server is not active"))
+            return Result.failure(IllegalStateException("hdc server is not active"))
+        }
+        if (!started) {
+            startServer()
         }
         return exec(
             *executable,
@@ -52,10 +57,12 @@ class HdcCommand : BaseCommand() {
 
     override suspend fun startServer() {
         exec(*executable, "start", consoleLog = true)
+        started = true
     }
 
     override suspend fun killServer() {
         exec(*executable, "kill", consoleLog = true)
+        started = false
     }
 
     companion object {

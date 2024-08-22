@@ -48,7 +48,7 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
         if (!enableHdc) {
             return false
         }
-        logger.info("try hdc connect")
+        logger.info("start hdc connect")
         cmd.hdc("tconn", "${ip}:${port}", "-remove", consoleLog = true)
         val r = cmd.hdc(
             "tconn", "${ip}:${port}", timeout = 3L, consoleLog = true

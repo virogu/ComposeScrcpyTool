@@ -89,7 +89,7 @@ open class BaseCommand {
                     logger.debug("job canceled, pid: ${process?.pid()}")
                     return@withContext Result.success("")
                 }
-                e.printStackTrace()
+                //e.printStackTrace()
                 logger.error("run error. $e")
                 return@withContext Result.failure(e)
             } finally {
@@ -148,8 +148,8 @@ open class BaseCommand {
             redirectOutput(redirect)
             redirectError(redirect)
         } else {
-            redirectOutput(ProcessBuilder.Redirect.DISCARD)
-            redirectError(ProcessBuilder.Redirect.DISCARD)
+            redirectOutput(ProcessBuilder.Redirect.PIPE)
+            redirectError(ProcessBuilder.Redirect.PIPE)
         }
         extraEnv?.also {
             val ev = environment()

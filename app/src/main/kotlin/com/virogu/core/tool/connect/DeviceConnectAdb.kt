@@ -23,8 +23,8 @@ abstract class DeviceConnectAdb(configStores: ConfigStores) : DeviceConnectBase(
     protected val adbCmd get() = cmd
 
     override suspend fun doConnect(ip: String, port: Int): Boolean {
-        cmd.adb("disconnect", "${ip}:${port}")
-        logger.info("try adb connect")
+        cmd.adb("disconnect", "${ip}:${port}", consoleLog = true)
+        logger.info("start adb connect")
         val r = cmd.adb("connect", "${ip}:${port}", timeout = 3L, consoleLog = true).getOrNull()?.takeIf {
             it.isNotEmpty()
         } ?: run {

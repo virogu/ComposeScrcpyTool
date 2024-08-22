@@ -61,8 +61,10 @@ abstract class DeviceConnectBase(
         return sshTool.connect(ip, SSHVerifyTools.user, SSHVerifyTools.pwd) { session ->
             val r = doOpenTcpPort(this, session, port)
             if (!r) {
-                throw IllegalStateException("open device port fail")
+                throw IllegalStateException("open device [$ip] port [$port] fail")
             }
+        }.onFailure {
+            logger.warn(it.localizedMessage)
         }.isSuccess
     }
 

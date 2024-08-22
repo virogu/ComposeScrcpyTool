@@ -15,6 +15,9 @@ import java.nio.charset.Charset
  **/
 class AdbCommand : BaseCommand() {
 
+    @Volatile
+    private var started: Boolean = false
+
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(this::class.java)
     }
@@ -41,7 +44,10 @@ class AdbCommand : BaseCommand() {
         charset: Charset = Charsets.UTF_8
     ): Result<String> {
         if (!active) {
-            return Result.failure(IllegalStateException("server is not active"))
+            return Result.failure(IllegalStateException("adb server is not active"))
+        }
+        if (!started) {
+            startServer()
         }
         return exec(
             *executable,
@@ -54,8 +60,14 @@ class AdbCommand : BaseCommand() {
         )
     }
 
+    override suspend fun startServer() {
+        exec(*executable, "start-server", consoleLog = true)
+        started = true
+    }
+
     override suspend fun killServer() {
         exec(*executable, "kill-server", consoleLog = true)
+        started = false
     }
 
 }
