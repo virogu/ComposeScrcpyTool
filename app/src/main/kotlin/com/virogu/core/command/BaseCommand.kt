@@ -116,6 +116,8 @@ open class BaseCommand {
             }
             val processBuilder = ProcessBuilder(*command).fixEnv(env, workDir)
             progress = processBuilder.start()
+            val cmdString = command.joinToString(" ")
+            logger.debug("\n[${cmdString}] start")
             scope.launch {
                 progress.inputReader(charset).use {
                     it.lineSequence().forEach { s ->
@@ -126,7 +128,7 @@ open class BaseCommand {
                         }
                         onReadLine(s)
                     }
-                    println("read end")
+                    logger.debug("\n[${cmdString}] end")
                 }
             }
             return@withContext progress
@@ -144,6 +146,7 @@ open class BaseCommand {
         redirect: File? = null
     ): ProcessBuilder {
         directory(workDir)
+        redirectErrorStream(true)
         if (redirect != null) {
             redirectOutput(redirect)
             redirectError(redirect)

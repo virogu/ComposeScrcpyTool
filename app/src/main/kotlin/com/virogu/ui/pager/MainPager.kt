@@ -1,6 +1,6 @@
 @file:Suppress("FunctionName")
 
-package com.virogu.ui
+package com.virogu.ui.pager
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.TooltipArea
@@ -21,6 +21,9 @@ import androidx.compose.ui.window.Notification
 import androidx.compose.ui.window.TrayState
 import androidx.compose.ui.window.WindowState
 import com.virogu.core.tool.Tools
+import com.virogu.ui.AuxiliaryToolWindow
+import com.virogu.ui.Pager
+import com.virogu.ui.PagerNavController
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import theme.Construction
@@ -38,8 +41,8 @@ fun MainPager(
 ) {
     Row(Modifier.fillMaxSize()) {
         Column(Modifier.wrapContentWidth().fillMaxHeight()) {
-            MenuView(pagerController, modifier = Modifier.weight(1f))
-            AuxiliaryToolView(trayState, tools)
+            TopMenuView(pagerController, modifier = Modifier.weight(1f))
+            BottomMenuView(trayState, tools)
         }
         Spacer(Modifier.fillMaxHeight().width(1.dp).background(materialColors.onSurface.copy(alpha = 0.3f)))
         PagerContainerView(window, windowState, pagerController, tools)
@@ -48,7 +51,7 @@ fun MainPager(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun MenuView(
+private fun TopMenuView(
     pagerController: PagerNavController<Pager>,
     modifier: Modifier = Modifier,
 ) {
@@ -118,7 +121,7 @@ private fun PagerContainerView(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AuxiliaryToolView(
+private fun BottomMenuView(
     trayState: TrayState,
     tools: Tools,
     modifier: Modifier = Modifier

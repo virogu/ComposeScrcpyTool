@@ -15,6 +15,8 @@ class LogToolImpl : LogTool() {
 
     override val loggingEventFlow: MutableSharedFlow<ILoggingEvent> = MutableSharedFlow()
 
+    private val logListLevel = Level.INFO
+
     init {
         this.context = rootLogger.loggerContext
     }
@@ -26,12 +28,12 @@ class LogToolImpl : LogTool() {
     }
 
     override fun append(eventObject: ILoggingEvent) {
-        if (eventObject.level.levelInt < Level.INFO_INT) {
+        if (eventObject.level.levelInt < logListLevel.levelInt) {
             return
         }
         if (logs.size >= 2000) {
             runCatching {
-                logs.removeRange(1800, logs.size)
+                logs.removeRange(1500, logs.size)
             }
         }
         logs.add(eventObject)

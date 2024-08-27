@@ -28,18 +28,18 @@ data class DeviceEntityAndroid(
 
     override val showName: String by lazy {
         buildString {
-            if (desc.isNotEmpty()) {
-                append(desc)
-            } else {
-                append(model)
-            }
+            append(desc.ifEmpty { model }.ifEmpty { "Unknown" })
             append("-")
             append(serial)
             if (isOnline) {
                 append(" (")
-                append("A$version")
+                if (version.isNotEmpty()) {
+                    append("A$version")
+                } else {
+                    append("Unknown")
+                }
                 append("_")
-                append(apiVersion)
+                append(apiVersion.ifEmpty { "Unknown" })
                 append(") ")
             } else {
                 append(" ($status) ")

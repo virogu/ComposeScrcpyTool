@@ -1,4 +1,4 @@
-package com.virogu.ui
+package com.virogu.ui.pager
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*

@@ -29,18 +29,14 @@ data class DeviceEntityOhos(
 
     override val showName: String by lazy {
         buildString {
-            if (desc.isNotEmpty()) {
-                append(desc)
-            } else {
-                append(model)
-            }
+            append(desc.ifEmpty { model }.ifEmpty { "Unknown" })
             append("-")
             append(serial)
             if (isOnline) {
                 append(" (")
                 append("OHOS")
                 append("_")
-                append(apiVersion)
+                append(apiVersion.ifEmpty { "Unknown" })
                 append(") ")
             } else {
                 append(" ($status) ")

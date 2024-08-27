@@ -43,6 +43,7 @@ class HdcCommand : BaseCommand() {
         }
         if (!started) {
             startServer()
+            showVersion()
         }
         return exec(
             *executable,
@@ -58,6 +59,11 @@ class HdcCommand : BaseCommand() {
     override suspend fun startServer() {
         exec(*executable, "start", consoleLog = true)
         started = true
+    }
+
+    private suspend fun showVersion() {
+        val version = exec(*executable, "version").getOrNull() ?: return
+        logger.info("\n----HDC----\n$version\n----------")
     }
 
     override suspend fun killServer() {

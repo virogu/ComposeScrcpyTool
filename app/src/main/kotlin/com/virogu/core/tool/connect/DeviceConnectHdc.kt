@@ -34,8 +34,6 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
             if (!it) {
                 disconnectHdc()
                 cmd.killServer()
-            } else {
-                cmd.startServer()
             }
         }.launchIn(scope)
     }
@@ -87,7 +85,9 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
                     if (!isOnline) {
                         return@mapNotNull null
                     }
-                    val apiVersion = hdcGetProp(serial, OHOS_API_VERSION)
+                    val apiVersion = hdcGetProp(serial, OHOS_API_VERSION).takeIf {
+                        it.toIntOrNull() != null
+                    } ?: ""
                     //val releaseName = hdcGetProp(serial, OHOS_FULL_NAME)
                     //val product = hdcGetProp(serial, OHOS_PRODUCT_NAME)
                     val model = hdcGetProp(serial, OHOS_MODEL_NAME)
@@ -100,7 +100,7 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
                         version = "",
                         device = "",
                         desc = model,
-                        isOnline = true,
+                        isOnline = isOnline,
                     )
                 }
             }.sortedByDescending {
@@ -130,7 +130,7 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
         connectedDevice.value.filter {
             it.platform == DevicePlatform.OpenHarmony
         }.forEach {
-            cmd.hdc("tconn", it.serial, "-remove", showLog = true)
+            cmd.hdc("tconn", it.serial, "-remove")
         }
     }
 
@@ -160,7 +160,7 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
     private suspend fun hdcGetProp(
         serial: String,
         prop: String,
-        default: String = "Unknown",
+        default: String = "",
         showLog: Boolean = false,
     ): String {
         return cmd.hdc(

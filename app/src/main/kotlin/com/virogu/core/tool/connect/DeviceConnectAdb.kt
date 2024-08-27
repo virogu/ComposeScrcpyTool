@@ -84,16 +84,23 @@ abstract class DeviceConnectAdb(configStores: ConfigStores) : DeviceConnectBase(
                 val model = matcher.group(4) ?: return@mapNotNull null
                 val device = matcher.group(5) ?: return@mapNotNull null
                 val isOnline = status == "device"
-                val apiVersion = if (isOnline) {
+
+                val apiVersion = isOnline.takeIf {
+                    it
+                }?.let {
                     adbGetProp(serial, ANDROID_API_VERSION)
-                } else {
-                    " Unknown"
-                }
-                val androidVersion = if (isOnline) {
+                }?.takeIf {
+                    it.toIntOrNull() != null
+                } ?: ""
+
+                val androidVersion = isOnline.takeIf {
+                    it
+                }?.let {
                     adbGetProp(serial, ANDROID_RELEASE_VERSION)
-                } else {
-                    " Unknown"
-                }
+                }?.takeIf {
+                    it.toIntOrNull() != null
+                } ?: ""
+
                 DeviceEntityAndroid(
                     serial = serial,
                     status = status,

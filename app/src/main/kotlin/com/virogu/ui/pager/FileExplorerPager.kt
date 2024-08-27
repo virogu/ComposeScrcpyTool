@@ -1,6 +1,6 @@
 @file:Suppress("FunctionName")
 
-package com.virogu.ui
+package com.virogu.ui.pager
 
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.*
@@ -31,6 +31,7 @@ import com.virogu.core.bean.FileType
 import com.virogu.core.device.Device
 import com.virogu.core.tool.Tools
 import com.virogu.core.tool.manager.FolderManager
+import com.virogu.ui.*
 import com.virogu.ui.view.BusyProcessView
 import com.virogu.ui.view.OptionButton
 import com.virogu.ui.view.SelectDeviceView

@@ -1,6 +1,6 @@
 @file:Suppress("unused", "FunctionName")
 
-package com.virogu.ui
+package com.virogu.ui.pager
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween

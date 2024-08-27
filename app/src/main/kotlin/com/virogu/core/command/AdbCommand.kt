@@ -47,6 +47,7 @@ class AdbCommand : BaseCommand() {
             return Result.failure(IllegalStateException("adb server is not active"))
         }
         if (!started) {
+            showVersion()
             startServer()
         }
         return exec(
@@ -63,6 +64,11 @@ class AdbCommand : BaseCommand() {
     override suspend fun startServer() {
         exec(*executable, "start-server", consoleLog = true)
         started = true
+    }
+
+    private suspend fun showVersion() {
+        val version = exec(*executable, "version").getOrNull() ?: return
+        logger.info("\n----ADB----\n$version\n----------")
     }
 
     override suspend fun killServer() {

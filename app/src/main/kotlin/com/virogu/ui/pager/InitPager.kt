@@ -1,6 +1,6 @@
 @file:Suppress("FunctionName")
 
-package com.virogu.ui
+package com.virogu.ui.pager
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

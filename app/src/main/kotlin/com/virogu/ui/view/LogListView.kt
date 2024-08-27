@@ -16,6 +16,9 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.spi.ILoggingEvent
@@ -51,9 +54,16 @@ fun LogListView(
             ) {
                 items(logList) { log ->
                     Text(
-                        text = log.logMsg,
-                        modifier = Modifier.fillMaxWidth(),
-                        color = log.color
+                        text = buildAnnotatedString {
+                            withStyle(SpanStyle(color = timeStampColor)) {
+                                append(log.logTimeStamp)
+                            }
+                            append(" ")
+                            withStyle(SpanStyle(color = log.color)) {
+                                append(log.logMsg)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
@@ -88,7 +98,8 @@ private suspend fun LazyListState.scrollListToEnd(
 
 private val ILoggingEvent.color
     get() = when (this.level) {
-        Level.DEBUG -> Color.Unspecified
+        //Level.DEBUG -> Color.Unspecified
+        Level.DEBUG -> Color(57, 147, 212)
         Level.INFO -> Color(73, 156, 84)
         Level.WARN -> Color(140, 102, 48)
         Level.ERROR -> Color.Red
@@ -97,5 +108,13 @@ private val ILoggingEvent.color
 
 private val simpleDateFormat = SimpleDateFormat("MM-dd HH:mm:ss.SSS")
 
+private val timeStampColor = Color.Unspecified
+
+private val ILoggingEvent.logTimeStamp
+    get() = simpleDateFormat.format(this.timeStamp)
+
 private val ILoggingEvent.logMsg
+    get() = this.formattedMessage
+
+private val ILoggingEvent.logFormatMsg
     get() = "${simpleDateFormat.format(this.timeStamp)} ${this.formattedMessage}"

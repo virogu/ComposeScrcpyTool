@@ -30,12 +30,12 @@ open class InitToolDefault : InitTool {
     override fun init() {
         scope.launch {
             val t = System.currentTimeMillis()
-            commonLogger.info("InitTool init")
+            commonLogger.info("init...")
             runCatching {
                 doInit()
             }
             afterInit()
-            commonLogger.info("InitTool init finish, spend ${System.currentTimeMillis() - t}ms")
+            commonLogger.info("init finish, spend ${System.currentTimeMillis() - t}ms")
             initStateFlow.emit(InitState.Success)
         }
     }
