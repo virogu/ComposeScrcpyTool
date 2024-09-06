@@ -53,6 +53,7 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.core)
     implementation(libs.kotlinx.serialization.json)
+    // https://developer.android.com/jetpack/androidx/releases/datastore?hl=zh-cn
     implementation(libs.datastore.preferences.core)
 
     //https://github.com/russhwolf/multiplatform-settings

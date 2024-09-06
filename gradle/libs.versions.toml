@@ -1,14 +1,14 @@
 [versions]
 kotlin = "1.9.23"
 gmazzoBuildconfig = "3.0.3"
-compose = "1.6.1"
+compose = "1.6.2"
 kotlin-coroutines = "1.8.0"
 apache-sshd = "2.12.1"
 slf4j = "2.0.12"
 logback = "1.5.3"
 kodein = "7.21.2"
 kotlin-serializable = "1.6.3"
-datastore = "1.1.0-beta02"
+datastore = "1.1.1"
 junit="5.9.2"
 
 [libraries]
