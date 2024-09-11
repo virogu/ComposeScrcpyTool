@@ -1,95 +1,115 @@
 package com.virogu.core
 
+import com.virogu.core.bean.Platform
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tools.BuildConfig
 import java.io.File
 
-const val isDebug = false
-
-val commonLogger: Logger by lazy {
-    LoggerFactory.getLogger("CommonLogger")
-}
-
-sealed class PlateForm(open val info: String, open val version: String) {
-    data class Windows(override val info: String, override val version: String) : PlateForm(info, version)
-    data class Linux(override val info: String, override val version: String) : PlateForm(info, version)
-    data class MacOs(override val info: String, override val version: String) : PlateForm(info, version)
-    data class Unknown(override val info: String, override val version: String) : PlateForm(info, version)
-}
-
-val currentOsName: String by lazy {
-    System.getProperty("os.name")
-}
-
-val currentOsVersion: String by lazy {
-    System.getProperty("os.version")
-}
-
-val currentPlateForm by lazy {
-    when {
-        currentOsName.contains("windows", true) -> PlateForm.Windows(currentOsName, currentOsVersion)
-        currentOsName.contains("linux", true) -> PlateForm.Linux(currentOsName, currentOsVersion)
-        currentOsName.contains("mac", true) -> PlateForm.MacOs(currentOsName, currentOsVersion)
-        else -> PlateForm.Unknown(currentOsName, currentOsVersion)
+@Suppress("MemberVisibilityCanBePrivate")
+object Common {
+    val logger: Logger by lazy {
+        LoggerFactory.getLogger("CommonLogger")
     }
-}
 
-val pingCommand: Array<String>? by lazy {
-    when (currentPlateForm) {
-        is PlateForm.Windows -> arrayOf("ping", "-n", "1")
-        is PlateForm.Linux -> arrayOf("ping", "-c", "1")
-        else -> null
+    val isDebug: Boolean by lazy {
+        File(projectHomeDir, "debug").exists()
     }
-}
 
-val commonResourceDir: File by lazy {
-    val resourcesDir = System.getProperty("compose.application.resources.dir").orEmpty()
-    File(resourcesDir).also {
-        commonLogger.info("ResourceDir: ${it.absolutePath}")
-    }.absoluteFile
-}
+    val osVersion: String by lazy {
+        get("os.version")
+    }
 
-val commonWorkDir: File by lazy {
-    val file = when (currentPlateForm) {
-        is PlateForm.Windows -> commonResourceDir
+    val osName: String by lazy {
+        get("os.name")
+    }
 
-        is PlateForm.Linux -> projectDataDir.also {
-            it.runCatching {
-                if (!exists()) {
-                    mkdirs()
+    val resourcePath: String by lazy {
+        get("compose.application.resources.dir")
+    }
+
+    val resourceDir: File by lazy {
+        File(resourcePath).also {
+            logger.info("ResourceDir: ${it.absolutePath}")
+        }.absoluteFile
+    }
+
+    val workDir: File by lazy {
+        val file = when (platform) {
+            is Platform.Windows -> resourceDir
+
+            is Platform.Linux -> projectDataDir.also {
+                it.runCatching {
+                    if (exists() && !isDirectory) {
+                        deleteRecursively()
+                    }
+                    if (!exists()) {
+                        mkdirs()
+                    }
                 }
             }
+
+            else -> resourceDir
         }
-
-        else -> commonResourceDir
+        file.absoluteFile
     }
-    file.absoluteFile
-}
 
-val userRootConfigDir: File by lazy {
-    val userDir = System.getProperty("user.home")
-    val file = when (currentPlateForm) {
-        is PlateForm.Windows -> File(userDir, "AppData/Roaming")
-        is PlateForm.Linux -> File(userDir, ".config")
-        is PlateForm.MacOs -> File(userDir, "Library/Application Support")
-        else -> File(userDir, "config")
+    val projectDataDir: File by lazy {
+        projectHomeDir.resolve("data")
     }
-    file
-}
 
-val projectDataDir: File by lazy {
-    File(userRootConfigDir, "scrcpy-tool")
-}
+    val projectHomeDir: File by lazy {
+        userHomeDir.resolve(PROJECT_NAME)
+    }
 
-val projectTmpDir: File by lazy {
-    File(projectDataDir, "tmp").also {
-        it.deleteRecursively()
-        commonLogger.debug("clear tmp dir: ${it.path}")
-        it.listFiles()?.also { files ->
-            commonLogger.info("tmp residual files: \n${files.map { f -> f.name }}")
+    val projectConfigDir: File by lazy {
+        projectHomeDir.resolve("config").also {
+            if (it.exists() && !it.isDirectory) {
+                it.deleteRecursively()
+            }
+            if (!it.exists()) {
+                it.mkdirs()
+            }
         }
-        it.mkdirs()
-        commonLogger.debug("mkdir tmp dir: ${it.path}")
+    }
 
+    val projectTmpDir: File by lazy {
+        projectHomeDir.resolve("tmp").also {
+            it.deleteRecursively()
+            logger.debug("clear tmp dir: ${it.path}")
+            it.listFiles()?.also { files ->
+                Common.logger.info("tmp residual files: \n${files.map { f -> f.name }}")
+            }
+            it.mkdirs()
+            logger.debug("mkdir tmp dir: ${it.path}")
+        }
+    }
+
+    val platform by lazy {
+        val osName = Common.osName
+        val osVersion = Common.osVersion
+        when {
+            osName.contains("windows", true) -> Platform.Windows(osName, osVersion)
+            osName.contains("linux", true) -> Platform.Linux(osName, osVersion)
+            osName.contains("mac", true) -> Platform.MacOs(osName, osVersion)
+            else -> Platform.Unknown(osName, osVersion)
+        }
+    }
+
+    private const val PROJECT_NAME = BuildConfig.AppName
+
+    private val userHomeDir: File by lazy {
+        val userHome = get("user.home")
+        val file = when (platform) {
+            is Platform.Windows -> File(userHome, "AppData/Roaming")
+            is Platform.Linux -> File(userHome, ".config")
+            is Platform.MacOs -> File(userHome, "Library/Application Support")
+            else -> File(userHome, "config")
+        }
+        file
+    }
+
+    fun get(key: String): String {
+        return System.getProperty(key).orEmpty()
     }
 }

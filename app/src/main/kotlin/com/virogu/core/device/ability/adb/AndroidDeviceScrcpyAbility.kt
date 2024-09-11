@@ -1,10 +1,9 @@
 package com.virogu.core.device.ability.adb
 
-import com.virogu.core.PlateForm
+import com.virogu.core.Common
+import com.virogu.core.bean.Platform
 import com.virogu.core.bean.ScrcpyConfig
 import com.virogu.core.command.BaseCommand
-import com.virogu.core.commonWorkDir
-import com.virogu.core.currentPlateForm
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityScrcpy
 import kotlinx.coroutines.CoroutineScope
@@ -30,19 +29,19 @@ class AndroidDeviceScrcpyAbility(
     private val target = arrayOf("-s", device.serial)
 
     private val workDir: File by lazy {
-        commonWorkDir.resolve("app")
+        Common.workDir.resolve("app")
     }
 
     private val executable by lazy {
-        when (currentPlateForm) {
-            is PlateForm.Linux -> arrayOf("./scrcpy")
+        when (Common.platform) {
+            is Platform.Linux -> arrayOf("./scrcpy")
             else -> arrayOf("cmd.exe", "/c", "scrcpy")
         }
     }
 
     private val environment: Map<String, String> by lazy {
-        when (currentPlateForm) {
-            is PlateForm.Linux -> mapOf(
+        when (Common.platform) {
+            is Platform.Linux -> mapOf(
                 "SCRCPY_ICON_PATH" to File(workDir, "logo.svg").absolutePath,
                 "SCRCPY_SERVER_PATH" to File(workDir, "scrcpy-server").absolutePath,
                 "ADB_PATH" to workDir.absolutePath,

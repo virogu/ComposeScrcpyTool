@@ -1,9 +1,7 @@
 package com.virogu.core.tool.init
 
+import com.virogu.core.Common
 import com.virogu.core.bean.DeviceSshConfig
-import com.virogu.core.commonLogger
-import com.virogu.core.commonResourceDir
-import com.virogu.core.commonWorkDir
 import com.virogu.core.json
 import com.virogu.core.tool.ssh.SSHVerifyTools
 import kotlinx.coroutines.CoroutineScope
@@ -18,11 +16,11 @@ open class InitToolDefault : InitTool {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override val workDir: File by lazy {
-        commonWorkDir
+        Common.workDir
     }
 
     override val resourceDir: File by lazy {
-        commonResourceDir
+        Common.resourceDir
     }
 
     override val initStateFlow: MutableStateFlow<InitState> = MutableStateFlow(InitState.Default)
@@ -30,12 +28,12 @@ open class InitToolDefault : InitTool {
     override fun init() {
         scope.launch {
             val t = System.currentTimeMillis()
-            commonLogger.info("init...")
+            Common.logger.info("init...")
             runCatching {
                 doInit()
             }
             afterInit()
-            commonLogger.info("init finish, spend ${System.currentTimeMillis() - t}ms")
+            Common.logger.info("init finish, spend ${System.currentTimeMillis() - t}ms")
             initStateFlow.emit(InitState.Success)
         }
     }
@@ -50,7 +48,7 @@ open class InitToolDefault : InitTool {
     protected open suspend fun initSSHConfig() {
         val configFile = File(workDir, "files/ssh/device_ssh_config.json")
         if (!configFile.exists()) {
-            commonLogger.info("ssh config file [$configFile] not exits")
+            Common.logger.info("ssh config file [$configFile] not exits")
             return
         }
         val config: DeviceSshConfig = runCatching {
@@ -63,7 +61,7 @@ open class InitToolDefault : InitTool {
             }
             val f = File(ppkPath, it.name)
             if (!f.exists()) {
-                commonLogger.info("init ppk [${it.name}]")
+                Common.logger.info("init ppk [${it.name}]")
                 f.writeText(it.value)
             }
         }

@@ -1,13 +1,13 @@
 package com.virogu.core.tool
 
-import com.virogu.core.PlateForm
+import com.virogu.core.Common
+import com.virogu.core.bean.Platform
 import com.virogu.core.command.AdbCommand
 import com.virogu.core.command.BaseCommand
 import com.virogu.core.command.HdcCommand
 import com.virogu.core.command.PingCommand
 import com.virogu.core.config.ConfigStores
 import com.virogu.core.config.impl.ConfigStoreImpl
-import com.virogu.core.currentPlateForm
 import com.virogu.core.tool.connect.DeviceConnect
 import com.virogu.core.tool.connect.DeviceConnectManager
 import com.virogu.core.tool.init.InitTool
@@ -46,9 +46,9 @@ class ToolImpl : Tools {
     override val hdcCommand: HdcCommand = HdcCommand()
 
     override val initTool: InitTool by lazy {
-        when (currentPlateForm) {
-            is PlateForm.Windows -> InitToolWindows()
-            is PlateForm.Linux -> InitToolLinux()
+        when (Common.platform) {
+            is Platform.Windows -> InitToolWindows()
+            is Platform.Linux -> InitToolLinux()
             else -> InitToolDefault()
         }
     }

@@ -4,6 +4,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
+import com.virogu.core.Common
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.slf4j.LoggerFactory
 
@@ -15,7 +16,13 @@ class LogToolImpl : LogTool() {
 
     override val loggingEventFlow: MutableSharedFlow<ILoggingEvent> = MutableSharedFlow()
 
-    private val logListLevel = Level.INFO
+    private val logListLevel: Level by lazy {
+        if (Common.isDebug) {
+            Level.ALL
+        } else {
+            Level.INFO
+        }
+    }
 
     init {
         this.context = rootLogger.loggerContext

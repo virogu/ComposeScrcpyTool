@@ -1,7 +1,7 @@
 package com.virogu.core.tool.ssh
 
+import com.virogu.core.Common
 import com.virogu.core.bean.DeviceSshConfig
-import com.virogu.core.commonLogger
 import org.apache.sshd.putty.PuttyKeyUtils
 import java.io.File
 import java.nio.file.FileSystems
@@ -31,7 +31,7 @@ object SSHVerifyTools {
             if (f.exists()) {
                 PPKFile(f, it.pwd)
             } else {
-                commonLogger.warn("ppk file [$f] not exist.")
+                Common.logger.warn("ppk file [$f] not exist.")
                 null
             }
         }
@@ -46,9 +46,9 @@ object SSHVerifyTools {
                         ppk.pwd
                     }).also(::addAll)
                 }.onSuccess {
-                    commonLogger.info("load key [${ppk.path}] success.")
+                    Common.logger.info("load key [${ppk.path}] success.")
                 }.onFailure {
-                    commonLogger.warn("load key [${ppk.path}] fail.")
+                    Common.logger.warn("load key [${ppk.path}] fail.")
                 }
             }
         }

@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
-import com.virogu.core.currentPlateForm
+import com.virogu.core.Common
 import com.virogu.core.di.initDi
 import com.virogu.core.tool.Tools
 import com.virogu.ui.Pager
@@ -43,11 +43,12 @@ private val size by lazy {
 }
 
 fun main() {
-    """Current OS [${currentPlateForm.info}, version:${currentPlateForm.version}]
+    val platformInfo = """OS: [${Common.osName}, version:${Common.osVersion}]
         |Java Version: [${System.getProperty("java.version")}]
         |Java Path: [${System.getProperty("java.home")}]
-    """.trimMargin().also(::println)
+    """.trimMargin()
     init()
+    logger.info("\n----Platform----\n$platformInfo\n--------")
     startApplication()
 }
 

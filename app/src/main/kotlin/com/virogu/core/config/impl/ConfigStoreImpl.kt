@@ -1,14 +1,14 @@
 package com.virogu.core.config.impl
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.virogu.core.Common
 import com.virogu.core.config.*
-import com.virogu.core.projectDataDir
 import java.io.File
 
 class ConfigStoreImpl(name: String = "settings") : ConfigStores {
 
     private val dataStore = PreferenceDataStoreFactory.create(produceFile = {
-        File(projectDataDir, "config/${name}.preferences_pb")
+        File(Common.projectConfigDir, "${name}.preferences_pb")
     })
 
     override val deviceDescStore: DeviceDescConfigStore = DescConfigImpl(dataStore)

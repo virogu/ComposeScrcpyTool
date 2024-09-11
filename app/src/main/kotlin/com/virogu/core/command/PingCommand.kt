@@ -1,7 +1,7 @@
 package com.virogu.core.command
 
-import com.virogu.core.PlateForm
-import com.virogu.core.currentPlateForm
+import com.virogu.core.Common
+import com.virogu.core.bean.Platform
 import java.nio.charset.Charset
 
 /**
@@ -10,8 +10,8 @@ import java.nio.charset.Charset
  **/
 class PingCommand : BaseCommand() {
     private val charset: Charset by lazy {
-        when (currentPlateForm) {
-            is PlateForm.Windows -> Charset.forName("GBK")
+        when (Common.platform) {
+            is Platform.Windows -> Charset.forName("GBK")
             else -> Charsets.UTF_8
         }
     }
@@ -19,8 +19,8 @@ class PingCommand : BaseCommand() {
     private val ping: String = "ping"
 
     private val pingArgs by lazy {
-        when (currentPlateForm) {
-            is PlateForm.Linux -> arrayOf("-c", "1")
+        when (Common.platform) {
+            is Platform.Linux -> arrayOf("-c", "1")
             else -> arrayOf("-n", "1")
         }
     }

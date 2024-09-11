@@ -1,9 +1,7 @@
 package com.virogu.core.command
 
-import com.virogu.core.PlateForm
-import com.virogu.core.commonWorkDir
-import com.virogu.core.currentPlateForm
-import com.virogu.core.isDebug
+import com.virogu.core.Common
+import com.virogu.core.bean.Platform
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -18,14 +16,14 @@ class HdcCommand : BaseCommand() {
     private var started: Boolean = false
 
     override val workDir: File by lazy {
-        commonWorkDir.resolve("app").also {
+        Common.workDir.resolve("app").also {
             logger.debug("Hdc Work Dir: ${it.absolutePath}")
         }
     }
 
     private val executable by lazy {
-        when (currentPlateForm) {
-            is PlateForm.Linux -> arrayOf("./hdc")
+        when (Common.platform) {
+            is Platform.Linux -> arrayOf("./hdc")
             else -> arrayOf("cmd.exe", "/c", "hdc")
         }
     }
@@ -34,7 +32,7 @@ class HdcCommand : BaseCommand() {
         vararg command: String,
         env: Map<String, String>? = null,
         showLog: Boolean = false,
-        consoleLog: Boolean = isDebug,
+        consoleLog: Boolean = Common.isDebug,
         timeout: Long = 5L,
         charset: Charset = Charset.forName("GBK")
     ): Result<String> {

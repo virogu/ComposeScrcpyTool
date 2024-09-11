@@ -1,7 +1,6 @@
 package com.virogu.core.command
 
-import com.virogu.core.isDebug
-import com.virogu.core.projectTmpDir
+import com.virogu.core.Common
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -25,7 +24,7 @@ open class BaseCommand {
     private val mutex = Mutex()
 
     private val tmpDir by lazy {
-        projectTmpDir
+        Common.projectTmpDir
     }
 
     private val defaultRedirectFile: File
@@ -40,7 +39,7 @@ open class BaseCommand {
         redirectFile: File? = null,
         env: Map<String, String>? = null,
         showLog: Boolean = false,
-        consoleLog: Boolean = isDebug,
+        consoleLog: Boolean = Common.isDebug,
         timeout: Long = 5L,
         charset: Charset = Charsets.UTF_8
     ): Result<String> = mutex.withLock {
