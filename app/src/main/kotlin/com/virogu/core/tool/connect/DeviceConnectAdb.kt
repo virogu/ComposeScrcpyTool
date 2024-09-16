@@ -89,16 +89,12 @@ abstract class DeviceConnectAdb(configStores: ConfigStores) : DeviceConnectBase(
                     it
                 }?.let {
                     adbGetProp(serial, ANDROID_API_VERSION)
-                }?.takeIf {
-                    it.toIntOrNull() != null
                 } ?: ""
 
                 val androidVersion = isOnline.takeIf {
                     it
                 }?.let {
                     adbGetProp(serial, ANDROID_RELEASE_VERSION)
-                }?.takeIf {
-                    it.toIntOrNull() != null
                 } ?: ""
 
                 DeviceEntityAndroid(
