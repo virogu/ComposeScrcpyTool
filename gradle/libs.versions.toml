@@ -1,7 +1,7 @@
 [versions]
-kotlin = "1.9.23"
+kotlin = "2.0.0"
 gmazzoBuildconfig = "3.0.3"
-compose = "1.6.2"
+compose = "1.6.10"
 kotlin-coroutines = "1.8.0"
 apache-sshd = "2.12.1"
 slf4j = "2.0.12"
@@ -39,6 +39,8 @@ android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 compose = { id = "org.jetbrains.compose", version.ref = "compose" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 gmazzo-buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "gmazzoBuildconfig" }

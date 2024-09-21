@@ -4,28 +4,30 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 plugins {
     id("config.package.tasks")
     kotlin("jvm")
-    id("org.jetbrains.compose")
-    id("com.github.gmazzo.buildconfig")
-    kotlin("plugin.serialization")
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.compose)
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.gmazzo.buildconfig)
 }
 
 val appBuildInfo: AppBuildInfo by project
 val javaVersion = JavaVersion.VERSION_21
-val javaVersionString = "21"
 
-java {
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-}
+//java {
+//    sourceCompatibility = javaVersion
+//    targetCompatibility = javaVersion
+//}
 
 tasks.compileKotlin {
-    kotlinOptions {
-        jvmTarget = javaVersionString
+    compilerOptions {
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
     }
 }
 tasks.compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = javaVersionString
+    compilerOptions {
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
     }
 }
 
