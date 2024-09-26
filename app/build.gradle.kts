@@ -3,7 +3,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     id("config.package.tasks")
-    kotlin("jvm")
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose)
     alias(libs.plugins.compose.compiler)
@@ -11,67 +11,54 @@ plugins {
 }
 
 val appBuildInfo: AppBuildInfo by project
-val javaVersion = JavaVersion.VERSION_21
 
-//java {
-//    sourceCompatibility = javaVersion
-//    targetCompatibility = javaVersion
-//}
+kotlin {
+    jvm("desktop")
+    sourceSets {
+        val desktopMain by getting
+        commonMain.dependencies {
+            implementation(compose.components.resources)
+            implementation(compose.components.uiToolingPreview)
+            //implementation(compose.materialIconsExtended)
+            implementation(libs.kotlin.stdlib)
+            implementation(libs.kotlinx.coroutines.core)
 
-tasks.compileKotlin {
-    compilerOptions {
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
-        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+            // https://mvnrepository.com/artifact/org.apache.sshd/sshd-mina
+            // https://github.com/apache/mina-sshd/blob/master/docs/client-setup.md
+            implementation(libs.apache.sshd.core)
+            implementation(libs.apache.sshd.mina)
+            implementation(libs.apache.sshd.common)
+            implementation(libs.apache.sshd.putty)
+
+            implementation(libs.slf4j.api)
+
+            implementation(libs.logback.core)
+            implementation(libs.logback.classic)
+
+            // https://github.com/Kodein-Framework/Kodein-DI
+            implementation(libs.kodein.di.jvm)
+            implementation(libs.kodein.di.conf.jvm)
+
+            implementation(libs.kotlinx.serialization.core)
+            implementation(libs.kotlinx.serialization.json)
+            // https://developer.android.com/jetpack/androidx/releases/datastore?hl=zh-cn
+            implementation(libs.datastore.preferences.core)
+
+            //https://google.github.io/accompanist/
+            //val accompanistVersion = "0.30.1"
+            //implementation("com.google.accompanist:accompanist-animations:$accompanistVersion")
+        }
+        commonTest.dependencies {
+            implementation(compose.desktop.uiTestJUnit4)
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(files("libs\\hdc\\device-file-explorer-4.0.0.600.jar"))
+            implementation(files("libs\\hdc\\ohos-hdclib-4.0.0.600.jar"))
+        }
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+        }
     }
-}
-tasks.compileTestKotlin {
-    compilerOptions {
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
-        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
-    }
-}
-
-dependencies {
-    implementation(compose.desktop.currentOs)
-    //implementation(compose.materialIconsExtended)
-    implementation(libs.kotlin.stdlib)
-    implementation(libs.kotlinx.coroutines.core)
-
-    // https://mvnrepository.com/artifact/org.apache.sshd/sshd-mina
-    // https://github.com/apache/mina-sshd/blob/master/docs/client-setup.md
-    implementation(libs.apache.sshd.core)
-    implementation(libs.apache.sshd.mina)
-    implementation(libs.apache.sshd.common)
-    implementation(libs.apache.sshd.putty)
-
-    implementation(libs.slf4j.api)
-
-    implementation(libs.logback.core)
-    implementation(libs.logback.classic)
-
-    // https://github.com/Kodein-Framework/Kodein-DI
-    implementation(libs.kodein.di.jvm)
-    implementation(libs.kodein.di.conf.jvm)
-
-    implementation(libs.kotlinx.serialization.core)
-    implementation(libs.kotlinx.serialization.json)
-    // https://developer.android.com/jetpack/androidx/releases/datastore?hl=zh-cn
-    implementation(libs.datastore.preferences.core)
-
-    //https://github.com/russhwolf/multiplatform-settings
-    //implementation("com.russhwolf:multiplatform-settings-datastore:1.0.0")
-    //implementation("com.russhwolf:multiplatform-settings-serialization:1.0.0")
-
-    //https://google.github.io/accompanist/
-    //val accompanistVersion = "0.30.1"
-    //implementation("com.google.accompanist:accompanist-animations:$accompanistVersion")
-
-    testImplementation(compose.desktop.uiTestJUnit4)
-    testImplementation(compose.desktop.currentOs)
-    testImplementation(libs.kotlinx.coroutines.test)
-
-    testImplementation(files("libs\\hdc\\device-file-explorer-4.0.0.600.jar"))
-    testImplementation(files("libs\\hdc\\ohos-hdclib-4.0.0.600.jar"))
 }
 
 buildConfig {
@@ -93,6 +80,10 @@ buildConfig {
     // buildConfigField("boolean", "FEATURE_ENABLED", "${true}")
     // buildConfigField("IntArray", "MAGIC_NUMBERS", "intArrayOf(1, 2, 3, 4)")
     // buildConfigField("com.github.gmazzo.SomeData", "MY_DATA", "new SomeData(\"a\",1)")
+}
+
+composeCompiler {
+    enableStrongSkippingMode = true
 }
 
 compose.desktop {
