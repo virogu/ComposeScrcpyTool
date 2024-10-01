@@ -61,9 +61,10 @@ val zipDistributable by tasks.registering(Zip::class) {
 }
 
 targetPlatform.forEach { packName ->
-    tasks.create("pack${packName.uppercaseFirstChar()}") {
+    val pack = packName.uppercaseFirstChar()
+    tasks.create("pack${pack}") {
         group = "package"
-        dependsOn("package$packName")
+        dependsOn("package$pack")
         doLast {
             renameDistribution()
         }
