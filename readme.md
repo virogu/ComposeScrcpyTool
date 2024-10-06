@@ -13,7 +13,7 @@ ComposeScrcpyTool是一款无需root权限即可通过 USB连接/网络连接And
 
 #### Windows
 
-无需额外环境配置，双击打包编译出的`.msi`安装程序进行安装，安装完成后即可运行
+无需额外环境配置，双击打包编译出的`.msi`安装程序进行安装，安装完成后即可运行，或者解压免安装版`.zip`到自定义的目录下
 
 尽量不要安装到C盘，如果安装到了C盘可能需要以管理员身份才能运行
 
@@ -23,12 +23,13 @@ ComposeScrcpyTool是一款无需root权限即可通过 USB连接/网络连接And
   - LinuxMint 20.3 Cinnamon Edition (Ubuntu Focal)
   - Deepin 20.9
   - WSL2 Ubuntu 22.04.3 LTS
+- Linux Mint 21.2
 
 ```cmd
 sudo dpkg -i ScrcpyTool-x.x.x-xx.deb
 ```
 
-运行环境依赖，很多系统中默认已经有这些依赖了
+运行环境依赖（可能不需要安装，很多系统中默认已经有这些依赖了）
 
 ```cmd
 sudo apt install ffmpeg libsdl2-2.0-0 libusb-1.0-0

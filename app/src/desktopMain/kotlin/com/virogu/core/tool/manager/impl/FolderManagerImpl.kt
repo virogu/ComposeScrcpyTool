@@ -65,17 +65,18 @@ class FolderManagerImpl(
         if (expanded) {
             expandedMap[path] = true
         } else {
-            closeChild(path)
-        }
-    }
-
-    private fun closeChild(path: String) {
-        fileChildMap[path]?.forEach {
-            if (it is FileInfoItem && it.isDirectory) {
-                closeChild(it.path)
+            fileMapLock {
+                fun closeChild(p: String) {
+                    it[p]?.forEach { item ->
+                        if (item is FileInfoItem && item.isDirectory) {
+                            closeChild(item.path)
+                        }
+                    }
+                    expandedMap[p] = false
+                }
+                closeChild(path)
             }
         }
-        expandedMap[path] = false
     }
 
     override fun getExpanded(path: String): Boolean {
@@ -88,7 +89,14 @@ class FolderManagerImpl(
             if (path == null) {
                 it.clear()
             } else {
-                it.remove(path)
+                fun remove(p: String) {
+                    it.remove(p)?.forEach { item ->
+                        if (item is FileInfoItem && item.isDirectory) {
+                            remove(item.path)
+                        }
+                    }
+                }
+                remove(path)
             }
         }
     }

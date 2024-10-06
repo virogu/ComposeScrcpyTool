@@ -314,7 +314,9 @@ private fun LazyListScope.FileView(
     when (fileItem) {
         is FileInfoItem -> {
             val currentExpanded = getExpended(fileItem)
-            item(key = fileItem.path) {
+            //ohos系统里面文件夹下居然可以存在两个完全相同的文件，这里用文件路径作为key会重复
+            //item(key = fileItem.path) {
+            item(key = null) {
                 FileInfoItemView(
                     folderManager,
                     fileInfo = fileItem,
@@ -355,7 +357,8 @@ private fun LazyListScope.FileView(
             }
         }
 
-        is FileTipsItem -> item(key = "tips_${fileItem.path}") {
+        //is FileTipsItem -> item(key = "tips_${fileItem.path}") {
+        is FileTipsItem -> item(key = null) {
             FileTipsItemView(fileItem, level)
         }
     }
