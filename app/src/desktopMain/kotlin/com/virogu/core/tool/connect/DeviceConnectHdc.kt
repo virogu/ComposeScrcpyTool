@@ -150,7 +150,7 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
         ).onSuccess {
             logger.info("open hdc port [$port] success")
             logger.info("需要重启设备，请重启设备后重新连接")
-            ssh.exec(session, "reboot")
+            //ssh.exec(session, "reboot")
         }.onFailure {
             logger.info("open hdc port [$port] fail: ${it.localizedMessage}")
         }
