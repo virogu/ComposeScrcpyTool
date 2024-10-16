@@ -22,7 +22,7 @@
 ## Linux
 
 - scrcpy
-  > v2.4
+  > v2.6.1
 
 - ADB
   > Android Debug Bridge version 1.0.41
