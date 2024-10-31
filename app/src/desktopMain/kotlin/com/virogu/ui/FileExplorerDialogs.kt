@@ -21,7 +21,7 @@ import androidx.compose.ui.window.rememberDialogState
 import com.virogu.core.bean.FileInfoItem
 import com.virogu.core.bean.FilePermission
 import com.virogu.core.bean.FileType
-import com.virogu.core.tool.manager.FolderManager
+import com.virogu.core.viewmodel.FolderViewModel
 import com.virogu.ui.view.FileChooser
 import theme.MainTheme
 import theme.materialColors
@@ -32,7 +32,7 @@ import javax.swing.JFileChooser
 fun NewFolderDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FolderManager
+    viewModel: FolderViewModel
 ) {
     if (currentSelect?.type != FileType.DIR) {
         return
@@ -45,7 +45,7 @@ fun NewFolderDialog(
                 show.value = false
             },
             onConfirm = label@{
-                fileExplore.createDir(path = currentSelect.path, newFile = it)
+                viewModel.createDir(path = currentSelect.path, newFile = it)
             }
         )
     }
@@ -55,7 +55,7 @@ fun NewFolderDialog(
 fun NewFileDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FolderManager
+    viewModel: FolderViewModel
 ) {
     if (currentSelect?.type != FileType.DIR) {
         return
@@ -68,7 +68,7 @@ fun NewFileDialog(
                 show.value = false
             },
             onConfirm = label@{
-                fileExplore.createFile(path = currentSelect.path, newFile = it)
+                viewModel.createFile(path = currentSelect.path, newFile = it)
             }
         )
     }
@@ -78,8 +78,8 @@ fun NewFileDialog(
 fun DeleteFileConfirmDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FolderManager,
-    selectFile: (FileInfoItem?) -> Unit
+    selectFile: (FileInfoItem?) -> Unit,
+    viewModel: FolderViewModel
 ) {
     if (currentSelect == null) {
         return
@@ -97,7 +97,7 @@ fun DeleteFileConfirmDialog(
                 show.value = false
             },
             onConfirm = label@{
-                fileExplore.deleteFile(currentSelect, onDeleted = {
+                viewModel.deleteFile(currentSelect, onDeleted = {
                     selectFile(null)
                 })
             }
@@ -109,7 +109,7 @@ fun DeleteFileConfirmDialog(
 fun FileDownloadDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FolderManager
+    viewModel: FolderViewModel
 ) {
     if (currentSelect == null) {
         return
@@ -124,7 +124,7 @@ fun FileDownloadDialog(
             multiSelectionEnabled = false
         ) {
             val target = it.firstOrNull() ?: return@FileChooser
-            fileExplore.pullFile(listOf(currentSelect), target)
+            viewModel.pullFile(listOf(currentSelect), target)
         }
     }
 }
@@ -133,7 +133,7 @@ fun FileDownloadDialog(
 fun FileUploadDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FolderManager
+    viewModel: FolderViewModel
 ) {
     if (currentSelect == null) {
         return
@@ -147,7 +147,7 @@ fun FileUploadDialog(
             },
             multiSelectionEnabled = true
         ) {
-            fileExplore.pushFile(currentSelect, it.toList())
+            viewModel.pushFile(currentSelect, it.toList())
         }
     }
 }
@@ -156,7 +156,7 @@ fun FileUploadDialog(
 fun ChmodFileDialog(
     show: MutableState<Boolean>,
     currentSelect: FileInfoItem?,
-    fileExplore: FolderManager
+    viewModel: FolderViewModel
 ) {
     if (currentSelect == null) {
         return
@@ -169,7 +169,7 @@ fun ChmodFileDialog(
             },
             defaultPermission = currentSelect.permission,
             onConfirm = label@{
-                fileExplore.chmod(currentSelect, permission = it)
+                viewModel.chmod(currentSelect, permission = it)
             }
         )
     }

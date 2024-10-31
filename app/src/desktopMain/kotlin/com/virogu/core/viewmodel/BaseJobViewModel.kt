@@ -1,15 +1,18 @@
-package com.virogu.core.tool.manager.impl
+package com.virogu.core.viewmodel
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * @author Virogu
- * @since 2024-04-07 œ¬ŒÁ5:28
+ * @since 2024-09-11 ‰∏äÂçà10:54
  **/
-abstract class BaseJobManager {
-    protected val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    protected open val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
+open class BaseJobViewModel : ViewModel() {
+    val isBusy: StateFlow<Boolean> get() = mIsBusy
+    protected open val mIsBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     private val activeJobs = mutableMapOf<String, Job>()
 
@@ -27,21 +30,21 @@ abstract class BaseJobManager {
             activeJobs.clear()
         }
         runBlocking(Dispatchers.IO) {
-            isBusy.emit(false)
+            mIsBusy.emit(false)
         }
     }
 
     protected fun startJob(tag: String, block: suspend CoroutineScope.() -> Unit) {
         synchronized(activeJobs) {
             activeJobs.remove(tag)?.cancel()
-            val job = scope.launch {
-                isBusy.emit(true)
+            val job = viewModelScope.launch {
+                mIsBusy.emit(true)
                 try {
                     block()
                 } catch (e: Throwable) {
                     e.printStackTrace()
                 } finally {
-                    isBusy.emit(false)
+                    mIsBusy.emit(false)
                 }
             }
             if (!job.isActive) {

@@ -19,6 +19,7 @@ kotlin {
         commonMain.dependencies {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(libs.lifecycle.viewmodel.compose)
             //implementation(compose.materialIconsExtended)
             implementation(libs.kotlin.stdlib)
             implementation(libs.kotlinx.coroutines.core)
@@ -57,6 +58,7 @@ kotlin {
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.swing)
         }
     }
 }

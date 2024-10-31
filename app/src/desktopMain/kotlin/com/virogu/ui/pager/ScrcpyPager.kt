@@ -18,10 +18,11 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.virogu.core.bean.ScrcpyConfig
 import com.virogu.core.device.Device
 import com.virogu.core.tool.Tools
-import com.virogu.core.tool.manager.ScrcpyManager
+import com.virogu.core.viewmodel.ScrcpyViewModel
 import com.virogu.ui.view.FileSelectView
 import theme.materialColors
 import theme.textFieldHeight
@@ -29,14 +30,17 @@ import views.OutlinedText
 import javax.swing.JFileChooser
 
 @Composable
-fun ScrcpyView(window: ComposeWindow, tools: Tools) {
+fun ScrcpyView(
+    window: ComposeWindow,
+    tools: Tools,
+    viewModel: ScrcpyViewModel = viewModel { ScrcpyViewModel() }
+) {
     val connectTool = tools.deviceConnect
-    val scrcpyTool = tools.scrcpyManager
     val configTool = tools.configStores.scrcpyConfigStore
 
     val scrcpyConfig = configTool.scrcpyConfigFlow.collectAsState()
     val currentDevice = connectTool.currentSelectedDevice.collectAsState()
-    val isBusy = scrcpyTool.isBusy.collectAsState()
+    val isBusy = viewModel.isBusy.collectAsState()
 
     val (commonConfig, _) = remember(scrcpyConfig.value.commonConfig) {
         mutableStateOf(scrcpyConfig.value.commonConfig)
@@ -72,7 +76,7 @@ fun ScrcpyView(window: ComposeWindow, tools: Tools) {
                 configTool.updateScrcpyConfig(device.serial, it)
             }
         )
-        ScrcpyOptionView(scrcpyTool, isBusy.value, commonConfig, currentDevice.value, specialConfig)
+        ScrcpyOptionView(viewModel, isBusy.value, commonConfig, currentDevice.value, specialConfig)
     }
 }
 
@@ -356,16 +360,15 @@ private fun CheckBoxView(
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun ColumnScope.ScrcpyOptionView(
-    scrcpyManager: ScrcpyManager,
+    viewModel: ScrcpyViewModel,
     isBusy: Boolean,
     commonConfig: ScrcpyConfig.CommonConfig,
     currentDevice: Device?,
     specialConfig: ScrcpyConfig.Config
 ) {
-    val activeDevices = scrcpyManager.activeDevicesFLow.collectAsState()
+    val activeDevices = viewModel.activeDevicesFLow.collectAsState()
     val currentActive = remember(currentDevice, activeDevices.value) {
         mutableStateOf(currentDevice != null && activeDevices.value.contains(currentDevice.serial))
     }
@@ -393,9 +396,9 @@ private fun ColumnScope.ScrcpyOptionView(
         onClick = label@{
             val device = currentDevice ?: return@label
             if (currentActive.value) {
-                scrcpyManager.disConnect(device)
+                viewModel.disConnect(device)
             } else {
-                scrcpyManager.connect(device, commonConfig, specialConfig)
+                viewModel.connect(device, commonConfig, specialConfig)
             }
         },
         modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally),

@@ -8,10 +8,6 @@ import com.virogu.core.config.ConfigStores
 import com.virogu.core.tool.connect.DeviceConnect
 import com.virogu.core.tool.init.InitTool
 import com.virogu.core.tool.log.LogTool
-import com.virogu.core.tool.manager.AdditionalManager
-import com.virogu.core.tool.manager.FolderManager
-import com.virogu.core.tool.manager.ProcessManager
-import com.virogu.core.tool.manager.ScrcpyManager
 import com.virogu.core.tool.ssh.SSHTool
 import kotlinx.coroutines.flow.MutableSharedFlow
 
@@ -28,11 +24,6 @@ interface Tools {
     val pingCommand: PingCommand
     val adbCommand: AdbCommand
     val hdcCommand: HdcCommand
-
-    val scrcpyManager: ScrcpyManager
-    val folderManager: FolderManager
-    val processTool: ProcessManager
-    val additionalManager: AdditionalManager
 
     fun start()
     fun stop()

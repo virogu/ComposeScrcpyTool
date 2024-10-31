@@ -17,8 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.virogu.core.bean.Additional
 import com.virogu.core.tool.Tools
+import com.virogu.core.viewmodel.AuxiliaryViewModel
 import theme.*
 
 /**
@@ -58,7 +60,7 @@ fun AuxiliaryToolWindow(
         MainTheme {
             Column(Modifier.fillMaxSize()) {
                 ToolBar(alwaysOnTop, show)
-                ToolsView(tools, Modifier.align(Alignment.CenterHorizontally))
+                ToolsView(Modifier.align(Alignment.CenterHorizontally))
             }
         }
     }
@@ -107,12 +109,11 @@ private fun WindowScope.ToolBar(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ToolsView(
-    tools: Tools,
     modifier: Modifier = Modifier,
+    viewModel: AuxiliaryViewModel = viewModel { AuxiliaryViewModel() },
 ) {
-    val auxiliaryTool = tools.additionalManager
-    val isBusy by auxiliaryTool.isBusy.collectAsState()
-    val currentDevice by auxiliaryTool.selectedOnlineDevice.collectAsState()
+    val isBusy by viewModel.isBusy.collectAsState()
+    val currentDevice by viewModel.selectedOnlineDevice.collectAsState()
 
     val list = remember {
         Additional.entries.toTypedArray()
@@ -121,7 +122,7 @@ private fun ToolsView(
         if (currentDevice == null || isBusy) {
             return@label
         }
-        auxiliaryTool.exec(it)
+        viewModel.exec(it)
     }
     LazyColumn(
         modifier = modifier.wrapContentWidth().fillMaxHeight().padding(8.dp),

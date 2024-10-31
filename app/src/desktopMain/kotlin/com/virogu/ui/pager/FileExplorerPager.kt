@@ -2,7 +2,6 @@
 
 package com.virogu.ui.pager
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,13 +23,14 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.virogu.core.bean.FileInfoItem
 import com.virogu.core.bean.FileItem
 import com.virogu.core.bean.FileTipsItem
 import com.virogu.core.bean.FileType
 import com.virogu.core.device.Device
 import com.virogu.core.tool.Tools
-import com.virogu.core.tool.manager.FolderManager
+import com.virogu.core.viewmodel.FolderViewModel
 import com.virogu.ui.*
 import com.virogu.ui.view.BusyProcessView
 import com.virogu.ui.view.OptionButton
@@ -44,8 +44,8 @@ import kotlin.io.path.toPath
 fun FileExplorerPager(
     tools: Tools,
     fileListState: LazyListState,
+    model: FolderViewModel = viewModel { FolderViewModel() }
 ) {
-    val fileExplorer = tools.folderManager
     val scrollAdapter = rememberScrollbarAdapter(fileListState)
     val currentDevice by tools.deviceConnect.currentSelectedDevice.collectAsState()
     var currentSelect: FileInfoItem? by remember(currentDevice) {
@@ -57,16 +57,16 @@ fun FileExplorerPager(
     }
     val getExpended: (FileInfoItem) -> Boolean = { file: FileInfoItem ->
         if (file.isDirectory) {
-            fileExplorer.getExpanded(file.path)
+            model.getExpanded(file.path)
         } else {
             false
         }
     }
     val setExpended = { file: FileInfoItem, expand: Boolean ->
-        fileExplorer.changeExpanded(file.path, expand)
+        model.changeExpanded(file.path, expand)
     }
     val getChildFiles = { file: FileInfoItem ->
-        fileExplorer.getChild(file)
+        model.getChild(file)
     }
 
     val showNewFolderDialog = remember(currentDevice, currentSelect) {
@@ -122,11 +122,11 @@ fun FileExplorerPager(
     val refresh: (FileInfoItem?) -> Unit = label@{
         if (it == null) {
             selectFile(null)
-            fileExplorer.refresh(null)
+            model.refresh(null)
         } else if (it.isDirectory) {
-            fileExplorer.refresh(it.path)
+            model.refresh(it.path)
         } else {
-            fileExplorer.refresh(it.parentPath)
+            model.refresh(it.parentPath)
         }
     }
 
@@ -147,7 +147,7 @@ fun FileExplorerPager(
                 tools.deviceConnect
             )
             ToolBarView(
-                folderManager = tools.folderManager,
+                viewModel = model,
                 currentSelect = currentSelect,
                 currentDevice = currentDevice,
                 createNewFolder = createNewFolder,
@@ -187,7 +187,7 @@ fun FileExplorerPager(
                 ) {
                     getChildFiles(FileInfoItem.ROOT).forEach {
                         FileView(
-                            folderManager = fileExplorer,
+                            viewModel = model,
                             fileItem = it,
                             currentSelect = currentSelect,
                             level = 0,
@@ -213,20 +213,18 @@ fun FileExplorerPager(
                 )
             }
         }
-        TipsView(Modifier.align(Alignment.BottomCenter), fileExplorer.tipsFlow)
+        TipsView(Modifier.align(Alignment.BottomCenter), model.tipsFlow)
     }
-    NewFolderDialog(showNewFolderDialog, currentSelect, fileExplorer)
-    NewFileDialog(showNewFileDialog, currentSelect, fileExplorer)
-    FileDownloadDialog(showDownloadFileDialog, currentSelect, fileExplorer)
-    FileUploadDialog(showUploadFileDialog, currentSelect, fileExplorer)
-    DeleteFileConfirmDialog(showDeleteDialog, currentSelect, fileExplorer, selectFile)
-    ChmodFileDialog(showChmodDialog, currentSelect, fileExplorer)
+    NewFolderDialog(showNewFolderDialog, currentSelect, model)
+    NewFileDialog(showNewFileDialog, currentSelect, model)
+    FileDownloadDialog(showDownloadFileDialog, currentSelect, model)
+    FileUploadDialog(showUploadFileDialog, currentSelect, model)
+    DeleteFileConfirmDialog(showDeleteDialog, currentSelect, selectFile, model)
+    ChmodFileDialog(showChmodDialog, currentSelect, model)
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun ToolBarView(
-    folderManager: FolderManager,
     currentSelect: FileInfoItem?,
     currentDevice: Device?,
     createNewFolder: () -> Unit,
@@ -235,9 +233,10 @@ private fun ToolBarView(
     uploadFile: () -> Unit,
     deleteFile: () -> Unit,
     refresh: (FileInfoItem?) -> Unit,
+    viewModel: FolderViewModel
 ) {
     val deviceConnected = currentDevice?.isOnline == true
-    val isBusy by folderManager.isBusy.collectAsState()
+    val isBusy by viewModel.isBusy.collectAsState()
     Box(modifier = Modifier.fillMaxWidth().padding(16.dp, 8.dp).height(35.dp)) {
         Row(Modifier.align(Alignment.CenterStart), Arrangement.spacedBy(8.dp)) {
             OptionButton(
@@ -280,7 +279,7 @@ private fun ToolBarView(
                 enable = deviceConnected && !isBusy,
                 painter = Icon.Outlined.AdminPanelSettings
             ) {
-                folderManager.restartWithRoot()
+                viewModel.restartWithRoot()
             }
             OptionButton(
                 "刷新",
@@ -295,7 +294,6 @@ private fun ToolBarView(
 }
 
 private fun LazyListScope.FileView(
-    folderManager: FolderManager,
     fileItem: FileItem,
     currentSelect: FileInfoItem?,
     level: Int,
@@ -310,6 +308,7 @@ private fun LazyListScope.FileView(
     deleteFile: () -> Unit,
     refresh: (FileInfoItem?) -> Unit,
     chmodFile: () -> Unit,
+    viewModel: FolderViewModel,
 ) {
     when (fileItem) {
         is FileInfoItem -> {
@@ -318,7 +317,7 @@ private fun LazyListScope.FileView(
             //item(key = fileItem.path) {
             item(key = null) {
                 FileInfoItemView(
-                    folderManager,
+                    viewModel = viewModel,
                     fileInfo = fileItem,
                     currentSelect = currentSelect,
                     level = level,
@@ -337,7 +336,7 @@ private fun LazyListScope.FileView(
             if (currentExpanded) {
                 getChildFiles(fileItem).forEach {
                     FileView(
-                        folderManager = folderManager,
+                        viewModel = viewModel,
                         fileItem = it,
                         currentSelect = currentSelect,
                         level = level + 1,
@@ -367,7 +366,6 @@ private fun LazyListScope.FileView(
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun FileInfoItemView(
-    folderManager: FolderManager,
     fileInfo: FileInfoItem,
     currentSelect: FileInfoItem?,
     level: Int,
@@ -381,6 +379,7 @@ private fun FileInfoItemView(
     deleteFile: () -> Unit,
     refresh: (FileInfoItem?) -> Unit,
     chmodFile: () -> Unit,
+    viewModel: FolderViewModel
 ) {
     val clipboardManager = LocalClipboardManager.current
     val selected = remember(fileInfo.path, currentSelect) {
@@ -391,14 +390,14 @@ private fun FileInfoItemView(
     }
     val copyName by rememberUpdatedState {
         clipboardManager.setText(AnnotatedString(fileInfo.name))
-        folderManager.emitTips("${fileInfo.name} 名称已复制")
+        viewModel.emitTips("${fileInfo.name} 名称已复制")
     }
     val copyPath by rememberUpdatedState {
         clipboardManager.setText(AnnotatedString(fileInfo.path))
-        folderManager.emitTips("${fileInfo.path} 路径已复制")
+        viewModel.emitTips("${fileInfo.path} 路径已复制")
     }
     val getFileDetails by rememberUpdatedState {
-        folderManager.getFileDetails(fileInfo)
+        viewModel.getFileDetails(fileInfo)
     }
     var mouseEnter by remember { mutableStateOf(false) }
     val backgroundColor by rememberItemBackground(selected.value, mouseEnter)
@@ -457,7 +456,7 @@ private fun FileInfoItemView(
                                     null
                                 }
                             }
-                            folderManager.pushFile(fileInfo, files)
+                            viewModel.pushFile(fileInfo, files)
                             println("onDrop $files")
                         }
                     }

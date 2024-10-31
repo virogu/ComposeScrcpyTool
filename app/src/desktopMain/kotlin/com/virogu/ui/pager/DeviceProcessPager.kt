@@ -23,10 +23,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.virogu.core.device.Device
 import com.virogu.core.device.process.ProcessInfo
 import com.virogu.core.tool.Tools
-import com.virogu.core.tool.manager.ProcessManager
+import com.virogu.core.viewmodel.ProcessViewModel
 import com.virogu.ui.view.BusyProcessView
 import com.virogu.ui.view.OptionButton
 import com.virogu.ui.view.SelectDeviceView
@@ -42,8 +43,8 @@ import theme.*
 @Composable
 fun DeviceProcessPager(
     tools: Tools,
+    viewModel: ProcessViewModel = viewModel { ProcessViewModel() }
 ) {
-    val processTool = tools.processTool
     val currentDevice by tools.deviceConnect.currentSelectedDevice.collectAsState()
 
     val listState = rememberLazyListState()
@@ -63,7 +64,7 @@ fun DeviceProcessPager(
         mutableStateOf(null)
     }
     LaunchedEffect(sortBy.value, sortDesc.value) {
-        processTool.processListFlow.onEach { list ->
+        viewModel.processListFlow.onEach { list ->
             processes = list.run {
                 sortBy.value.sort(this, sortDesc.value)
             }
@@ -73,9 +74,9 @@ fun DeviceProcessPager(
         }.launchIn(this)
     }
     DisposableEffect("enter") {
-        processTool.active()
+        viewModel.active()
         onDispose {
-            processTool.pause()
+            viewModel.pause()
         }
     }
 
@@ -88,7 +89,7 @@ fun DeviceProcessPager(
                 currentDevice,
                 tools.deviceConnect
             )
-            ToolBarView(tools.processTool, currentDevice, currentSelect) {
+            ToolBarView(viewModel, currentDevice, currentSelect) {
                 currentSelect = it
             }
             ProcessItemTitle(sortBy, sortDesc)
@@ -100,7 +101,7 @@ fun DeviceProcessPager(
                 ) {
                     processes.forEach {
                         item {
-                            ProcessItemView(processTool, it, currentSelect) {
+                            ProcessItemView(viewModel, it, currentSelect) {
                                 currentSelect = it
                             }
                         }
@@ -114,19 +115,19 @@ fun DeviceProcessPager(
                 )
             }
         }
-        TipsView(Modifier.align(Alignment.BottomCenter), processTool.tipsFlow)
+        TipsView(Modifier.align(Alignment.BottomCenter), viewModel.tipsFlow)
     }
 }
 
 @Composable
 private fun ToolBarView(
-    processTool: ProcessManager,
+    viewModel: ProcessViewModel,
     currentDevice: Device?,
     currentSelect: ProcessInfo?,
     selectProcess: (ProcessInfo?) -> Unit,
 ) {
     val deviceConnected = currentDevice?.isOnline == true
-    val isBusy by processTool.isBusy.collectAsState()
+    val isBusy by viewModel.isBusy.collectAsState()
 
     Box(modifier = Modifier.fillMaxWidth().padding(16.dp, 8.dp).height(35.dp)) {
         Row(Modifier.align(Alignment.CenterStart), Arrangement.spacedBy(8.dp)) {
@@ -140,7 +141,7 @@ private fun ToolBarView(
                 ),
             ) label@{
                 currentSelect ?: return@label
-                processTool.killProcess(currentSelect)
+                viewModel.killProcess(currentSelect)
                 selectProcess(null)
             }
 
@@ -154,7 +155,7 @@ private fun ToolBarView(
                 ),
             ) label@{
                 currentSelect ?: return@label
-                processTool.forceStopProcess(currentSelect)
+                viewModel.forceStopProcess(currentSelect)
                 selectProcess(null)
             }
 
@@ -163,7 +164,7 @@ private fun ToolBarView(
                 enable = deviceConnected,
                 painter = Icon.Outlined.Sync
             ) {
-                processTool.refresh()
+                viewModel.refresh()
             }
         }
         BusyProcessView(modifier = Modifier.align(Alignment.CenterEnd).size(24.dp), isBusy = isBusy)
@@ -248,7 +249,7 @@ private fun ProcessItemTitle(
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun ProcessItemView(
-    processTool: ProcessManager,
+    viewModel: ProcessViewModel,
     processInfo: ProcessInfo,
     currentSelect: ProcessInfo?,
     selectProcess: (ProcessInfo?) -> Unit,
@@ -269,11 +270,11 @@ private fun ProcessItemView(
     ContextMenuArea(state = contextMenuState, items = {
         mutableListOf<ContextMenuItem>().apply {
             ContextMenuItem("停止") {
-                processTool.killProcess(processInfo)
+                viewModel.killProcess(processInfo)
                 selectProcess(null)
             }.also(::add)
             ContextMenuItem("强行停止") {
-                processTool.forceStopProcess(processInfo)
+                viewModel.forceStopProcess(processInfo)
                 selectProcess(null)
             }.also(::add)
             ContextMenuItem("复制包名") {

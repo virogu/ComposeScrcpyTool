@@ -1,8 +1,8 @@
-package com.virogu.core.tool.manager.impl
+package com.virogu.core.viewmodel
 
+import androidx.lifecycle.ViewModel
 import com.virogu.core.bean.ScrcpyConfig
 import com.virogu.core.device.Device
-import com.virogu.core.tool.manager.ScrcpyManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -13,17 +13,21 @@ import kotlinx.coroutines.sync.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class ScrcpyManagerImpl : ScrcpyManager {
+/**
+ * @author Virogu
+ * @since 2024-09-11 上午11:43
+ **/
+class ScrcpyViewModel : ViewModel() {
     private val mutex = Mutex()
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val scrcpyMap = HashMap<String, Process>()
 
-    override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-    override val activeDevicesFLow = MutableStateFlow<Set<String>>(emptySet())
+    val activeDevicesFLow = MutableStateFlow<Set<String>>(emptySet())
 
-    override fun connect(
+    fun connect(
         device: Device,
         commonConfig: ScrcpyConfig.CommonConfig,
         config: ScrcpyConfig.Config
@@ -53,7 +57,12 @@ class ScrcpyManagerImpl : ScrcpyManager {
         }
     }
 
-    override fun disConnect(device: Device?) {
+    override fun onCleared() {
+        disConnect()
+        super.onCleared()
+    }
+
+    fun disConnect(device: Device? = null) {
         withLock {
             if (device == null) {
                 scrcpyMap.forEach { (_, progress) ->

@@ -8,8 +8,8 @@ import com.virogu.core.config.*
 import com.virogu.core.tool.ToolImpl
 import com.virogu.core.tool.Tools
 import com.virogu.core.tool.connect.DeviceConnect
+import com.virogu.core.tool.init.InitTool
 import com.virogu.core.tool.log.LogTool
-import com.virogu.core.tool.manager.ScrcpyManager
 import com.virogu.core.tool.ssh.SSHTool
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.kodein.di.DI
@@ -35,6 +35,9 @@ fun initDi(
         val configStores = tools.configStores
         bindSingleton<Tools> {
             tools
+        }
+        bindSingleton<InitTool> {
+            tools.initTool
         }
         bindSingleton<BaseCommand> {
             tools.baseCommand
@@ -71,9 +74,6 @@ fun initDi(
         }
         bindSingleton<LogTool> {
             tools.logTool
-        }
-        bindSingleton<ScrcpyManager> {
-            tools.scrcpyManager
         }
         onBind()
     }

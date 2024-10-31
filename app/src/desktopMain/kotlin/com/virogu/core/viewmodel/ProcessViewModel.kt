@@ -1,56 +1,55 @@
-package com.virogu.core.tool.manager.impl
+package com.virogu.core.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.virogu.core.device.Device
 import com.virogu.core.device.process.ProcessInfo
 import com.virogu.core.tool.connect.DeviceConnect
-import com.virogu.core.tool.init.InitTool
-import com.virogu.core.tool.manager.ProcessManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.kodein.di.DI
+import org.kodein.di.conf.global
+import org.kodein.di.instance
 
-class ProcessManagerImpl(
-    private val initTool: InitTool,
-    deviceConnect: DeviceConnect,
-) : BaseJobManager(), ProcessManager {
+/**
+ * @author Virogu
+ * @since 2024-09-11 上午11:37
+ **/
+class ProcessViewModel : BaseJobViewModel() {
+    private val deviceConnect by DI.global.instance<DeviceConnect>()
     private var mJob: Job? = null
 
     @Volatile
     private var active = false
 
-    override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
-
     private val selectedOnlineDevice = deviceConnect.currentSelectedDevice.map {
         it?.takeIf {
             it.isOnline
         }
-    }.stateIn(scope, SharingStarted.Lazily, null)
+    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     private val currentDevice get() = selectedOnlineDevice.value
 
-    override val processListFlow: MutableStateFlow<List<ProcessInfo>> = MutableStateFlow(emptyList())
+    val processListFlow: MutableStateFlow<List<ProcessInfo>> = MutableStateFlow(emptyList())
 
-    override val tipsFlow = MutableSharedFlow<String>()
+    val tipsFlow = MutableSharedFlow<String>()
 
     init {
         start()
     }
 
     private fun start() {
-        scope.launch {
-            initTool.waitStart()
-            selectedOnlineDevice.onEach {
-                processListFlow.emit(emptyList())
-                initJob()
-            }.launchIn(scope)
-        }
+        selectedOnlineDevice.onEach {
+            processListFlow.emit(emptyList())
+            initJob()
+        }.launchIn(viewModelScope)
     }
 
     private fun initJob() {
         mJob?.cancel()
-        mJob = scope.launch {
+        mJob = viewModelScope.launch {
             if (!active) {
                 return@launch
             }
@@ -64,17 +63,17 @@ class ProcessManagerImpl(
         }
     }
 
-    override fun pause() {
+    fun pause() {
         active = false
         initJob()
     }
 
-    override fun active() {
+    fun active() {
         active = true
         initJob()
     }
 
-    override fun refresh() {
+    fun refresh() {
         startJob("refresh") {
             val device = currentDevice ?: return@startJob
             refreshProcess(device)
@@ -86,7 +85,7 @@ class ProcessManagerImpl(
         processListFlow.emit(process)
     }
 
-    override fun killProcess(info: ProcessInfo) {
+    fun killProcess(info: ProcessInfo) {
         startJob("kill ${info.pid}") {
             val device = currentDevice ?: return@startJob
             device.processAbility.killProcess(info).toast()
@@ -94,7 +93,7 @@ class ProcessManagerImpl(
         }
     }
 
-    override fun forceStopProcess(info: ProcessInfo) {
+    fun forceStopProcess(info: ProcessInfo) {
         startJob("force stop ${info.packageName}") {
             val device = currentDevice ?: return@startJob
             device.processAbility.forceStopProcess(info).toast()

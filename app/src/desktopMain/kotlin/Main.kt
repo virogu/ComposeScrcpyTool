@@ -4,9 +4,11 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.virogu.core.Common
 import com.virogu.core.di.initDi
 import com.virogu.core.tool.Tools
+import com.virogu.core.viewmodel.ScrcpyViewModel
 import com.virogu.ui.Pager
 import com.virogu.ui.rememberPagerController
 import org.kodein.di.DI
@@ -82,10 +84,10 @@ private fun startApplication() = application {
         icon = icon,
     ) {
         App(window, this@application, state, trayState, pagerController, tools)
-    }
-    if (SystemTray.isSupported()) {
-        TrayView(trayState, icon, tools, state, alwaysOnTop) {
-            setAlwaysOnTop(it)
+        if (SystemTray.isSupported()) {
+            TrayView(trayState, icon, tools, state, alwaysOnTop) {
+                setAlwaysOnTop(it)
+            }
         }
     }
 }
@@ -97,11 +99,12 @@ private fun ApplicationScope.TrayView(
     tools: Tools,
     state: WindowState,
     alwaysOnTop: Boolean,
+    scrcpyViewModel: ScrcpyViewModel = viewModel { ScrcpyViewModel() },
     onAlwaysOnTopChanged: (Boolean) -> Unit
 ) {
     val connectedDevice = tools.deviceConnect.connectedDevice.collectAsState()
     val currentDevice = tools.deviceConnect.currentSelectedDevice.collectAsState()
-    val startedDevice = tools.scrcpyManager.activeDevicesFLow.collectAsState()
+    val startedDevice = scrcpyViewModel.activeDevicesFLow.collectAsState()
     val connectedSize = remember(connectedDevice.value.size) {
         mutableStateOf(connectedDevice.value.size)
     }

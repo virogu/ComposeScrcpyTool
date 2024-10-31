@@ -1,41 +1,42 @@
-@file:Suppress("GrazieInspection")
-
-package com.virogu.core.tool.manager.impl
+package com.virogu.core.viewmodel
 
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.lifecycle.viewModelScope
 import com.virogu.core.bean.FileInfoItem
 import com.virogu.core.bean.FileItem
 import com.virogu.core.bean.FileTipsItem
 import com.virogu.core.device.Device
 import com.virogu.core.tool.connect.DeviceConnect
-import com.virogu.core.tool.init.InitTool
-import com.virogu.core.tool.manager.FolderManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.kodein.di.DI
+import org.kodein.di.conf.global
+import org.kodein.di.instance
 import java.io.File
 
-class FolderManagerImpl(
-    private val initTool: InitTool,
-    deviceConnect: DeviceConnect,
-) : BaseJobManager(), FolderManager {
-    private val fileMapMutex = Mutex()
+/**
+ * @author Virogu
+ * @since 2024-09-11 上午11:10
+ **/
+class FolderViewModel : BaseJobViewModel() {
+    private val deviceConnect by DI.global.instance<DeviceConnect>()
 
+    private val fileMapMutex = Mutex()
     private val fileChildMap: SnapshotStateMap<String, List<FileItem>> = mutableStateMapOf()
     private val expandedMap = mutableStateMapOf<String, Boolean>()
 
-    override val isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    override val tipsFlow = MutableSharedFlow<String>()
+    val tipsFlow = MutableSharedFlow<String>()
 
     private val selectedOnlineDevice = deviceConnect.currentSelectedDevice.map {
         it?.takeIf {
             it.isOnline
         }
-    }.stateIn(scope, SharingStarted.Lazily, null)
+    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     private val currentDevice get() = selectedOnlineDevice.value
 
@@ -44,24 +45,21 @@ class FolderManagerImpl(
     }
 
     private fun start() {
-        scope.launch {
-            initTool.waitStart()
-            selectedOnlineDevice.onEach {
-                expandedMap.clear()
-                cancelAllJob()
-                isBusy.emit(false)
-                refresh(null)
-            }.launchIn(this)
-        }
+        selectedOnlineDevice.onEach {
+            expandedMap.clear()
+            cancelAllJob()
+            mIsBusy.emit(false)
+            refresh(null)
+        }.launchIn(viewModelScope)
     }
 
-    override fun emitTips(tips: String) {
-        scope.launch {
+    fun emitTips(tips: String) {
+        viewModelScope.launch {
             tipsFlow.emit(tips)
         }
     }
 
-    override fun changeExpanded(path: String, expanded: Boolean) {
+    fun changeExpanded(path: String, expanded: Boolean) {
         if (expanded) {
             expandedMap[path] = true
         } else {
@@ -79,12 +77,12 @@ class FolderManagerImpl(
         }
     }
 
-    override fun getExpanded(path: String): Boolean {
+    fun getExpanded(path: String): Boolean {
         //println("getExpanded $path")
         return expandedMap[path] ?: false
     }
 
-    override fun refresh(path: String?) {
+    fun refresh(path: String?) {
         fileMapLock {
             if (path == null) {
                 it.clear()
@@ -101,7 +99,7 @@ class FolderManagerImpl(
         }
     }
 
-    override fun restartWithRoot() {
+    fun restartWithRoot() {
         startJob("restartWithRoot") {
             val device = currentDevice ?: return@startJob
             val s = device.folderAbility.remount()
@@ -111,7 +109,7 @@ class FolderManagerImpl(
         }
     }
 
-    override fun createDir(path: String, newFile: String) {
+    fun createDir(path: String, newFile: String) {
         val tag = "create dir $newFile in $path"
         println(tag)
         startJob(tag) {
@@ -125,7 +123,7 @@ class FolderManagerImpl(
         }
     }
 
-    override fun createFile(path: String, newFile: String) {
+    fun createFile(path: String, newFile: String) {
         val tag = "create file $newFile in $path"
         println(tag)
         startJob(tag) {
@@ -139,7 +137,7 @@ class FolderManagerImpl(
         }
     }
 
-    override fun deleteFile(file: FileInfoItem, onDeleted: suspend () -> Unit) {
+    fun deleteFile(file: FileInfoItem, onDeleted: suspend () -> Unit) {
         val path = file.path
         val tag = "delete $path"
         startJob(tag) {
@@ -154,7 +152,7 @@ class FolderManagerImpl(
         }
     }
 
-    override fun getChild(fileInfo: FileInfoItem): List<FileItem> {
+    fun getChild(fileInfo: FileInfoItem): List<FileItem> {
         //println("getChild ${fileInfo.path}")
         if (currentDevice == null) {
             return listOf(FileTipsItem.Error(fileInfo.path, "未连接设备"))
@@ -180,7 +178,7 @@ class FolderManagerImpl(
         return listOf(FileTipsItem.Info(path, "Loading..."))
     }
 
-    override fun getFileDetails(fileInfo: FileInfoItem) {
+    fun getFileDetails(fileInfo: FileInfoItem) {
         startJob("get file detail info") {
             val device = currentDevice ?: return@startJob
             val s = device.folderAbility.getFileDetail(fileInfo)
@@ -188,7 +186,7 @@ class FolderManagerImpl(
         }
     }
 
-    override fun pullFile(fromFile: List<FileInfoItem>, toLocalFile: File) {
+    fun pullFile(fromFile: List<FileInfoItem>, toLocalFile: File) {
         startJob("pull file") {
             val device = currentDevice ?: return@startJob
             if (!toLocalFile.isDirectory) {
@@ -204,7 +202,7 @@ class FolderManagerImpl(
         }
     }
 
-    override fun pushFile(toFile: FileInfoItem, fromLocalFiles: List<File>) {
+    fun pushFile(toFile: FileInfoItem, fromLocalFiles: List<File>) {
         startJob("push file") {
             val device = currentDevice ?: return@startJob
             if (!toFile.isDirectory) {
@@ -217,7 +215,7 @@ class FolderManagerImpl(
         }
     }
 
-    override fun chmod(fileInfo: FileInfoItem, permission: String) {
+    fun chmod(fileInfo: FileInfoItem, permission: String) {
         startJob("chmod file") {
             val device = currentDevice ?: return@startJob
             val s = device.folderAbility.chmod(fileInfo, permission)
