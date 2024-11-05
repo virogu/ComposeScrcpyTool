@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.compose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.gmazzo.buildconfig)
+    //alias(libs.plugins.ksp)
 }
 
 val appBuildInfo: AppBuildInfo by project
@@ -17,12 +18,16 @@ kotlin {
     sourceSets {
         val desktopMain by getting
         commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material)
+            implementation(compose.ui)
+            //implementation(compose.materialIconsExtended)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+
+            implementation(libs.lifecycle.runtime.compose)
             implementation(libs.lifecycle.viewmodel.compose)
-            //implementation(compose.materialIconsExtended)
-            implementation(libs.kotlin.stdlib)
-            implementation(libs.kotlinx.coroutines.core)
 
             // https://mvnrepository.com/artifact/org.apache.sshd/sshd-mina
             // https://github.com/apache/mina-sshd/blob/master/docs/client-setup.md
@@ -52,7 +57,8 @@ kotlin {
         commonTest.dependencies {
             implementation(compose.desktop.uiTestJUnit4)
             implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlin.test.junit)
             implementation(files("libs\\hdc\\device-file-explorer-4.0.0.600.jar"))
             implementation(files("libs\\hdc\\ohos-hdclib-4.0.0.600.jar"))
         }
@@ -62,6 +68,10 @@ kotlin {
         }
     }
 }
+
+//dependencies {
+//    add("kspCommonMainMetadata", project(":app"))
+//}
 
 buildConfig {
     className("BuildConfig")   // forces the class name. Defaults to 'BuildConfig'
