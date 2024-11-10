@@ -3,11 +3,10 @@ package com.virogu.core.tool.connect
 import com.virogu.core.config.ConfigStores
 import com.virogu.core.device.Device
 import com.virogu.core.tool.init.InitTool
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.withLock
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 class DeviceConnectManager(
     private val initTool: InitTool,
@@ -23,9 +22,9 @@ class DeviceConnectManager(
     override fun start() {
         mJob?.cancel()
         mJob = scope.launch {
-            logger.info("等待程序初始化")
+            logger.info { "等待程序初始化" }
             initTool.waitStart()
-            logger.info("初始化成功")
+            logger.info { "初始化成功" }
             delay(1000)
             afterStarted()
             delay(1000)
@@ -34,7 +33,7 @@ class DeviceConnectManager(
     }
 
     private suspend fun autoRefreshChanged(enable: Boolean) {
-        logger.info("auto refresh: $enable")
+        logger.info { "auto refresh: $enable" }
         refreshJob?.cancel()
         if (!enable) {
             return
@@ -56,20 +55,20 @@ class DeviceConnectManager(
 
     override fun connect(ip: String, port: Int) {
         withLock {
-            logger.info("正在连接 [$ip:$port]")
+            logger.info { "正在连接 [$ip:$port]" }
             val ping = pingCommand.ping(ip)
             if (!ping) {
-                logger.warn("无法访问 [$ip], 请检查设备是否在线")
+                logger.warn { "无法访问 [$ip], 请检查设备是否在线" }
                 return@withLock
             }
             var r = doConnect(ip, port)
             if (!r) {
                 r = openTcpPort(ip, port)
                 if (r) {
-                    logger.info("重新连接 [$ip:$port]")
+                    logger.info { "重新连接 [$ip:$port]" }
                     doConnect(ip, port)
                 } else {
-                    logger.warn("open device [$ip] port [$port] fail")
+                    logger.warn { "open device [$ip] port [$port] fail" }
                 }
             }
             innerRefreshDevices(true)
@@ -131,6 +130,6 @@ class DeviceConnectManager(
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+        private val logger = KotlinLogging.logger { }
     }
 }

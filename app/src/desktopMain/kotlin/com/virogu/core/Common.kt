@@ -1,15 +1,14 @@
 package com.virogu.core
 
 import com.virogu.core.bean.Platform
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.BuildConfig
 import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate")
 object Common {
-    val logger: Logger by lazy {
-        LoggerFactory.getLogger("CommonLogger")
+    val logger by lazy {
+        KotlinLogging.logger("CommonLogger")
     }
 
     val isDebug: Boolean by lazy {
@@ -30,7 +29,7 @@ object Common {
 
     val resourceDir: File by lazy {
         File(resourcePath).also {
-            logger.info("ResourceDir: ${it.absolutePath}")
+            logger.info { "ResourceDir: ${it.absolutePath}" }
         }.absoluteFile
     }
 
@@ -76,12 +75,12 @@ object Common {
     val projectTmpDir: File by lazy {
         projectHomeDir.resolve("tmp").also {
             it.deleteRecursively()
-            logger.debug("clear tmp dir: ${it.path}")
+            logger.debug { "clear tmp dir: ${it.path}" }
             it.listFiles()?.also { files ->
-                Common.logger.info("tmp residual files: \n${files.map { f -> f.name }}")
+                logger.info { "tmp residual files: \n${files.map { f -> f.name }}" }
             }
             it.mkdirs()
-            logger.debug("mkdir tmp dir: ${it.path}")
+            logger.debug { "mkdir tmp dir: ${it.path}" }
         }
     }
 

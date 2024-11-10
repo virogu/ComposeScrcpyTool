@@ -4,12 +4,11 @@ import com.virogu.core.bean.ScrcpyConfig
 import com.virogu.core.command.HdcCommand
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityScrcpy
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 /**
  * @author Virogu
@@ -18,7 +17,7 @@ import org.slf4j.LoggerFactory
 class OhosDeviceScrcpyAbility(device: Device) : DeviceAbilityScrcpy {
     companion object {
         private val cmd: HdcCommand by DI.global.instance<HdcCommand>()
-        private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+        private val logger = KotlinLogging.logger { }
     }
 
     override suspend fun connect(
@@ -26,7 +25,7 @@ class OhosDeviceScrcpyAbility(device: Device) : DeviceAbilityScrcpy {
         commonConfig: ScrcpyConfig.CommonConfig,
         config: ScrcpyConfig.Config
     ): Process? {
-        logger.warn("当前设备暂不支持")
+        logger.warn { "当前设备暂不支持" }
         return null
     }
 }

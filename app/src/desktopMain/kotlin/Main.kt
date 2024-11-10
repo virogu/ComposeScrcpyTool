@@ -11,11 +11,10 @@ import com.virogu.core.tool.Tools
 import com.virogu.core.viewmodel.ScrcpyViewModel
 import com.virogu.ui.Pager
 import com.virogu.ui.rememberPagerController
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import theme.Icon
 import theme.Logo
 import tools.BuildConfig
@@ -25,7 +24,8 @@ import java.awt.SystemTray
 //private val preferences = Preferences.userRoot()
 //private const val KEY_LAST_WINDOWS_SIZE = "key-last-windows-size"
 
-val logger: Logger = LoggerFactory.getLogger("MainLogger")
+//val logger = KotlinLogging.logger("MainLogger")
+val logger = KotlinLogging.logger("MainLogger")
 
 private val tools by DI.global.instance<Tools>()
 
@@ -50,7 +50,7 @@ fun main() {
         |Java Path: [${System.getProperty("java.home")}]
     """.trimMargin()
     init()
-    logger.info("\n----Platform----\n$platformInfo\n--------")
+    logger.info { "\n----Platform----\n$platformInfo\n--------" }
     startApplication()
 }
 
@@ -165,14 +165,14 @@ private fun ApplicationScope.TrayView(
 }
 
 private fun init() {
-    logger.info("init")
+    logger.info { "init" }
     initDi()
     tools.start()
 }
 
 private fun ApplicationScope.exit() {
-    logger.info("exit app")
+    logger.info { "exit app" }
     tools.stop()
-    logger.info("exited")
+    logger.info { "exited" }
     exitApplication()
 }

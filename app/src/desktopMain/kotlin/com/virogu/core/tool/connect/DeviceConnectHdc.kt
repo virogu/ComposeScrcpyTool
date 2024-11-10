@@ -6,13 +6,12 @@ import com.virogu.core.device.Device
 import com.virogu.core.device.DeviceEntityOhos
 import com.virogu.core.device.DevicePlatform
 import com.virogu.core.tool.ssh.SSHTool
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.*
 import org.apache.sshd.client.session.ClientSession
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.util.regex.Pattern
 
 /**
@@ -46,7 +45,7 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
         if (!enableHdc) {
             return false
         }
-        logger.info("start hdc connect")
+        logger.info { "start hdc connect" }
         cmd.hdc("tconn", "${ip}:${port}", "-remove", consoleLog = true)
         val r = cmd.hdc(
             "tconn", "${ip}:${port}", timeout = 3L, consoleLog = true
@@ -55,7 +54,7 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
         } ?: run {
             return false
         }
-        logger.info(r)
+        logger.info { r }
         val failed = r.contains("failed", true)
         return !failed
     }
@@ -140,7 +139,7 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
             return true
         }
         if (!enableHdc) {
-            logger.warn("如需连接Harmony设备，请勾选 [启用Hdc]")
+            logger.warn { "如需连接Harmony设备，请勾选 [启用Hdc]" }
             return false
         }
         ssh.exec(
@@ -148,11 +147,11 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
             "param set persist.hdc.port $port",
             //"hdcd -b"
         ).onSuccess {
-            logger.info("open hdc port [$port] success")
-            logger.info("需要重启设备，请重启设备后重新连接")
+            logger.info { "open hdc port [$port] success" }
+            logger.info { "需要重启设备，请重启设备后重新连接" }
             //ssh.exec(session, "reboot")
         }.onFailure {
-            logger.info("open hdc port [$port] fail: ${it.localizedMessage}")
+            logger.info { "open hdc port [$port] fail: ${it.localizedMessage}" }
         }
         return false
     }
@@ -172,7 +171,7 @@ abstract class DeviceConnectHdc(configStores: ConfigStores) : DeviceConnectAdb(c
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+        private val logger = KotlinLogging.logger { }
         private const val OHOS_API_VERSION = "const.ohos.apiversion"
         private const val OHOS_FULL_NAME = "const.ohos.fullname"
         private const val OHOS_PRODUCT_NAME = "const.product.name"

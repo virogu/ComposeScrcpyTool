@@ -28,12 +28,12 @@ open class InitToolDefault : InitTool {
     override fun init() {
         scope.launch {
             val t = System.currentTimeMillis()
-            Common.logger.info("init...")
+            Common.logger.info { "init..." }
             runCatching {
                 doInit()
             }
             afterInit()
-            Common.logger.info("init finish, spend ${System.currentTimeMillis() - t}ms")
+            Common.logger.info { "init finish, spend ${System.currentTimeMillis() - t}ms" }
             initStateFlow.emit(InitState.Success)
         }
     }
@@ -48,7 +48,7 @@ open class InitToolDefault : InitTool {
     protected open suspend fun initSSHConfig() {
         val configFile = File(workDir, "files/ssh/device_ssh_config.json")
         if (!configFile.exists()) {
-            Common.logger.info("ssh config file [$configFile] not exits")
+            Common.logger.info { "ssh config file [$configFile] not exits" }
             return
         }
         val config: DeviceSshConfig = runCatching {
@@ -61,7 +61,7 @@ open class InitToolDefault : InitTool {
             }
             val f = File(ppkPath, it.name)
             if (!f.exists()) {
-                Common.logger.info("init ppk [${it.name}]")
+                Common.logger.info { "init ppk [${it.name}]" }
                 f.writeText(it.value)
             }
         }

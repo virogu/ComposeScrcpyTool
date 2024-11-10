@@ -31,7 +31,7 @@ object SSHVerifyTools {
             if (f.exists()) {
                 PPKFile(f, it.pwd)
             } else {
-                Common.logger.warn("ppk file [$f] not exist.")
+                Common.logger.warn { "ppk file [$f] not exist." }
                 null
             }
         }
@@ -46,9 +46,9 @@ object SSHVerifyTools {
                         ppk.pwd
                     }).also(::addAll)
                 }.onSuccess {
-                    Common.logger.info("load key [${ppk.path}] success.")
+                    Common.logger.info { "load key [${ppk.path}] success." }
                 }.onFailure {
-                    Common.logger.warn("load key [${ppk.path}] fail.")
+                    Common.logger.warn { "load key [${ppk.path}] fail." }
                 }
             }
         }

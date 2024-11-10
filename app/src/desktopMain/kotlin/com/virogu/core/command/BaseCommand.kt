@@ -1,11 +1,10 @@
 package com.virogu.core.command
 
 import com.virogu.core.Common
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
@@ -53,9 +52,9 @@ open class BaseCommand {
                 }
                 val cmdString = command.joinToString(" ")
                 if (showLog) {
-                    logger.info("\n[${cmdString}] wait")
+                    logger.info { "\n[${cmdString}] wait" }
                 } else if (consoleLog) {
-                    logger.debug("\n[${cmdString}] wait")
+                    logger.debug { "\n[${cmdString}] wait" }
                 }
                 // 将执行结果重定向到一个临时文件，执行结束后读取这个文件的内容，再把文件删除
                 // 因为执行hdc命令时，inputStream read时总是会卡死
@@ -66,7 +65,7 @@ open class BaseCommand {
                     process.waitFor()
                 } else {
                     if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
-                        logger.debug("\n[${process.pid()}] [$cmdString] time out after ${timeout}s")
+                        logger.debug { "\n[${process.pid()}] [$cmdString] time out after ${timeout}s" }
                         throw CancellationException("time out after ${timeout}s")
                     }
                 }
@@ -77,19 +76,19 @@ open class BaseCommand {
                 }
                 if (showLog) {
                     val msg = "\n" + formatLog(cmdString, result)
-                    logger.info(msg)
+                    logger.info { msg }
                 } else if (consoleLog) {
                     val msg = "\n" + formatLog(cmdString, result)
-                    logger.debug(msg)
+                    logger.debug { msg }
                 }
                 return@withContext Result.success(result)
             } catch (e: Throwable) {
                 if (e is CancellationException) {
-                    logger.debug("job canceled, pid: ${process?.pid()}")
+                    logger.debug { "job canceled, pid: ${process?.pid()}" }
                     return@withContext Result.success("")
                 }
                 //e.printStackTrace()
-                logger.error("run error. $e")
+                logger.error { "run error. $e" }
                 return@withContext Result.failure(e)
             } finally {
                 process?.destroyRecursively()
@@ -116,7 +115,7 @@ open class BaseCommand {
             val processBuilder = ProcessBuilder(*command).fixEnv(env, workDir)
             progress = processBuilder.start()
             val cmdString = command.joinToString(" ")
-            logger.debug("\n[${cmdString}] start")
+            logger.debug { "\n[${cmdString}] start" }
             scope.launch {
                 progress.inputReader(charset).use {
                     it.lineSequence().forEach { s ->
@@ -127,13 +126,13 @@ open class BaseCommand {
                         }
                         onReadLine(s)
                     }
-                    logger.debug("\n[${cmdString}] end")
+                    logger.debug { "\n[${cmdString}] end" }
                 }
             }
             return@withContext progress
         } catch (e: Throwable) {
             progress?.destroyRecursively()
-            logger.warn("执行失败, ${e.localizedMessage}")
+            logger.warn { "执行失败, ${e.localizedMessage}" }
             e.printStackTrace()
             return@withContext null
         }
@@ -201,6 +200,6 @@ open class BaseCommand {
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+        private val logger = KotlinLogging.logger { }
     }
 }

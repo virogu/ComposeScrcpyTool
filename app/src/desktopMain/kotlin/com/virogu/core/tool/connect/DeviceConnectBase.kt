@@ -5,6 +5,7 @@ import com.virogu.core.config.ConfigStores
 import com.virogu.core.device.Device
 import com.virogu.core.tool.ssh.SSHTool
 import com.virogu.core.tool.ssh.SSHVerifyTools
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -16,8 +17,6 @@ import org.apache.sshd.client.session.ClientSession
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 abstract class DeviceConnectBase(
     protected val configStores: ConfigStores,
@@ -57,14 +56,14 @@ abstract class DeviceConnectBase(
     abstract suspend fun refreshDevice(showLog: Boolean = false): List<Device>
 
     protected suspend fun openTcpPort(ip: String, port: Int): Boolean {
-        logger.info("try open device port, $ip:$port")
+        logger.info { "try open device port, $ip:$port" }
         return sshTool.connect(ip, SSHVerifyTools.user, SSHVerifyTools.pwd) { session ->
             val r = doOpenTcpPort(this, session, port)
             if (!r) {
                 throw IllegalStateException("open device [$ip] port [$port] fail")
             }
         }.onFailure {
-            logger.warn(it.localizedMessage)
+            logger.warn { it.localizedMessage }
         }.isSuccess
     }
 
@@ -105,7 +104,7 @@ abstract class DeviceConnectBase(
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(DeviceConnectBase::class.java)
+        private val logger = KotlinLogging.logger {}
     }
 
 }

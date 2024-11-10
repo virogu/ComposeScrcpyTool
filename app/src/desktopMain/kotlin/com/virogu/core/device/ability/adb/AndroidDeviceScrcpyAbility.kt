@@ -6,12 +6,11 @@ import com.virogu.core.bean.ScrcpyConfig
 import com.virogu.core.command.BaseCommand
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityScrcpy
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 
 /**
@@ -23,7 +22,7 @@ class AndroidDeviceScrcpyAbility(
 ) : DeviceAbilityScrcpy {
     companion object {
         private val cmd: BaseCommand by DI.global.instance<BaseCommand>()
-        private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+        private val logger = KotlinLogging.logger { }
     }
 
     private val target = arrayOf("-s", device.serial)
@@ -68,7 +67,7 @@ class AndroidDeviceScrcpyAbility(
             workDir = workDir,
             env = environment
         ) {
-            logger.info(it)
+            logger.info { it }
         }
     }
 }

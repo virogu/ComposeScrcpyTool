@@ -7,12 +7,11 @@ import com.virogu.core.bean.FileType
 import com.virogu.core.command.HdcCommand
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityAdditional
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.delay
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -24,7 +23,7 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
 
     companion object {
         private val cmd: HdcCommand by DI.global.instance<HdcCommand>()
-        private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+        private val logger = KotlinLogging.logger { }
     }
 
     private val target = arrayOf("-t", device.serial)
@@ -54,7 +53,7 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
             }
             return ""
         } catch (e: Throwable) {
-            logger.warn(e.localizedMessage)
+            logger.warn { e.localizedMessage }
             return "操作失败: ${e.localizedMessage}"
         }
     }

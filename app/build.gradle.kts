@@ -36,10 +36,10 @@ kotlin {
             implementation(libs.apache.sshd.common)
             implementation(libs.apache.sshd.putty)
 
-            implementation(libs.slf4j.api)
-
-            implementation(libs.logback.core)
+            //implementation(libs.slf4j.api)
+            //implementation(libs.logback.core)
             implementation(libs.logback.classic)
+            implementation(libs.kotlin.logging)
 
             // https://github.com/Kodein-Framework/Kodein-DI
             implementation(libs.kodein.di.jvm)

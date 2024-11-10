@@ -3,6 +3,7 @@ package com.virogu.core.viewmodel
 import androidx.lifecycle.ViewModel
 import com.virogu.core.bean.ScrcpyConfig
 import com.virogu.core.device.Device
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -10,8 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 /**
  * @author Virogu
@@ -105,7 +104,7 @@ class ScrcpyViewModel : ViewModel() {
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+        private val logger = KotlinLogging.logger { }
     }
 
 }

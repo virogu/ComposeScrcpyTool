@@ -1,13 +1,12 @@
 package com.virogu.core.tool.ssh
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.sshd.client.ClientBuilder
 import org.apache.sshd.client.SshClient
 import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier
 import org.apache.sshd.client.session.ClientSession
 import org.apache.sshd.common.kex.BuiltinDHFactories
 import org.apache.sshd.common.signature.BuiltinSignatures
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.nio.charset.Charset
 import java.util.stream.Collectors
@@ -95,26 +94,26 @@ class SSHToolImpl : SSHTool {
     internal inner class ConsoleOutputStream : ByteArrayOutputStream() {
         override fun write(b: Int) {
             super.write(b)
-            logger.debug(b.toChar().toString())
+            logger.debug { b.toChar().toString() }
         }
 
         override fun write(b: ByteArray) {
             super.write(b)
-            logger.debug(String(buf, Charsets.UTF_8))
+            logger.debug { String(buf, Charsets.UTF_8) }
         }
 
         override fun writeBytes(b: ByteArray?) {
             super.writeBytes(b)
-            logger.debug(String(buf, Charsets.UTF_8))
+            logger.debug { String(buf, Charsets.UTF_8) }
         }
 
         override fun write(b: ByteArray, off: Int, len: Int) {
             super.write(b, off, len)
-            logger.debug(String(buf, Charsets.UTF_8))
+            logger.debug { String(buf, Charsets.UTF_8) }
         }
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(SSHToolImpl::class.java)
+        private val logger = KotlinLogging.logger {}
     }
 }

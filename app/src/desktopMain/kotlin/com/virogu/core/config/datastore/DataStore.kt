@@ -4,15 +4,14 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import com.virogu.core.json
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
-private val logger: Logger = LoggerFactory.getLogger("DataStore")
+private val logger = KotlinLogging.logger("DataStore")
 
 fun <T> DataStore<Preferences>.get(
     key: Preferences.Key<T>,
@@ -39,7 +38,7 @@ fun <T> DataStore<Preferences>.updateConfig(key: Preferences.Key<T>, value: T) {
                 it[key] = value
             }
         }.onFailure {
-            logger.warn("save config fail. $it")
+            logger.warn { "save config fail. $it" }
         }
     }
 }
@@ -61,7 +60,7 @@ fun <T> DataStore<Preferences>.clearConfig(key: Preferences.Key<T>) {
                 it.remove(key)
             }
         }.onFailure {
-            logger.warn("save config fail. $it")
+            logger.warn { "save config fail. $it" }
         }
     }
 }

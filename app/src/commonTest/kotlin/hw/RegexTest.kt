@@ -4,7 +4,7 @@ import org.junit.Test
 
 /**
  * @author Virogu
- * @since 2024-04-07 ÏÂÎç4:07
+ * @since 2024-04-07 ä¸‹åˆ4:07
  **/
 
 internal class RegexTest {

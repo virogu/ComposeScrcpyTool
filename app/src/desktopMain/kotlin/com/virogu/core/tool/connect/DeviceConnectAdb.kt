@@ -6,12 +6,11 @@ import com.virogu.core.device.Device
 import com.virogu.core.device.DeviceEntityAndroid
 import com.virogu.core.device.DevicePlatform
 import com.virogu.core.tool.ssh.SSHTool
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.sshd.client.session.ClientSession
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.util.regex.Pattern
 
 /**
@@ -24,13 +23,13 @@ abstract class DeviceConnectAdb(configStores: ConfigStores) : DeviceConnectBase(
 
     override suspend fun doConnect(ip: String, port: Int): Boolean {
         cmd.adb("disconnect", "${ip}:${port}", consoleLog = true)
-        logger.info("start adb connect")
+        logger.info { "start adb connect" }
         val r = cmd.adb("connect", "${ip}:${port}", timeout = 3L, consoleLog = true).getOrNull()?.takeIf {
             it.isNotEmpty()
         } ?: run {
             return false
         }
-        logger.info(r)
+        logger.info { r }
         // cannot connect to 192.168: 由于目标计算机积极拒绝，无法连接。 (10061)
         // 尝试通过SSH连接到设备再打开ADB
         val failed = r.contains("cannot connect to", true) ||
@@ -60,9 +59,9 @@ abstract class DeviceConnectAdb(configStores: ConfigStores) : DeviceConnectBase(
             "start adbd"
         ).onSuccess {
             r = true
-            logger.info("open adb port [$port] success")
+            logger.info { "open adb port [$port] success" }
         }.onFailure {
-            logger.info("open adb port [$port] fail: ${it.localizedMessage}")
+            logger.info { "open adb port [$port] fail: ${it.localizedMessage}" }
         }
         return r
     }
@@ -129,7 +128,7 @@ abstract class DeviceConnectAdb(configStores: ConfigStores) : DeviceConnectBase(
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+        private val logger = KotlinLogging.logger { }
 
         private const val ANDROID_API_VERSION = "ro.build.version.sdk"
         private const val ANDROID_RELEASE_VERSION = "ro.build.version.release"

@@ -2,8 +2,8 @@ package com.virogu.core.command
 
 import com.virogu.core.Common
 import com.virogu.core.bean.Platform
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 import java.nio.charset.Charset
 
@@ -17,12 +17,12 @@ class AdbCommand : BaseCommand() {
     private var started: Boolean = false
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+        private val logger = KotlinLogging.logger { }
     }
 
     override val workDir: File by lazy {
         Common.workDir.resolve("app").also {
-            logger.debug("Adb Work Dir: ${it.absolutePath}")
+            logger.debug { "Adb Work Dir: ${it.absolutePath}" }
         }
     }
 
@@ -66,7 +66,7 @@ class AdbCommand : BaseCommand() {
 
     private suspend fun showVersion() {
         val version = exec(*executable, "version").getOrNull() ?: return
-        logger.info("\n----ADB----\n$version\n----------")
+        logger.info { "\n----ADB----\n$version\n----------" }
     }
 
     override suspend fun killServer() {

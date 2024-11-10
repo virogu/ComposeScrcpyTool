@@ -4,12 +4,11 @@ import com.virogu.core.bean.Additional
 import com.virogu.core.command.AdbCommand
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityAdditional
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.delay
 import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -26,7 +25,7 @@ class AndroidDeviceAdditionalAbility(private val device: Device) : DeviceAbility
 
     companion object {
         private val cmd: AdbCommand by DI.global.instance<AdbCommand>()
-        private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+        private val logger = KotlinLogging.logger { }
     }
 
     override suspend fun exec(additional: Additional): String {
@@ -50,7 +49,7 @@ class AndroidDeviceAdditionalAbility(private val device: Device) : DeviceAbility
             }
             return ""
         } catch (e: Throwable) {
-            logger.warn(e.localizedMessage)
+            logger.warn { e.localizedMessage }
             return "操作失败: ${e.localizedMessage}"
         }
     }
