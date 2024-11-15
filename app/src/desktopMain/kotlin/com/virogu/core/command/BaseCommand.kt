@@ -40,7 +40,8 @@ open class BaseCommand {
         showLog: Boolean = false,
         consoleLog: Boolean = Common.isDebug,
         timeout: Long = 5L,
-        charset: Charset = Charsets.UTF_8
+        inputCharset: Charset = Charsets.UTF_8,
+        outCharset: Charset = Charsets.UTF_8
     ): Result<String> = mutex.withLock {
         val redirect = redirectFile ?: defaultRedirectFile
         val autoDeleteRedirect = redirectFile == null
@@ -60,7 +61,14 @@ open class BaseCommand {
                 // 因为执行hdc命令时，inputStream read时总是会卡死
                 // 这样操作虽然仍无法避免hdc inputStream卡死，但是卡死时不会影响正常运行，只是这个临时文件被hdc进程锁死无法删除
                 // 程序正常关闭时会kill掉hdc服务，从而释放相关被锁定的文件，下次程序启动会自动清空临时目录
-                process = ProcessBuilder(*command).fixEnv(env, workDir, redirect).start()
+                val commandEncoded = if (inputCharset.name() == Charsets.UTF_8.name()) {
+                    command
+                } else {
+                    command.map {
+                        String(it.toByteArray(Charsets.UTF_8), inputCharset)
+                    }.toTypedArray()
+                }
+                process = ProcessBuilder(*commandEncoded).fixEnv(env, workDir, redirect).start()
                 if (timeout <= 0) {
                     process.waitFor()
                 } else {
@@ -70,7 +78,7 @@ open class BaseCommand {
                     }
                 }
                 val result = if (autoDeleteRedirect) {
-                    redirect.readText(charset).trim()
+                    redirect.readText(outCharset).trim()
                 } else {
                     ""
                 }
@@ -104,7 +112,8 @@ open class BaseCommand {
         vararg command: String,
         workDir: File? = this.workDir,
         env: Map<String, String>? = null,
-        charset: Charset = Charsets.UTF_8,
+        inputCharset: Charset = Charsets.UTF_8,
+        outCharset: Charset = Charsets.UTF_8,
         onReadLine: suspend (String) -> Unit,
     ): Process? = withContext(Dispatchers.IO) {
         var progress: Process? = null
@@ -112,12 +121,19 @@ open class BaseCommand {
             if (command.isEmpty()) {
                 return@withContext null
             }
-            val processBuilder = ProcessBuilder(*command).fixEnv(env, workDir)
+            val commandEncoded = if (inputCharset.name() == Charsets.UTF_8.name()) {
+                command
+            } else {
+                command.map {
+                    String(it.toByteArray(Charsets.UTF_8), inputCharset)
+                }.toTypedArray()
+            }
+            val processBuilder = ProcessBuilder(*commandEncoded).fixEnv(env, workDir)
             progress = processBuilder.start()
             val cmdString = command.joinToString(" ")
             logger.debug { "\n[${cmdString}] start" }
             scope.launch {
-                progress.inputReader(charset).use {
+                progress.inputReader(outCharset).use {
                     it.lineSequence().forEach { s ->
                         println(s)
                         if (!isActive) {

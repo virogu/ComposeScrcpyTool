@@ -26,7 +26,7 @@ class PingCommand : BaseCommand() {
     }
 
     suspend fun ping(ip: String): Boolean {
-        val ping = exec(ping, ip, *pingArgs, charset = charset).getOrNull()
+        val ping = exec(ping, ip, *pingArgs, outCharset = charset).getOrNull()
         return !(ping == null || !ping.contains("ttl=", true))
     }
 

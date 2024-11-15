@@ -55,7 +55,7 @@ class AdbCommand : BaseCommand() {
             showLog = showLog,
             consoleLog = consoleLog,
             timeout = timeout,
-            charset = charset
+            outCharset = charset
         )
     }
 

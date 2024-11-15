@@ -2,7 +2,6 @@ package com.virogu.core.command
 
 import com.virogu.core.Common
 import com.virogu.core.bean.Platform
-
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 import java.nio.charset.Charset
@@ -34,7 +33,8 @@ class HdcCommand : BaseCommand() {
         showLog: Boolean = false,
         consoleLog: Boolean = Common.isDebug,
         timeout: Long = 5L,
-        charset: Charset = Charset.forName("GBK")
+        charset: Charset = Charsets.UTF_8
+        //charset: Charset = Charset.forName("GBK")
     ): Result<String> {
         if (!active) {
             return Result.failure(IllegalStateException("hdc server is not active"))
@@ -43,6 +43,7 @@ class HdcCommand : BaseCommand() {
             startServer()
             showVersion()
         }
+
         return exec(
             *executable,
             *command,
@@ -50,7 +51,8 @@ class HdcCommand : BaseCommand() {
             showLog = showLog,
             consoleLog = consoleLog,
             timeout = timeout,
-            charset = charset
+            inputCharset = Charset.forName("GBK"),
+            outCharset = charset
         )
     }
 
