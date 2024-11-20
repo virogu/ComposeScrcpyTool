@@ -1,5 +1,7 @@
 package com.virogu.ui.view
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -11,14 +13,16 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.contentColorFor
 import androidx.compose.runtime.*
-import androidx.compose.ui.DragData
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.DragData
+import androidx.compose.ui.draganddrop.dragData
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.onExternalDrag
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,10 +50,9 @@ import kotlin.math.roundToInt
 
 private val projectRootPath = File("./").absoluteFile
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun FileSelectView(
-    window: ComposeWindow,
     text: String,
     fileChooserType: Int,
     modifier: Modifier = Modifier.height(48.dp),
@@ -81,25 +84,21 @@ fun FileSelectView(
     var focus by remember {
         mutableStateOf(FocusInteraction.Focus())
     }
-    LaunchedEffect(dragging) {
-        if (dragging) {
-            focus = FocusInteraction.Focus()
-            interactionSource.emit(focus)
-        } else {
-            interactionSource.emit(FocusInteraction.Unfocus(focus))
-        }
-    }
-    OutlinedText(
-        modifier = modifier.onExternalDrag(
-            onDragStart = {
+    val dragAndDropTargetCallback = remember {
+        object : DragAndDropTarget {
+            override fun onEntered(event: DragAndDropEvent) {
                 dragging = true
-            },
-            onDragExit = {
+                super.onEntered(event)
+            }
+
+            override fun onExited(event: DragAndDropEvent) {
                 dragging = false
-            },
-            onDrop = {
+                super.onExited(event)
+            }
+
+            override fun onDrop(event: DragAndDropEvent): Boolean {
                 dragging = false
-                it.dragData.also { dragData ->
+                event.dragData().also { dragData ->
                     if (dragData !is DragData.FilesList) {
                         return@also
                     }
@@ -138,7 +137,23 @@ fun FileSelectView(
                         }
                     }
                 }
+                return true
             }
+        }
+    }
+
+    LaunchedEffect(dragging) {
+        if (dragging) {
+            focus = FocusInteraction.Focus()
+            interactionSource.emit(focus)
+        } else {
+            interactionSource.emit(FocusInteraction.Unfocus(focus))
+        }
+    }
+    OutlinedText(
+        modifier = modifier.dragAndDropTarget(
+            shouldStartDragAndDrop = { true },
+            target = dragAndDropTargetCallback
         ),
         value = text,
         interactionSource = interactionSource,

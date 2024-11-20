@@ -14,12 +14,10 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Notification
 import androidx.compose.ui.window.TrayState
-import androidx.compose.ui.window.WindowState
 import com.virogu.core.tool.Tools
 import com.virogu.ui.AuxiliaryToolWindow
 import com.virogu.ui.Pager
@@ -33,8 +31,6 @@ import java.awt.SystemTray
 
 @Composable
 fun MainPager(
-    window: ComposeWindow,
-    windowState: WindowState,
     trayState: TrayState,
     pagerController: PagerNavController<Pager>,
     tools: Tools
@@ -45,7 +41,7 @@ fun MainPager(
             BottomMenuView(trayState, tools)
         }
         Spacer(Modifier.fillMaxHeight().width(1.dp).background(materialColors.onSurface.copy(alpha = 0.3f)))
-        PagerContainerView(window, windowState, pagerController, tools)
+        PagerContainerView(pagerController, tools)
     }
 }
 
@@ -98,8 +94,6 @@ private fun TopMenuView(
 
 @Composable
 private fun PagerContainerView(
-    window: ComposeWindow,
-    windowState: WindowState,
     pagerController: PagerNavController<Pager>,
     tools: Tools
 ) {
@@ -108,8 +102,6 @@ private fun PagerContainerView(
     val deviceConnectListState = rememberLazyListState()
     when (currentPager.value) {
         Pager.DeviceConnection -> DeviceConnectView(
-            window,
-            windowState,
             tools,
             deviceConnectListState
         )

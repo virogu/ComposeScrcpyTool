@@ -3,7 +3,7 @@ kotlin = "2.0.20"
 #https://github.com/google/ksp/releases
 ksp = "2.0.20-1.0.25"
 gmazzoBuildconfig = "3.0.3"
-compose = "1.6.11"
+compose = "1.7.0"
 kotlinx-coroutines = "1.8.1"
 apache-sshd = "2.12.1"
 lifecycle = "2.8.0"

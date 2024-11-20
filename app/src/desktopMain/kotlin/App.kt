@@ -34,7 +34,7 @@ import theme.MainTheme
 
 @Composable
 @Preview
-fun WindowScope.App(
+fun App(
     window: ComposeWindow,
     applicationScope: ApplicationScope,
     state: WindowState,
@@ -49,7 +49,7 @@ fun WindowScope.App(
             mutableStateOf(initState.value.success)
         }
         if (initStateSuccess) {
-            MainPager(window, state, trayState, pagerController, tools)
+            MainPager(trayState, pagerController, tools)
         } else {
             InitPager(initState)
         }

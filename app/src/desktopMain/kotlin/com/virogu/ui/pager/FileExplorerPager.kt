@@ -3,6 +3,9 @@
 package com.virogu.ui.pager
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.draganddrop.dragAndDropSource
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -14,12 +17,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.*
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,6 +47,7 @@ import com.virogu.ui.view.OptionButton
 import com.virogu.ui.view.SelectDeviceView
 import com.virogu.ui.view.TipsView
 import theme.*
+import java.awt.datatransfer.StringSelection
 import java.net.URI
 import kotlin.io.path.toPath
 
@@ -399,9 +410,53 @@ private fun FileInfoItemView(
     val getFileDetails by rememberUpdatedState {
         viewModel.getFileDetails(fileInfo)
     }
+
     var mouseEnter by remember { mutableStateOf(false) }
     val backgroundColor by rememberItemBackground(selected.value, mouseEnter)
     val contextMenuState = remember { ContextMenuState() }
+    val dragAndDropTargetCallback = remember(fileInfo) {
+        object : DragAndDropTarget {
+            override fun onEntered(event: DragAndDropEvent) {
+                mouseEnter = true
+                super.onEntered(event)
+            }
+
+            override fun onExited(event: DragAndDropEvent) {
+                mouseEnter = false
+                super.onExited(event)
+            }
+
+            override fun onDrop(event: DragAndDropEvent): Boolean {
+                println("event ${event.action}")
+                event.dragData().also { dragData ->
+                    if (dragData !is DragData.FilesList) {
+                        return@also
+                    }
+                    val files = dragData.readFiles().mapNotNull { uri ->
+                        try {
+                            URI.create(uri).toPath().toFile()
+                        } catch (e: Throwable) {
+                            null
+                        }
+                    }
+                    viewModel.pushFile(fileInfo, files)
+                    println("onDrop $files")
+                }
+                return true
+            }
+        }
+    }
+
+    val onDoubleTap by rememberUpdatedState {
+        when (fileInfo.type) {
+            FileType.DIR -> {
+                setExpended(fileInfo, !currentExpanded)
+            }
+
+            else -> {}
+        }
+    }
+
     LaunchedEffect(contextMenuState.status) {
         if (contextMenuState.status is ContextMenuState.Status.Open) {
             selectFile(fileInfo)
@@ -423,52 +478,75 @@ private fun FileInfoItemView(
             ContextMenuItem("删除", deleteFile).also(::add)
         }
     }) {
-        Card(modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
-            mouseEnter = true
-        }.onPointerEvent(PointerEventType.Exit) {
-            mouseEnter = false
-        }.onPointerEvent(PointerEventType.Release) {
-            mouseEnter = false
-        }.run {
-            when (fileInfo.type) {
-                FileType.DIR -> {
-                    onClick(
-                        onDoubleClick = {
-                            setExpended(fileInfo, !currentExpanded)
-                        }, onClick = {
-
-                        }
-                    ).onPointerEvent(PointerEventType.Press) {
-                        selectFile(fileInfo)
-                    }.onExternalDrag(onDragStart = {
-                        mouseEnter = true
-                    }, onDragExit = {
-                        mouseEnter = false
-                    }) {
-                        it.dragData.also { dragData ->
-                            if (dragData !is DragData.FilesList) {
-                                return@also
-                            }
-                            val files = dragData.readFiles().mapNotNull { uri ->
-                                try {
-                                    URI.create(uri).toPath().toFile()
-                                } catch (e: Throwable) {
-                                    null
-                                }
-                            }
-                            viewModel.pushFile(fileInfo, files)
-                            println("onDrop $files")
-                        }
+        val textMeasurer = rememberTextMeasurer()
+        val colors = materialColors
+        Card(
+            modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
+                mouseEnter = true
+            }.onPointerEvent(PointerEventType.Exit) {
+                mouseEnter = false
+            }.onPointerEvent(PointerEventType.Release) {
+                mouseEnter = false
+            }.run {
+                when (fileInfo.type) {
+                    FileType.DIR -> {
+                        dragAndDropTarget(shouldStartDragAndDrop = { true }, target = dragAndDropTargetCallback)
                     }
-                }
 
-                FileType.FILE -> {
-                    onPointerEvent(PointerEventType.Press) { selectFile(fileInfo) }
+                    else -> this
                 }
-
-                else -> this
-            }
-        }, backgroundColor = backgroundColor, elevation = 0.dp) {
+            }.onPointerEvent(PointerEventType.Press) { selectFile(fileInfo) }.dragAndDropSource(
+                drawDragDecoration = {
+                    drawRect(
+                        color = colors.primary,
+                        //topLeft = Offset(x = 0f, y = size.height / 4),
+                        size = Size(size.width / 2, size.height)
+                    )
+                    val textLayoutResult = textMeasurer.measure(
+                        text = AnnotatedString(fileInfo.name),
+                        layoutDirection = layoutDirection,
+                        density = this
+                    )
+                    drawText(
+                        textLayoutResult = textLayoutResult,
+                        color = colors.onSurface,
+                        topLeft = Offset(
+                            x = (size.width / 2 - textLayoutResult.size.width) / 2,
+                            y = (size.height - textLayoutResult.size.height) / 2,
+                        )
+                    )
+                }
+            ) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        onDoubleTap()
+                    },
+                    onLongPress = { offset ->
+                        startTransfer(
+                            DragAndDropTransferData(
+                                transferable = DragAndDropTransferable(
+                                    StringSelection(fileInfo.path)
+                                ),
+                                supportedActions = listOf(
+                                    DragAndDropTransferAction.Copy,
+                                    DragAndDropTransferAction.Move,
+                                    DragAndDropTransferAction.Link,
+                                ),
+                                dragDecorationOffset = offset,
+                                onTransferCompleted = { action ->
+                                    when (action) {
+                                        DragAndDropTransferAction.Copy -> println("Copied")
+                                        DragAndDropTransferAction.Move -> println("Moved")
+                                        DragAndDropTransferAction.Link -> println("Linked")
+                                        null -> println("Transfer aborted")
+                                    }
+                                }
+                            )
+                        )
+                    })
+            },
+            backgroundColor = backgroundColor, elevation = 0.dp
+        ) {
             var nameHasVisualOverflow by remember { mutableStateOf(false) }
             TooltipArea(
                 tooltip = {

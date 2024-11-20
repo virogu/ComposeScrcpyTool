@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,7 +30,6 @@ import javax.swing.JFileChooser
 
 @Composable
 fun ScrcpyView(
-    window: ComposeWindow,
     tools: Tools,
     viewModel: ScrcpyViewModel = viewModel { ScrcpyViewModel() }
 ) {
@@ -58,7 +56,6 @@ fun ScrcpyView(
     ) {
         Text(modifier = Modifier.align(Alignment.CenterHorizontally), text = "启动配置")
         ScrcpyConfigView(
-            window = window,
             specialConfig = specialConfig,
             commonConfig = commonConfig,
             specialConfigEnable = currentDevice.value != null,
@@ -82,7 +79,6 @@ fun ScrcpyView(
 
 @Composable
 private fun ScrcpyConfigView(
-    window: ComposeWindow,
     specialConfig: ScrcpyConfig.Config,
     commonConfig: ScrcpyConfig.CommonConfig,
     specialConfigEnable: Boolean,
@@ -95,7 +91,7 @@ private fun ScrcpyConfigView(
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         val modifier = Modifier.textFieldHeight().align(Alignment.CenterVertically)
-        SelectRecordPathView(modifier.weight(2f), window, commonConfig.recordPath) {
+        SelectRecordPathView(modifier.weight(2f), commonConfig.recordPath) {
             currentUpdateCommonConfig(commonConfig.copy(recordPath = it))
         }
     }
@@ -253,7 +249,6 @@ private fun ScrcpyConfigView(
 @Composable
 private fun SelectRecordPathView(
     modifier: Modifier = Modifier,
-    window: ComposeWindow,
     recordPath: String,
     onFileSelected: (String) -> Unit
 ) {
@@ -265,7 +260,6 @@ private fun SelectRecordPathView(
     ) {
         Text("录像路径", Modifier.width(80.dp).align(Alignment.CenterVertically))
         FileSelectView(
-            window = window,
             text = recordPath,
             modifier = modifier,
             fileChooserType = JFileChooser.DIRECTORIES_ONLY,

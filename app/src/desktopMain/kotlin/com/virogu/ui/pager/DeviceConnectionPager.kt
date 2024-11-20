@@ -20,13 +20,11 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.WindowState
 import com.virogu.core.bean.HistoryDevice
 import com.virogu.core.tool.Tools
 import com.virogu.core.tool.log.LogTool
@@ -43,8 +41,6 @@ import views.modifier.onEnterKey
  **/
 @Composable
 fun DeviceConnectView(
-    window: ComposeWindow,
-    windowState: WindowState,
     tools: Tools,
     deviceConnectListState: LazyListState,
 ) {
@@ -62,16 +58,16 @@ fun DeviceConnectView(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    ConnectDeviceView(windowState, tools)
+                    ConnectDeviceView(tools)
                 }
                 item {
-                    DeviceListView(windowState, tools)
+                    DeviceListView(tools)
                 }
                 item {
                     DeviceView(tools)
                 }
                 item {
-                    ScrcpyView(window, tools)
+                    ScrcpyView(tools)
                 }
             }
             VerticalScrollbar(
@@ -87,7 +83,6 @@ fun DeviceConnectView(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ConnectDeviceView(
-    windowState: WindowState,
     tools: Tools
 ) {
     Row(
@@ -131,7 +126,7 @@ fun ConnectDeviceView(
                 true
             } ?: false
             if (!valid) {
-                logger.info("IP地址[$ipString]无效")
+                logger.info { "IP地址[$ipString]无效" }
                 return@label
             }
             historyDevicesStore.updateLastConnect(
@@ -259,7 +254,6 @@ fun ConnectDeviceView(
 
 @Composable
 fun DeviceListView(
-    windowState: WindowState,
     tools: Tools,
 ) {
     Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
