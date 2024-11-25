@@ -6,9 +6,6 @@ ComposeScrcpyTool是一款无需root权限即可通过 USB连接/网络连接And
 
 程序使用 [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform) 进行开发
 
-对安卓设备进行画面展示和控制的部分使用了 [Genymobile](https://github.com/Genymobile)
-的开源项目 [scrcpy](https://github.com/Genymobile/scrcpy)。
-
 ### 安装运行
 
 #### Windows
@@ -124,3 +121,21 @@ scrcpy启动相关的一些配置项
 ### 辅助工具
 
 ![辅助工具](screens/img_6.png)
+
+
+## 开源声明
+
+本项目使用了以下开源软件：
+
+- **scrcpy**: 一个开源安卓设备投屏工具
+
+  版权所有 © 2018 Genymobile
+
+  许可证：Apache License, Version 2.0
+
+  源代码：[scrcpy](https://github.com/Genymobile/scrcpy)
+
+  根据Apache License, Version 2.0的条款，本项目包含了该软件的编译好版本。请参阅以下许可证文本或访问[Apache许可证 2.0的链接](http://www.apache.org/licenses/LICENSE-2.0)以获取更多信息。
+
+  **Apache License, Version 2.0**:  
+  [scrcpy-LICENSE](https://github.com/Genymobile/scrcpy/blob/master/LICENSE)
