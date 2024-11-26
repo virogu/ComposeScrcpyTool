@@ -95,7 +95,7 @@ buildConfig {
 }
 
 composeCompiler {
-    enableStrongSkippingMode = true
+
 }
 
 compose.desktop {
