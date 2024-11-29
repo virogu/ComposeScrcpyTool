@@ -1,10 +1,14 @@
 ## ComposeScrcpyTool
 
-ComposeScrcpyTool是一款无需root权限即可通过 USB连接/网络连接Android设备，显示设备画面和控制设备的工具。
+**ComposeScrcpyTool** 是一款使用 [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform) 
+进行开发的 安卓/鸿蒙 设备辅助工具，主要功能：
 
-支持Windows、Linux、MacOS（理论上支持，无MacOs环境，未编译测试）。
+- [Scrcpy设备投屏](https://github.com/Genymobile/scrcpy)（暂不支持鸿蒙）：无需root权限即可通过 USB连接/网络连接Android设备，显示设备画面和控制设备
+- 文件管理：文件浏览、详情、导入、导出、设置权限等。
+- 进程管理：正在运行进程列表、停止进程等
+- 辅助工具：模拟设备物理键操作、截屏等
 
-程序使用 [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform) 进行开发
+支持Windows、Linux、MacOS（理论上支持，本人无MacOs环境，未编译测试）。
 
 ### 安装运行
 
@@ -32,15 +36,15 @@ sudo dpkg -i ScrcpyTool-x.x.x-xx.deb
 sudo apt install ffmpeg libsdl2-2.0-0 libusb-1.0-0
 ```
 
-如果安装时提示一些其他依赖的软件包，请根据提示进行安装
+如果安装时提示一些其他依赖的软件包，请根据提示安装缺少的依赖。
 
-如果安装时提示
+如果安装时提示：
 
 ```cmd
 xdg-desktop-menu: No writable system menu directory found.
 ```
 
-执行一下这个
+执行一下这个：
 
 ```cmd
 sudo mkdir /usr/share/desktop-directories/
@@ -48,7 +52,7 @@ sudo mkdir /usr/share/desktop-directories/
 
 #### MacOs
 
-暂未进行编译测试 ，需要的话自行补充相关内容再编译运行
+暂未进行编译测试 ，需要的话自行补充相关内容（adb、scrcpy等相关资源文件）再编译运行
 
 ### 设备要求
 Android版本需要API21（Android 5.0），并且要开启USB调试

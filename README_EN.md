@@ -1,10 +1,14 @@
 ## ComposeScrcpyTool
 
-ComposeScrcpyTool is a tool that allows you to display and control the screen of an Android device via USB or network connection without root permissions.
+**ComposeScrcpyTool** is an Android/HarmonyOS device assistance tool developed using [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform). The main features include:
 
-It supports Windows, Linux, and macOS (theoretically supported, not compiled and tested due to lack of a macOS environment).
+- [Scrcpy](https://github.com/Genymobile/scrcpy) (device screen mirroring, not yet supported for HarmonyOS): Mirror and control Android devices via USB or network connection without root permissions.
+- File management: Browse files, view details, import, export, set permissions, etc.
+- Process management: List running processes, stop processes, etc.
+- Utility tools: Simulate physical key operations on devices, take screenshots, etc.
 
-The program is developed using [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform).
+Supported on Windows, Linux, and macOS (theoretically supported, not tested due to lack of macOS environment for compilation).
+
 
 ### Installation and Running
 
@@ -46,7 +50,7 @@ sudo mkdir /usr/share/desktop-directories/
 
 #### MacOs
 
-Compilation and testing have not been performed yet. If needed, please supplement the relevant content and compile it yourself.
+The compilation test has not been conducted yet. If needed, please add the relevant content (files related to adb, scrcpy, etc.) yourself before compiling and running.
 
 ### Device Requirements
 
