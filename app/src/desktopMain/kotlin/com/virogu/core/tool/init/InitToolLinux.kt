@@ -21,6 +21,7 @@ class InitToolLinux : InitToolDefault() {
         listOf(
             File(workDir, "app/adb"),
             File(workDir, "app/scrcpy"),
+            File(workDir, "app/scrcpy_bin"),
             File(workDir, "app/hdc"),
         ).forEach { f ->
             chmodX(f.absolutePath)
