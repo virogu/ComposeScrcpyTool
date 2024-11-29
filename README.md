@@ -1,5 +1,8 @@
 ## ComposeScrcpyTool
 
+- [English](README-en.md)
+- [简体中文](README.md)
+
 **ComposeScrcpyTool** 是一款使用 [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform) 
 进行开发的 安卓/鸿蒙 设备辅助工具，主要功能：
 

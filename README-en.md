@@ -1,5 +1,8 @@
 ## ComposeScrcpyTool
 
+- [English](README-en.md)
+- [¼òÌåÖÐÎÄ](README.md)
+
 **ComposeScrcpyTool** is an Android/HarmonyOS device assistance tool developed using [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform). The main features include:
 
 - [Scrcpy](https://github.com/Genymobile/scrcpy) (device screen mirroring, not yet supported for HarmonyOS): Mirror and control Android devices via USB or network connection without root permissions.
