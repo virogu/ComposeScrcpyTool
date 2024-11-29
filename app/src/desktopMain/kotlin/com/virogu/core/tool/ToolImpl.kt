@@ -10,10 +10,7 @@ import com.virogu.core.config.ConfigStores
 import com.virogu.core.config.impl.ConfigStoreImpl
 import com.virogu.core.tool.connect.DeviceConnect
 import com.virogu.core.tool.connect.DeviceConnectManager
-import com.virogu.core.tool.init.InitTool
-import com.virogu.core.tool.init.InitToolDefault
-import com.virogu.core.tool.init.InitToolLinux
-import com.virogu.core.tool.init.InitToolWindows
+import com.virogu.core.tool.init.*
 import com.virogu.core.tool.log.LogTool
 import com.virogu.core.tool.log.LogToolImpl
 import com.virogu.core.tool.ssh.SSHTool
@@ -41,6 +38,7 @@ class ToolImpl : Tools {
         when (Common.platform) {
             is Platform.Windows -> InitToolWindows()
             is Platform.Linux -> InitToolLinux()
+            is Platform.MacOs -> InitToolMacOs()
             else -> InitToolDefault()
         }
     }
