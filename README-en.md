@@ -1,7 +1,7 @@
 ## ComposeScrcpyTool
 
 - [English](README-en.md)
-- [¼òÌåÖÐÎÄ](README.md)
+- [ç®€ä½“ä¸­æ–‡](README.md)
 
 **ComposeScrcpyTool** is an Android/HarmonyOS device assistance tool developed using [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform). The main features include:
 
