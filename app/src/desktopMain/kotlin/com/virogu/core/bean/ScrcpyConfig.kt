@@ -59,17 +59,17 @@ data class ScrcpyConfig(
         val bitRate: VideoBiteRate = VideoBiteRate.M8,
         //--video-codec=h264
         val videoCodec: VideoCodec = VideoCodec.H264,
-        //--lock-video-orientation
+        //--capture-orientation
         val videoRotation: VideoRotation = VideoRotation.Default,
-        //--rotation=0
+        //--orientation=0
         val windowRotation: WindowRotation = WindowRotation.R0
     ) {
         fun scrcpyArgs() = listOfNotNull(
             "--max-size=${maxSize.value}".takeIf { maxSize != MaxSize.Default },
             "--video-bit-rate=${bitRate.value}",
             "--video-codec=${videoCodec.value}",
-            "--lock-video-orientation=${videoRotation.value}".takeIf { videoRotation != VideoRotation.Default },
-            "--rotation=${windowRotation.value}"
+            "--capture-orientation=${videoRotation.value}".takeIf { videoRotation != VideoRotation.Default },
+            "--orientation=${windowRotation.value}"
         )
     }
 
@@ -104,16 +104,16 @@ data class ScrcpyConfig(
     enum class VideoRotation(val value: String, val desc: String) {
         Default("0", "默认"),
         R0("0", "0°"),
-        R1("1", "90°"),
-        R2("2", "180°"),
-        R3("3", "270°"),
+        R1("90", "90°"),
+        R2("180", "180°"),
+        R3("270", "270°"),
     }
 
     enum class WindowRotation(val value: String, val desc: String) {
         R0("0", "默认"),
-        R1("1", "90°"),
-        R2("2", "180°"),
-        R3("3", "270°"),
+        R1("90", "90°"),
+        R2("180", "180°"),
+        R3("270", "270°"),
     }
 
 }

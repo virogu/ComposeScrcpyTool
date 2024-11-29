@@ -1,7 +1,7 @@
 [versions]
-kotlin = "2.0.20"
+kotlin = "2.1.0"
 #https://github.com/google/ksp/releases
-ksp = "2.0.20-1.0.25"
+ksp = "2.1.0-1.0.29"
 gmazzoBuildconfig = "3.0.3"
 compose = "1.7.0"
 kotlinx-coroutines = "1.8.1"
