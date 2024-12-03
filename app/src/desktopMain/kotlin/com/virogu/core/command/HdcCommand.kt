@@ -22,8 +22,9 @@ class HdcCommand : BaseCommand() {
 
     private val executable by lazy {
         when (Common.platform) {
-            is Platform.Linux -> arrayOf("./hdc")
-            else -> arrayOf("cmd.exe", "/c", "hdc")
+            is Platform.Linux, is Platform.MacOs -> arrayOf("./hdc")
+            is Platform.Windows -> arrayOf("cmd.exe", "/c", "hdc")
+            else -> arrayOf("hdc")
         }
     }
 

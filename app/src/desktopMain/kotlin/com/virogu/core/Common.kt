@@ -85,8 +85,8 @@ object Common {
     }
 
     val platform by lazy {
-        val osName = Common.osName
-        val osVersion = Common.osVersion
+        val osName = osName
+        val osVersion = osVersion
         when {
             osName.contains("windows", true) -> Platform.Windows(osName, osVersion)
             osName.contains("linux", true) -> Platform.Linux(osName, osVersion)

@@ -33,14 +33,15 @@ class AndroidDeviceScrcpyAbility(
 
     private val executable by lazy {
         when (Common.platform) {
-            is Platform.Linux -> arrayOf("./scrcpy")
-            else -> arrayOf("cmd.exe", "/c", "scrcpy")
+            is Platform.Linux, is Platform.MacOs -> arrayOf("./scrcpy")
+            is Platform.Windows -> arrayOf("cmd.exe", "/c", "scrcpy")
+            else -> arrayOf("scrcpy")
         }
     }
 
     private val environment: Map<String, String> by lazy {
         when (Common.platform) {
-            is Platform.Linux -> mapOf(
+            is Platform.Linux, is Platform.MacOs -> mapOf(
                 "SCRCPY_ICON_PATH" to File(workDir, "logo.svg").absolutePath,
                 "SCRCPY_SERVER_PATH" to File(workDir, "scrcpy-server").absolutePath,
                 "ADB_PATH" to workDir.absolutePath,

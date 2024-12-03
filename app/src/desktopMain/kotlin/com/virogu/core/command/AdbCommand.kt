@@ -28,8 +28,9 @@ class AdbCommand : BaseCommand() {
 
     private val executable by lazy {
         when (Common.platform) {
-            is Platform.Linux -> arrayOf("./adb")
-            else -> arrayOf("cmd.exe", "/c", "adb")
+            is Platform.Linux, is Platform.MacOs -> arrayOf("./adb")
+            is Platform.Windows -> arrayOf("cmd.exe", "/c", "adb")
+            else -> arrayOf("adb")
         }
     }
 
