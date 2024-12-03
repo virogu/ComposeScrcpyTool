@@ -71,8 +71,11 @@ abstract class DeviceConnectAdb(configStores: ConfigStores) : DeviceConnectBase(
         val result = process.split("\n")
         result.mapNotNull { line ->
             //127.0.0.1:58526        device product:windows_x86_64 model:Subsystem_for_Android_TM_ device:windows_x86_64 transport_id:5
+            //emulator-5556 device product:google_x86_64 model:Android_x86_64 device:generic_x86_64
+            //emulator-5554 device product:google_x86 model:Android_x86 device:generic_x86  transport_id:5
+            //0a388e93      device usb:1-1 product:razor model:Nexus_7 device:flo
             val matcher = Pattern.compile(
-                "^(\\S+)\\s+(\\S+)\\s+product:(\\S+)\\s+model:(\\S+)\\s+device:(\\S+)\\s+(transport_id:)?(\\S+)?(.*)$"
+                "^(\\S+)\\s+(\\S+)\\s+(?:usb:\\S+\\s+)?product:(\\S+)\\s+model:(\\S+)\\s+device:(\\S+)(?:\\s+transport_id:)?(\\S+)?(.*)$"
             ).matcher(line.trim())
             if (!matcher.find()) {
                 return@mapNotNull null
