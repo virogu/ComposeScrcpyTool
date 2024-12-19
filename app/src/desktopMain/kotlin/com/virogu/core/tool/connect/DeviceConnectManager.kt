@@ -49,7 +49,7 @@ class DeviceConnectManager(
         }
     }
 
-    private suspend fun autoRefreshChanged(enable: Boolean) {
+    private fun autoRefreshChanged(enable: Boolean) {
         logger.info { "auto refresh: $enable" }
         refreshJob?.cancel()
         if (!enable) {

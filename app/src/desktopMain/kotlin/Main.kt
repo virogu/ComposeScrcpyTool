@@ -33,7 +33,6 @@ import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
 import theme.Icon
-import theme.Logo
 import tools.BuildConfig
 import java.awt.SystemTray
 

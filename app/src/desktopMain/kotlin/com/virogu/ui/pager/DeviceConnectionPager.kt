@@ -15,7 +15,7 @@
  *
  */
 
-@file:Suppress("unused", "FunctionName")
+@file:Suppress("FunctionName")
 
 package com.virogu.ui.pager
 

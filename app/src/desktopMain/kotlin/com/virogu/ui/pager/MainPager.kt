@@ -41,7 +41,6 @@ import com.virogu.ui.Pager
 import com.virogu.ui.PagerNavController
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import theme.Construction
 import theme.Icon
 import theme.materialColors
 import java.awt.SystemTray

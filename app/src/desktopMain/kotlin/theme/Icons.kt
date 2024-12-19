@@ -21,169 +21,165 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.res.painterResource
 import composescrcpytool.app.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
-
-object Icon {
-    object Outlined
-    object Filled
-}
 
 @Composable
 fun ImageVector.painter() = rememberVectorPainter(this)
 
-@Composable
-private fun fromResource(resourcePath: String) = painterResource(resourcePath)
+object Icon {
+    val Logo: Painter
+        @Composable
+        get() = painterResource(Res.drawable.logo)
 
-val Icon.Logo: Painter
-    @Composable
-    get() = painterResource(Res.drawable.logo)
+    object Outlined {
+        val AdminPanelSettings: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_admin_panel_settings)
 
-//Outlined
-val Icon.Outlined.AdminPanelSettings: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_admin_panel_settings)
+        val ClockLoader: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_clock_loader)
 
-val Icon.Outlined.ClockLoader: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_clock_loader)
+        val Construction: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_construction)
 
-val Icon.Outlined.Construction: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_construction)
+        val Dangerous: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_dangerous)
 
-val Icon.Outlined.Dangerous: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_dangerous)
+        val TrashCan: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_delete)
 
-val Icon.Outlined.TrashCan: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_delete)
+        val DesktopAndPhone: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_device_connection)
 
-val Icon.Outlined.DesktopAndPhone: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_device_connection)
+        val Download: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_download)
 
-val Icon.Outlined.Download: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_download)
+        val FileDocument: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_file)
 
-val Icon.Outlined.FileDocument: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_file)
+        val FileLink: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_file_link)
 
-val Icon.Outlined.FileLink: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_file_link)
+        val FileFolder: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_folder)
 
-val Icon.Outlined.FileFolder: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_folder)
+        val FileFolderOpen: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_folder_open)
 
-val Icon.Outlined.FileFolderOpen: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_folder_open)
+        val FileNewFile: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_new_file)
 
-val Icon.Outlined.FileNewFile: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_new_file)
+        val FileNewFolder: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_new_folder)
 
-val Icon.Outlined.FileNewFolder: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_new_folder)
+        val FileUnknown: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_unknown_file)
 
-val Icon.Outlined.FileUnknown: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_unknown_file)
+        val CPU: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_memory)
 
-val Icon.Outlined.CPU: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_memory)
+        val SmartPhone: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_smartphone)
 
-val Icon.Outlined.SmartPhone: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_smartphone)
+        val Star: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_star)
 
-val Icon.Outlined.Star: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_star)
+        val Stop: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_stop)
 
-val Icon.Outlined.Stop: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_stop)
+        val Sync: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_sync)
 
-val Icon.Outlined.Sync: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_sync)
+        val Upload: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_upload)
 
-val Icon.Outlined.Upload: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_upload)
+        val PowerSetting: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_power_settings_new)
 
-val Icon.Outlined.PowerSetting: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_power_settings_new)
+        val VolumeDown: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_volume_down_alt)
 
-val Icon.Outlined.VolumeDown: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_volume_down_alt)
+        val VolumeUp: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_volume_up)
 
-val Icon.Outlined.VolumeUp: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_volume_up)
+        val Preview: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_preview)
 
-val Icon.Outlined.Preview: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_preview)
+        val PreviewOff: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_preview_off)
 
-val Icon.Outlined.PreviewOff: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_preview_off)
+        val FilterNone: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_filter_none)
 
-val Icon.Outlined.FilterNone: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_filter_none)
+        val SelectWindow: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_select_window)
 
-val Icon.Outlined.SelectWindow: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_select_window)
+        val KeyboardDoubleArrowDown: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_keyboard_double_arrow_down)
 
-val Icon.Outlined.KeyboardDoubleArrowDown: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_keyboard_double_arrow_down)
+        val Screenshot: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_screenshot)
 
-val Icon.Outlined.Screenshot: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_screenshot)
+        val DragPan: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_drag_pan)
 
-val Icon.Outlined.DragPan: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_drag_pan)
+        val MoreHorizon: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_more_horiz)
 
-val Icon.Outlined.MoreHorizon: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_more_horiz)
+        val Keep: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_keep)
 
-val Icon.Outlined.Keep: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_keep)
+        val KeepOf: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_keep_off)
 
-val Icon.Outlined.KeepOf: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_keep_off)
+        val ContentCopy: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_content_copy)
 
-val Icon.Outlined.ContentCopy: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_content_copy)
+    }
 
-//Filled
-val Icon.Filled.Star: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_star_fill)
-val Icon.Filled.FileFolder: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_folder_fill)
-val Icon.Filled.FileFolderOpen: Painter
-    @Composable
-    get() = painterResource(Res.drawable.ic_folder_open_fill)
+    object Filled {
+        val Star: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_star_fill)
+        val FileFolder: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_folder_fill)
+        val FileFolderOpen: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_folder_open_fill)
+    }
+}

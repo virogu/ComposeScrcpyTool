@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import theme.FileFolder
 import theme.Icon
 import views.OutlinedText
 import java.awt.datatransfer.DataFlavor

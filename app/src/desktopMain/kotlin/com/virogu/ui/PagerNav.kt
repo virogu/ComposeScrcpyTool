@@ -24,9 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.painter.Painter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import theme.CPU
-import theme.DesktopAndPhone
-import theme.FileFolderOpen
 import theme.Icon
 
 sealed class Pager(
