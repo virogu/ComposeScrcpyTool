@@ -48,6 +48,7 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
     private val localFormatTime get() = LocalDateTime.now().format(timeFormatter)
 
     //@ohos.multimodalInput.keyCode
+    //https://docs.openharmony.cn/pages/v5.0/zh-cn/application-dev/reference/apis-input-kit/js-apis-keycode.md
     override suspend fun exec(additional: Additional): String {
         try {
             val commands: List<Array<String>> = when (additional) {
@@ -59,7 +60,7 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
                 PowerButton -> listOf(arrayOf("shell", "uinput -K -d 18 -u 18"))
                 VolumePlus -> listOf(arrayOf("shell", "uinput -K -d 16 -u 16"))
                 VolumeReduce -> listOf(arrayOf("shell", "uinput -K -d 17 -u 17"))
-                TaskManagement -> listOf(arrayOf("shell", "uinput -K -d 3 -u 3"))
+                TaskManagement -> listOf(arrayOf("shell", "uinput -K -d 2078 -u 2078"))
                 Menu -> listOf(arrayOf("shell", "uinput -K -d 2067 -u 2067"))
                 Home -> listOf(arrayOf("shell", "uinput -K -d 1 -u 1"))
                 Back -> listOf(arrayOf("shell", "uinput -K -d 2 -u 2"))
