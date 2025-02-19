@@ -61,7 +61,7 @@ class HistoryDeviceConfigImpl(
                 it.ip == device.ip
             }
             if (current != null) {
-                add(0, current.copy(timeMs = device.timeMs))
+                add(0, current.copy(timeMs = device.timeMs, port = device.port))
             } else {
                 add(0, device)
             }
