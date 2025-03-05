@@ -1,9 +1,10 @@
 [versions]
-kotlin = "2.1.0"
+kotlin = "2.1.10"
 #https://github.com/google/ksp/releases
-ksp = "2.1.0-1.0.29"
+ksp = "2.1.10-1.0.31"
 gmazzoBuildconfig = "3.0.3"
-compose = "1.7.0"
+compose = "1.7.3"
+composeBom = "2025.02.00"
 kotlinx-coroutines = "1.8.1"
 apache-sshd = "2.12.1"
 lifecycle = "2.8.0"
@@ -18,6 +19,7 @@ datastore = "1.1.1"
 junit = "5.9.2"
 
 [libraries]
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 
 lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycle" }
 lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
@@ -57,8 +59,7 @@ jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 compose = { id = "org.jetbrains.compose", version.ref = "compose" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
