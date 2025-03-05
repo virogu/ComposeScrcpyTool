@@ -16,5 +16,5 @@
 
 - [Scrcpy](https://github.com/Genymobile/scrcpy/releases)
   ```
-  v3.0
+  v3.1
   ``` 
