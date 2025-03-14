@@ -13,7 +13,7 @@ slf4j = "2.0.12"
 logback = "1.5.3"
 #https://repo1.maven.org/maven2/io/github/oshai/
 kotlin-logging = "7.0.0"
-kodein = "7.21.2"
+kodein = "7.25.0"
 kotlin-serializable = "1.6.3"
 datastore = "1.1.1"
 junit = "5.9.2"
@@ -45,6 +45,8 @@ kotlin-logging-jvm = { module = "io.github.oshai:kotlin-logging-jvm", version.re
 kodein-di-jvm = { module = "org.kodein.di:kodein-di-jvm", version.ref = "kodein" }
 kodein-di-conf-jvm = { module = "org.kodein.di:kodein-di-conf-jvm", version.ref = "kodein" }
 kodein-di-framework-android-x = { module = "org.kodein.di:kodein-di-framework-android-x", version.ref = "kodein" }
+kodein-di-framework-compose = { module = "org.kodein.di:kodein-di-framework-compose", version.ref = "kodein" }
+
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlin-serializable" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlin-serializable" }
 datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
