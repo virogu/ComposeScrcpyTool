@@ -69,7 +69,7 @@ class HdcCommand : BaseCommand() {
             showLog = showLog,
             consoleLog = consoleLog,
             timeout = timeout,
-            inputCharset = Charset.forName("GBK"),
+            //inputCharset = Charset.forName("GBK"),
             outCharset = charset
         )
     }
