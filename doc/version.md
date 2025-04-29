@@ -11,10 +11,10 @@
   
   [hdc daily builds](http://ci.openharmony.cn/workbench/cicd/dailybuild/dailylist)
   ```
-  Ver:  3.1.0b
+  Ver:  3.1.0e
   ```
 
 - [Scrcpy](https://github.com/Genymobile/scrcpy/releases)
   ```
-  v3.1
+  v3.2
   ``` 

@@ -1,10 +1,12 @@
 [versions]
-kotlin = "2.1.10"
+kotlin = "2.1.20"
 #https://github.com/google/ksp/releases
-ksp = "2.1.10-1.0.31"
+ksp = "2.1.20-2.0.0"
 gmazzoBuildconfig = "3.0.3"
+#https://github.com/JetBrains/compose-multiplatform/tags?after=v1.8.0-beta02
 compose = "1.7.3"
-composeBom = "2025.02.00"
+#https://developer.android.google.cn/develop/ui/compose/bom/bom-mapping?hl=el
+composeBom = "2025.04.00"
 kotlinx-coroutines = "1.8.1"
 apache-sshd = "2.12.1"
 lifecycle = "2.8.0"
@@ -14,6 +16,7 @@ logback = "1.5.3"
 #https://repo1.maven.org/maven2/io/github/oshai/
 kotlin-logging = "7.0.0"
 kodein = "7.25.0"
+koin-bom = "4.1.0-Beta7"
 kotlin-serializable = "1.6.3"
 datastore = "1.1.1"
 junit = "5.9.2"
@@ -42,6 +45,8 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 kotlin-logging = { module = "io.github.oshai:kotlin-logging", version.ref = "kotlin-logging" }
 kotlin-logging-jvm = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
+koin-core = { module = "io.insert-koin:koin-core" }
 kodein-di-jvm = { module = "org.kodein.di:kodein-di-jvm", version.ref = "kodein" }
 kodein-di-conf-jvm = { module = "org.kodein.di:kodein-di-conf-jvm", version.ref = "kodein" }
 kodein-di-framework-android-x = { module = "org.kodein.di:kodein-di-framework-android-x", version.ref = "kodein" }
