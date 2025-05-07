@@ -20,9 +20,7 @@
 package com.virogu.ui.pager
 
 import androidx.compose.foundation.*
-import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -30,22 +28,20 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draganddrop.*
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.DragData
+import androidx.compose.ui.draganddrop.dragData
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,8 +59,10 @@ import com.virogu.ui.view.BusyProcessView
 import com.virogu.ui.view.OptionButton
 import com.virogu.ui.view.SelectDeviceView
 import com.virogu.ui.view.TipsView
-import theme.*
-import java.awt.datatransfer.StringSelection
+import theme.Icon
+import theme.materialColors
+import theme.rememberItemBackground
+import theme.textFieldHeight
 import java.net.URI
 import kotlin.io.path.toPath
 
@@ -498,13 +496,14 @@ private fun FileInfoItemView(
         val textMeasurer = rememberTextMeasurer()
         val colors = materialColors
         Card(
+            backgroundColor = backgroundColor, elevation = 0.dp,
             modifier = Modifier.height(40.dp).onPointerEvent(PointerEventType.Enter) {
                 mouseEnter = true
             }.onPointerEvent(PointerEventType.Exit) {
                 mouseEnter = false
             }.onPointerEvent(PointerEventType.Release) {
                 mouseEnter = false
-            }.run {
+            }.combinedClickable(onClick = {}, onDoubleClick = onDoubleTap).run {
                 when (fileInfo.type) {
                     FileType.DIR -> {
                         dragAndDropTarget(shouldStartDragAndDrop = { true }, target = dragAndDropTargetCallback)
@@ -512,57 +511,47 @@ private fun FileInfoItemView(
 
                     else -> this
                 }
-            }.onPointerEvent(PointerEventType.Press) { selectFile(fileInfo) }.dragAndDropSource(
-                drawDragDecoration = {
-                    drawRect(
-                        color = colors.primary,
-                        //topLeft = Offset(x = 0f, y = size.height / 4),
-                        size = Size(size.width / 2, size.height)
-                    )
-                    val textLayoutResult = textMeasurer.measure(
-                        text = AnnotatedString(fileInfo.name),
-                        layoutDirection = layoutDirection,
-                        density = this
-                    )
-                    drawText(
-                        textLayoutResult = textLayoutResult,
-                        color = colors.onSurface,
-                        topLeft = Offset(
-                            x = (size.width / 2 - textLayoutResult.size.width) / 2,
-                            y = (size.height - textLayoutResult.size.height) / 2,
-                        )
-                    )
-                }
-            ) {
-                detectTapGestures(
-                    onDoubleTap = {
-                        onDoubleTap()
-                    },
-                    onLongPress = { offset ->
-                        startTransfer(
-                            DragAndDropTransferData(
-                                transferable = DragAndDropTransferable(
-                                    StringSelection(fileInfo.path)
-                                ),
-                                supportedActions = listOf(
-                                    DragAndDropTransferAction.Copy,
-                                    DragAndDropTransferAction.Move,
-                                    DragAndDropTransferAction.Link,
-                                ),
-                                dragDecorationOffset = offset,
-                                onTransferCompleted = { action ->
-                                    when (action) {
-                                        DragAndDropTransferAction.Copy -> println("Copied")
-                                        DragAndDropTransferAction.Move -> println("Moved")
-                                        DragAndDropTransferAction.Link -> println("Linked")
-                                        null -> println("Transfer aborted")
-                                    }
-                                }
-                            )
-                        )
-                    })
-            },
-            backgroundColor = backgroundColor, elevation = 0.dp
+            }.onPointerEvent(PointerEventType.Press) { selectFile(fileInfo) }
+//                .dragAndDropSource({
+//                    drawRect(
+//                        color = colors.primary,
+//                        //topLeft = Offset(x = 0f, y = size.height / 4),
+//                        size = Size(size.width / 2, size.height)
+//                    )
+//                    val textLayoutResult = textMeasurer.measure(
+//                        text = AnnotatedString(fileInfo.name),
+//                        layoutDirection = layoutDirection,
+//                        density = this
+//                    )
+//                    drawText(
+//                        textLayoutResult = textLayoutResult,
+//                        color = colors.onSurface,
+//                        topLeft = Offset(
+//                            x = (size.width / 2 - textLayoutResult.size.width) / 2,
+//                            y = (size.height - textLayoutResult.size.height) / 2,
+//                        )
+//                    )
+//                }, { offset ->
+//                    DragAndDropTransferData(
+//                        transferable = DragAndDropTransferable(
+//                            StringSelection(fileInfo.path)
+//                        ),
+//                        supportedActions = listOf(
+//                            DragAndDropTransferAction.Copy,
+//                            DragAndDropTransferAction.Move,
+//                            DragAndDropTransferAction.Link,
+//                        ),
+//                        dragDecorationOffset = offset,
+//                        onTransferCompleted = { action ->
+//                            when (action) {
+//                                DragAndDropTransferAction.Copy -> println("Copied")
+//                                DragAndDropTransferAction.Move -> println("Moved")
+//                                DragAndDropTransferAction.Link -> println("Linked")
+//                                null -> println("Transfer aborted")
+//                            }
+//                        }
+//                    )
+//                })
         ) {
             var nameHasVisualOverflow by remember { mutableStateOf(false) }
             TooltipArea(
@@ -573,7 +562,7 @@ private fun FileInfoItemView(
                         }
                     }
                 },
-                delayMillis = 800,
+                delayMillis = 500,
             ) {
                 Row(
                     modifier = Modifier.padding(end = 8.dp).fillMaxSize(),
@@ -589,13 +578,13 @@ private fun FileInfoItemView(
                         when (fileInfo.type) {
                             FileType.DIR -> {
                                 Icon(
-                                    modifier = modifier.size(30.dp).clickable {
+                                    modifier = modifier.size(30.dp).clickable(role = Role.Button) {
                                         selectFile(fileInfo)
                                         setExpended(fileInfo, !currentExpanded)
-                                    }.padding(5.dp), imageVector = if (currentExpanded) {
-                                        Icons.Filled.KeyboardArrowDown
+                                    }.padding(5.dp), painter = if (currentExpanded) {
+                                        Icon.Outlined.KeyboardArrowDown
                                     } else {
-                                        Icons.AutoMirrored.Filled.KeyboardArrowRight
+                                        Icon.Outlined.KeyboardArrowRight
                                     }, contentDescription = fileInfo.name
                                 )
                                 Icon(

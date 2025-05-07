@@ -60,7 +60,10 @@ private val size by lazy {
     DpSize(700.dp, 820.dp)
 }
 
+private var startTime: Long = 0
+
 fun main() {
+    startTime = System.currentTimeMillis()
     val platformInfo = """OS: [${Common.osName}, version:${Common.osVersion}]
         |Java Version: [${System.getProperty("java.version")}]
         |Java Path: [${System.getProperty("java.home")}]
@@ -99,6 +102,10 @@ private fun startApplication() = application {
         alwaysOnTop = alwaysOnTop,
         icon = icon,
     ) {
+        LaunchedEffect(startTime) {
+            val spendTime = System.currentTimeMillis() - startTime
+            logger.info { "启动耗时: ${spendTime}ms" }
+        }
         App(window, this@application, state, trayState, pagerController, tools)
         if (SystemTray.isSupported()) {
             TrayView(trayState, icon, tools, state, alwaysOnTop) {
@@ -181,7 +188,6 @@ private fun ApplicationScope.TrayView(
 }
 
 private fun init() {
-    logger.info { "init" }
     initDi()
     tools.start()
 }

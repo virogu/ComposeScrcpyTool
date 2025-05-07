@@ -29,9 +29,6 @@ import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -105,7 +102,7 @@ fun TipsView(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Icon(Icons.Outlined.Info, "info")
+                Icon(Icon.Outlined.Info, "info")
                 Spacer(Modifier.size(4.dp))
                 var lazyColumnHeight by remember { mutableStateOf(0) }
                 LazyColumn(Modifier.weight(1f).onGloballyPositioned {
@@ -129,7 +126,7 @@ fun TipsView(
                 IconButton({
                     showTips = false
                 }) {
-                    Icon(Icons.Default.Close, "关闭")
+                    Icon(Icon.Outlined.Close, "关闭")
                 }
             }
 

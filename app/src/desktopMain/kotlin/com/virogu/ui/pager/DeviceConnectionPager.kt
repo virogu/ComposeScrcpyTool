@@ -30,10 +30,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -248,7 +244,7 @@ fun ConnectDeviceView(
                                 historyDevicesStore.removeLastConnect(device)
                             }) {
                                 Icon(
-                                    Icons.Default.Close,
+                                    Icon.Outlined.Close,
                                     "",
                                     tint = contentColorFor(MaterialTheme.colors.background),
                                     modifier = Modifier.size(24.dp)
@@ -388,10 +384,10 @@ fun LogView(
             ) {
                 Image(
                     modifier = Modifier.align(Alignment.CenterVertically),
-                    imageVector = if (showLogView) {
-                        Icons.Filled.KeyboardArrowDown
+                    painter = if (showLogView) {
+                        Icon.Outlined.KeyboardArrowDown
                     } else {
-                        Icons.Filled.KeyboardArrowUp
+                        Icon.Outlined.KeyboardArrowUp
                     },
                     contentDescription = "展开/收起日志",
                     colorFilter = ColorFilter.tint(contentColorFor(MaterialTheme.colors.background)),

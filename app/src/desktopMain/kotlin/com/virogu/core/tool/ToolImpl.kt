@@ -32,7 +32,10 @@ import com.virogu.core.tool.log.LogTool
 import com.virogu.core.tool.log.LogToolImpl
 import com.virogu.core.tool.ssh.SSHTool
 import com.virogu.core.tool.ssh.SSHToolImpl
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class ToolImpl : Tools {
     override val notification = MutableSharedFlow<String>()
@@ -70,10 +73,22 @@ class ToolImpl : Tools {
 
     override fun stop() {
         deviceConnect.stop()
-        baseCommand.destroy()
-        pingCommand.destroy()
-        hdcCommand.destroy()
-        adbCommand.destroy()
+        runBlocking {
+            coroutineScope {
+                launch {
+                    baseCommand.destroy()
+                }
+                launch {
+                    pingCommand.destroy()
+                }
+                launch {
+                    hdcCommand.destroy()
+                }
+                launch {
+                    adbCommand.destroy()
+                }
+            }
+        }
         logTool.stop()
     }
 

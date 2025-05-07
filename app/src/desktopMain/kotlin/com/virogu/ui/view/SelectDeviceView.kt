@@ -17,10 +17,16 @@
 
 package com.virogu.ui.view
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.virogu.core.device.Device
 import com.virogu.core.tool.connect.DeviceConnect
 import theme.dropdownMenuItemPadding
@@ -56,16 +62,42 @@ fun SelectDeviceView(
             onDismissRequest = { expanded = false },
         ) {
             devices.value.forEach {
-                DropdownMenuItem(
-                    onClick = {
-                        connectTool.selectDevice(it)
-                        expanded = false
-                    },
-                    contentPadding = dropdownMenuItemPadding(),
-                ) {
-                    Text(text = it.showName)
+                DeviceItemView(it) { device ->
+                    connectTool.selectDevice(device)
+                    expanded = false
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun DeviceItemView(device: Device, onItemClick: (Device) -> Unit) {
+    var nameHasVisualOverflow by remember { mutableStateOf(false) }
+    TooltipArea(
+        tooltip = {
+            AnimatedVisibility(nameHasVisualOverflow) {
+                Card(elevation = 4.dp) {
+                    Text(text = device.showName, modifier = Modifier.padding(10.dp))
+                }
+            }
+        },
+        modifier = Modifier.fillMaxSize(),
+        delayMillis = 200,
+    ) {
+        DropdownMenuItem(
+            onClick = {
+                onItemClick(device)
+            },
+            contentPadding = dropdownMenuItemPadding(),
+        ) {
+            Text(
+                text = device.showName, maxLines = 1, overflow = TextOverflow.StartEllipsis,
+                onTextLayout = { l ->
+                    nameHasVisualOverflow = l.hasVisualOverflow
+                },
+            )
         }
     }
 }

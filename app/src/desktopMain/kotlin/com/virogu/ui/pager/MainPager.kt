@@ -28,7 +28,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -166,7 +165,6 @@ private fun BottomMenuView(
                 elevation = null,
                 contentPadding = PaddingValues(8.dp)
             ) {
-                Icons
                 Icon(
                     modifier = Modifier.size(28.dp),
                     painter = Icon.Outlined.Construction,

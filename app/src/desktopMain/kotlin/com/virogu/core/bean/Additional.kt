@@ -17,13 +17,9 @@
 
 package com.virogu.core.bean
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
-import theme.*
+import theme.Icon
 
 /**
  * Created by Virogu
@@ -43,7 +39,7 @@ enum class Additional(
     VolumePlus("音量+", { Icon.Outlined.VolumeUp }),
     VolumeReduce("音量-", { Icon.Outlined.VolumeDown }),
     TaskManagement("切换应用", { Icon.Outlined.SelectWindow }),
-    Menu("菜单", { Icons.Outlined.Menu.painter() }),
-    Home("主界面", { Icons.Outlined.Home.painter() }),
-    Back("返回", { Icons.AutoMirrored.Outlined.ArrowBack.painter() }),
+    Menu("菜单", { Icon.Outlined.Menu }),
+    Home("主界面", { Icon.Outlined.Home }),
+    Back("返回", { Icon.Outlined.ArrowBack }),
 }

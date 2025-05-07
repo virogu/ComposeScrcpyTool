@@ -25,9 +25,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +37,7 @@ import com.virogu.core.device.Device
 import com.virogu.core.tool.Tools
 import com.virogu.core.viewmodel.ScrcpyViewModel
 import com.virogu.ui.view.FileSelectView
+import theme.Icon
 import theme.materialColors
 import theme.textFieldHeight
 import views.OutlinedText
@@ -426,10 +424,10 @@ private fun ColumnScope.ScrcpyOptionView(
             }
         ) { active ->
             Icon(
-                imageVector = if (active) {
-                    Icons.Filled.Close
+                painter = if (active) {
+                    Icon.Outlined.Close
                 } else {
-                    Icons.AutoMirrored.Filled.ArrowForward
+                    Icon.Outlined.ArrowForward
                 },
                 contentDescription = if (active) "断开服务" else "启动服务",
                 tint = contentColorFor(buttonColor)

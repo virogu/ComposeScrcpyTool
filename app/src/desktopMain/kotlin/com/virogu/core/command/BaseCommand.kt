@@ -26,6 +26,7 @@ import java.io.File
 import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * @author Virogu
@@ -208,13 +209,10 @@ open class BaseCommand {
         destroy()
     }
 
-    fun destroy() {
+    suspend fun destroy() {
         active = false
-        runBlocking(Dispatchers.IO) {
-            try {
-                killServer()
-            } catch (_: Throwable) {
-            }
+        withTimeout(2.seconds) {
+            killServer()
         }
         synchronized(processMap) {
             processMap.onEach {

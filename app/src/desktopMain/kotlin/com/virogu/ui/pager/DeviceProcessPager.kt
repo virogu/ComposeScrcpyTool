@@ -25,9 +25,6 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -51,7 +48,10 @@ import com.virogu.ui.view.SelectDeviceView
 import com.virogu.ui.view.TipsView
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import theme.*
+import theme.Icon
+import theme.materialColors
+import theme.rememberItemBackground
+import theme.textFieldHeight
 
 /**
  * Created by Virogu
@@ -204,20 +204,19 @@ private fun ProcessItemTitle(
             val icModifier = boxModifier.size(24.dp)
             val tabModifier = Modifier.fillMaxHeight().padding(horizontal = 8.dp)
             val spacerModifier = Modifier.fillMaxHeight().width(1.dp).background(borderColor)
-            val imageVector = remember(sortDesc.value) {
-                if (sortDesc.value) {
-                    Icons.Filled.KeyboardArrowDown
-                } else {
-                    Icons.Filled.KeyboardArrowUp
-                }
-            }
             Box(boxModifier.weight(6f).clickable {
                 sortBy.value = ProcessInfo.SortBy.NAME
                 sortDesc.value = !sortDesc.value
             }) {
                 Row(tabModifier.align(Alignment.CenterStart)) {
                     if (sortBy.value.tag == ProcessInfo.SortBy.NAME.tag) {
-                        Icon(modifier = icModifier, imageVector = imageVector, contentDescription = "排序")
+                        Icon(
+                            modifier = icModifier, painter = if (sortDesc.value) {
+                                Icon.Outlined.KeyboardArrowDown
+                            } else {
+                                Icon.Outlined.KeyboardArrowUp
+                            }, contentDescription = "排序"
+                        )
                     } else {
                         Spacer(icModifier)
                     }
@@ -231,7 +230,13 @@ private fun ProcessItemTitle(
             }) {
                 Row(tabModifier.align(Alignment.Center)) {
                     if (sortBy.value.tag == ProcessInfo.SortBy.PID.tag) {
-                        Icon(modifier = icModifier, imageVector = imageVector, contentDescription = "排序")
+                        Icon(
+                            modifier = icModifier, painter = if (sortDesc.value) {
+                                Icon.Outlined.KeyboardArrowDown
+                            } else {
+                                Icon.Outlined.KeyboardArrowUp
+                            }, contentDescription = "排序"
+                        )
                     } else {
                         Spacer(icModifier)
                     }

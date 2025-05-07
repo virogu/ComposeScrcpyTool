@@ -37,21 +37,37 @@ object Icon {
             @Composable
             get() = painterResource(Res.drawable.ic_admin_panel_settings)
 
+        val ArrowBack: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_arrow_back)
+
+        val ArrowForward: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_arrow_forward)
+
         val ClockLoader: Painter
             @Composable
             get() = painterResource(Res.drawable.ic_clock_loader)
+
+        val Close: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_close)
 
         val Construction: Painter
             @Composable
             get() = painterResource(Res.drawable.ic_construction)
 
+        val ContentCopy: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_content_copy)
+
+        val CPU: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_memory)
+
         val Dangerous: Painter
             @Composable
             get() = painterResource(Res.drawable.ic_dangerous)
-
-        val TrashCan: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_delete)
 
         val DesktopAndPhone: Painter
             @Composable
@@ -61,13 +77,13 @@ object Icon {
             @Composable
             get() = painterResource(Res.drawable.ic_download)
 
+        val DragPan: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_drag_pan)
+
         val FileDocument: Painter
             @Composable
             get() = painterResource(Res.drawable.ic_file)
-
-        val FileLink: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_file_link)
 
         val FileFolder: Painter
             @Composable
@@ -76,6 +92,10 @@ object Icon {
         val FileFolderOpen: Painter
             @Composable
             get() = painterResource(Res.drawable.ic_folder_open)
+
+        val FileLink: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_file_link)
 
         val FileNewFile: Painter
             @Composable
@@ -89,9 +109,73 @@ object Icon {
             @Composable
             get() = painterResource(Res.drawable.ic_unknown_file)
 
-        val CPU: Painter
+        val FilterNone: Painter
             @Composable
-            get() = painterResource(Res.drawable.ic_memory)
+            get() = painterResource(Res.drawable.ic_filter_none)
+
+        val Home: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_home)
+
+        val Info: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_info)
+
+        val Keep: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_keep)
+
+        val KeepOf: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_keep_off)
+
+        val KeyboardArrowDown: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_keyboard_arrow_down)
+
+        val KeyboardArrowLeft: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_keyboard_arrow_left)
+
+        val KeyboardArrowRight: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_keyboard_arrow_right)
+
+        val KeyboardArrowUp: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_keyboard_arrow_up)
+
+        val KeyboardDoubleArrowDown: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_keyboard_double_arrow_down)
+
+        val Menu: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_menu)
+
+        val MoreHorizon: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_more_horiz)
+
+        val PowerSetting: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_power_settings_new)
+
+        val Preview: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_preview)
+
+        val PreviewOff: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_preview_off)
+
+        val Screenshot: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_screenshot)
+
+        val SelectWindow: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_select_window)
 
         val SmartPhone: Painter
             @Composable
@@ -109,13 +193,13 @@ object Icon {
             @Composable
             get() = painterResource(Res.drawable.ic_sync)
 
+        val TrashCan: Painter
+            @Composable
+            get() = painterResource(Res.drawable.ic_delete)
+
         val Upload: Painter
             @Composable
             get() = painterResource(Res.drawable.ic_upload)
-
-        val PowerSetting: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_power_settings_new)
 
         val VolumeDown: Painter
             @Composable
@@ -124,51 +208,6 @@ object Icon {
         val VolumeUp: Painter
             @Composable
             get() = painterResource(Res.drawable.ic_volume_up)
-
-        val Preview: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_preview)
-
-        val PreviewOff: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_preview_off)
-
-        val FilterNone: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_filter_none)
-
-        val SelectWindow: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_select_window)
-
-        val KeyboardDoubleArrowDown: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_keyboard_double_arrow_down)
-
-        val Screenshot: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_screenshot)
-
-        val DragPan: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_drag_pan)
-
-        val MoreHorizon: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_more_horiz)
-
-        val Keep: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_keep)
-
-        val KeepOf: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_keep_off)
-
-        val ContentCopy: Painter
-            @Composable
-            get() = painterResource(Res.drawable.ic_content_copy)
-
     }
 
     object Filled {
