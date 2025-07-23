@@ -4,7 +4,7 @@
 
   ```
   Android Debug Bridge version 1.0.41
-  Version 35.0.2-12147458
+  Version 36.0.0-13206524
   ```
 
 - [HDC](https://gitee.com/openharmony/developtools_hdc#pc%E7%AB%AF%E8%8E%B7%E5%8F%96%E8%AF%B4%E6%98%8E)
@@ -16,5 +16,5 @@
 
 - [Scrcpy](https://github.com/Genymobile/scrcpy/releases)
   ```
-  v3.2
+  v3.3.1
   ``` 
