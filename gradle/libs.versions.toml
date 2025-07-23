@@ -1,12 +1,12 @@
 [versions]
-kotlin = "2.1.20"
+kotlin = "2.2.0"
 #https://github.com/google/ksp/releases
-ksp = "2.1.20-2.0.1"
+ksp = "2.2.0-2.0.2"
 gmazzoBuildconfig = "3.0.3"
 #https://github.com/JetBrains/compose-multiplatform/releases
-compose = "1.8.0"
+compose = "1.8.2"
 #https://developer.android.google.cn/develop/ui/compose/bom/bom-mapping?hl=el
-composeBom = "2025.04.01"
+composeBom = "2025.06.01"
 #https://klibs.io/project/Kotlin/kotlinx.coroutines
 kotlinx-coroutines = "1.10.2"
 apache-sshd = "2.15.0"
@@ -19,8 +19,9 @@ kotlin-logging = "7.0.7"
 kodein = "7.26.0"
 koin-bom = "4.1.0-Beta8"
 #https://klibs.io/project/Kotlin/kotlinx.serialization
-kotlin-serializable = "1.8.1"
-datastore = "1.1.5"
+kotlin-serializable = "1.9.0"
+#https://klibs.io/package/androidx.datastore/datastore-preferences-core
+datastore = "1.1.7"
 junit = "5.9.2"
 
 [libraries]
