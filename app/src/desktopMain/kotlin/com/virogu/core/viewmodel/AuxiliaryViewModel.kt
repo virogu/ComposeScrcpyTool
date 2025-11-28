@@ -46,7 +46,7 @@ class AuxiliaryViewModel : BaseJobViewModel() {
     private val currentDevice get() = selectedOnlineDevice.value
 
     fun exec(additional: Additional) {
-        startJob("auxiliary: ${additional.title}") {
+        startLineJob("auxiliary: ${additional.title}") {
             currentDevice?.also { device ->
                 device.additionalAbility.exec(additional).takeIf {
                     it.isNotEmpty()

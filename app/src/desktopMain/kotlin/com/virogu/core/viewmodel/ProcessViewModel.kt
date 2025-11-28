@@ -91,8 +91,8 @@ class ProcessViewModel : BaseJobViewModel() {
     }
 
     fun refresh() {
-        startJob("refresh") {
-            val device = currentDevice ?: return@startJob
+        startLineJob("refresh") {
+            val device = currentDevice ?: return@startLineJob
             refreshProcess(device)
         }
     }
@@ -103,16 +103,16 @@ class ProcessViewModel : BaseJobViewModel() {
     }
 
     fun killProcess(info: ProcessInfo) {
-        startJob("kill ${info.pid}") {
-            val device = currentDevice ?: return@startJob
+        startLineJob("kill ${info.pid}") {
+            val device = currentDevice ?: return@startLineJob
             device.processAbility.killProcess(info).toast()
             refreshProcess(device)
         }
     }
 
     fun forceStopProcess(info: ProcessInfo) {
-        startJob("force stop ${info.packageName}") {
-            val device = currentDevice ?: return@startJob
+        startLineJob("force stop ${info.packageName}") {
+            val device = currentDevice ?: return@startLineJob
             device.processAbility.forceStopProcess(info).toast()
             refreshProcess(device)
         }

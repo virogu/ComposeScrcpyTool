@@ -78,6 +78,7 @@ fun MainTheme(
         shapes = Shapes,
     ) {
         CompositionLocalProvider(LocalContextMenuRepresentation provides contextMenuRepresentation) {
+            MaterialTheme.colors
             Surface(
                 modifier = modifier,
             ) {

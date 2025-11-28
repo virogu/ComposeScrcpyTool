@@ -17,8 +17,8 @@
 
 package com.virogu.core.device.ability
 
-import com.virogu.core.bean.FileInfoItem
-import com.virogu.core.bean.FileItem
+import com.virogu.core.bean.FileVerifyInfo
+import com.virogu.core.bean.RemoteFile
 import java.io.File
 
 /**
@@ -28,19 +28,19 @@ import java.io.File
 interface DeviceAbilityFolder {
     suspend fun remount(): String
 
-    suspend fun refreshPath(path: String): Result<List<FileItem>>
+    suspend fun refreshPath(parent: RemoteFile, path: String = parent.path): Result<List<RemoteFile>>
 
     suspend fun createDir(dir: String, newFile: String): Result<String>
 
     suspend fun createFile(dir: String, newFile: String): Result<String>
 
-    suspend fun deleteFile(fileItem: FileInfoItem): Result<String>
+    suspend fun deleteFile(path: String): Result<String>
 
-    suspend fun getFileDetail(fileItem: FileInfoItem): String
+    suspend fun getFileVerifyInfo(path: String): FileVerifyInfo
 
-    suspend fun pullFile(fromFile: List<FileInfoItem>, toLocalFile: File): String
+    suspend fun pullFile(toLocalFile: File, vararg fromRemotePath: String): String
 
-    suspend fun pushFile(toFile: FileInfoItem, fromLocalFiles: List<File>): String
+    suspend fun pushFile(toRemotePath: String, vararg fromLocalFiles: File): String
 
-    suspend fun chmod(fileInfo: FileInfoItem, permission: String): String
+    suspend fun chmod(path: String, permission: String): String
 }

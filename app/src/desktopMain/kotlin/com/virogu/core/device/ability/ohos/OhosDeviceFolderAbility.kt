@@ -17,10 +17,9 @@
 
 package com.virogu.core.device.ability.ohos
 
-import com.virogu.core.bean.FileInfoItem
-import com.virogu.core.bean.FileItem
-import com.virogu.core.bean.FileTipsItem
 import com.virogu.core.bean.FileType
+import com.virogu.core.bean.FileVerifyInfo
+import com.virogu.core.bean.RemoteFile
 import com.virogu.core.command.HdcCommand
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityFolder
@@ -55,18 +54,20 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         }
     }
 
-    override suspend fun refreshPath(path: String): Result<List<FileItem>> = cmd.hdc(
+    override suspend fun refreshPath(
+        parent: RemoteFile, path: String
+    ): Result<List<RemoteFile>> = cmd.hdc(
         *target, "shell",
-        "ls", "-h", "-g", "-L", path.ifEmpty { "/" }, consoleLog = DEBUG
+        "ls", "-h", "-g", "-L", parent.path.ifEmpty { "/" }, consoleLog = DEBUG
     ).map {
         val lines = it.trim().split("\n")
-        val files: List<FileItem> = if (lines.isEmpty()) {
+        val files: List<RemoteFile> = if (lines.isEmpty()) {
             emptyList()
         } else if (Pattern.compile(".*\\$path.*Permission denied.*").matcher(lines.first()).find()) {
             //println("^(.*)?${parent}(.*)?Permission denied(.*)?$ find")
-            listOf(FileTipsItem.Error(path, lines.first()))
+            throw IllegalStateException(lines.first())
         } else {
-            lines.parseToFiles(path)
+            lines.parseToFiles(parent)
         }
         files
     }
@@ -94,8 +95,8 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         }
     }
 
-    override suspend fun deleteFile(fileItem: FileInfoItem): Result<String> = cmd.hdc(
-        *target, "shell", "rm -r '${fileItem.path}'",
+    override suspend fun deleteFile(path: String): Result<String> = cmd.hdc(
+        *target, "shell", "rm -r '${path}'",
         consoleLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
@@ -105,65 +106,48 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         }
     }
 
-    override suspend fun getFileDetail(fileItem: FileInfoItem): String = buildString {
-        appendLine("路径: ${fileItem.path}")
-        append("权限: ${fileItem.permissions}")
-        append("  ")
-        append("类型: ${fileItem.type.name}")
-        append("  ")
-        append("大小: ${fileItem.size}")
-        appendLine()
-        appendLine("修改时间: ${fileItem.modificationTime}")
-        cmd.hdc(
-            *target,
-            "shell", "md5sum", fileItem.path, consoleLog = DEBUG
-        ).onSuccess {
+    override suspend fun getFileVerifyInfo(path: String): FileVerifyInfo {
+        val md5 = cmd.hdc(*target, "shell", "md5sum", path, consoleLog = DEBUG).map {
             it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
                 if (l.size == 2) {
-                    appendLine("MD5: ${l[0]}")
+                    l[0]
                 } else {
-                    appendLine("MD5: $it")
+                    it
                 }
             }
-        }.onFailure {
-            appendLine("获取MD5信息失败 ${it.localizedMessage}")
         }
-        cmd.hdc(
-            *target,
-            "shell", "sha1sum", fileItem.path, consoleLog = DEBUG
-        ).onSuccess {
+        val sha1 = cmd.hdc(*target, "shell", "sha1sum", path, consoleLog = DEBUG).map {
             it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
                 if (l.size == 2) {
-                    appendLine("SHA1: ${l[0]}")
+                    l[0]
                 } else {
-                    appendLine("SHA1: $it")
+                    it
                 }
             }
-        }.onFailure {
-            appendLine("获取SHA1信息失败 ${it.localizedMessage}")
         }
+        return FileVerifyInfo(md5 = md5, sha1 = sha1)
     }
 
-    override suspend fun pullFile(fromFile: List<FileInfoItem>, toLocalFile: File): String = buildString {
-        fromFile.forEach { f ->
+    override suspend fun pullFile(toLocalFile: File, vararg fromRemotePath: String): String = buildString {
+        fromRemotePath.forEach { path ->
             cmd.hdc(
                 *target,
-                "file", "recv", "-a", "\"${f.path}\"", "\"${toLocalFile.absolutePath}\"",
+                "file", "recv", "-a", "\"${path}\"", "\"${toLocalFile.absolutePath}\"",
                 consoleLog = true
             ).onSuccess {
                 appendLine(it)
             }.onFailure {
-                appendLine("pull file [${f.path}] fail, ${it.localizedMessage}")
+                appendLine("pull file [${path}] fail, ${it.localizedMessage}")
             }
         }
     }
 
-    override suspend fun pushFile(toFile: FileInfoItem, fromLocalFiles: List<File>): String = buildString {
+    override suspend fun pushFile(toRemotePath: String, vararg fromLocalFiles: File): String = buildString {
         fromLocalFiles.forEach { f ->
             val args = if (f.isDirectory) {
-                arrayOf("\"${f.absolutePath}\\.\"", "\"${toFile.path}/${f.name}/.\"")
+                arrayOf("\"${f.absolutePath}\\.\"", "\"${toRemotePath}/${f.name}/.\"")
             } else {
-                arrayOf("\"${f.absolutePath}\"", "\"${toFile.path}/${f.name}\"")
+                arrayOf("\"${f.absolutePath}\"", "\"${toRemotePath}/${f.name}\"")
             }
             cmd.hdc(
                 *target,
@@ -177,23 +161,19 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         }
     }
 
-    override suspend fun chmod(fileInfo: FileInfoItem, permission: String): String = buildString {
-        cmd.hdc(
-            *target, "shell",
-            "chmod", permission, fileInfo.path,
-            consoleLog = true
-        ).onSuccess {
+    override suspend fun chmod(path: String, permission: String): String = buildString {
+        cmd.hdc(*target, "shell", "chmod", permission, path, consoleLog = true).onSuccess {
             if (it.isNotBlank()) {
                 appendLine(it)
             } else {
-                appendLine("chmod $permission ${fileInfo.path} success")
+                appendLine("chmod $permission $path success")
             }
         }.onFailure {
-            appendLine("chmod $permission ${fileInfo.path} fail, ${it.localizedMessage}")
+            appendLine("chmod $permission $path fail, ${it.localizedMessage}")
         }
     }
 
-    private fun List<String>.parseToFiles(parent: String): List<FileInfoItem> {
+    private fun List<String>.parseToFiles(parent: RemoteFile): List<RemoteFile> {
         if (this.isEmpty()) {
             return emptyList()
         }
@@ -234,7 +214,11 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
                 } else {
                     "${matcher.group(7).orEmpty()}${matcher.group(8).orEmpty()}"
                 }
-                FileInfoItem(name, parent, "${parent}/${name}", type, size, modificationTime, permissions)
+                RemoteFile(
+                    name, parent, "${parent.path}/${name}",
+                    type, size, modificationTime, permissions,
+                    level = parent.level + 1
+                )
             }
             return files.sortedBy {
                 it.type.sortIndex

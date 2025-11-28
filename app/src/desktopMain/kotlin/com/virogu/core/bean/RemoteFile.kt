@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Virogu
+ * Copyright 2025 Virogu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 
 package com.virogu.core.bean
 
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+
 //drwxr-xr-x  -rwxrwxr-x
 //-：普通文件
 //d：文件夹
@@ -28,22 +31,27 @@ enum class FileType(val sortIndex: Int) {
     OTHER(2)
 }
 
-sealed class FileItem(open val name: String = "")
-
-sealed class FileTipsItem(open val path: String, open val msg: String) : FileItem(msg) {
-    data class Info(override val path: String, override val msg: String) : FileTipsItem(path, msg)
-    data class Error(override val path: String, override val msg: String) : FileTipsItem(path, msg)
+sealed class RemoteFileLoadState() {
+    object NotLoad : RemoteFileLoadState()
+    object Loading : RemoteFileLoadState()
+    object Loaded : RemoteFileLoadState()
+    data class Error(val msg: String) : RemoteFileLoadState()
 }
 
-data class FileInfoItem(
-    override val name: String = "",
-    val parentPath: String = "",
+data class RemoteFile(
+    val name: String = "",
+    val parent: RemoteFile? = null,
     val path: String = "",
     val type: FileType = FileType.OTHER,
     val size: String = "",
     val modificationTime: String = "",
     val permissions: String = "",
-) : FileItem(name) {
+    val level: Int = 0,
+    val isExpanded: MutableState<Boolean> = mutableStateOf(false),
+    val children: MutableState<List<RemoteFile>> = mutableStateOf(emptyList()),
+    val childrenLoadStates: MutableState<RemoteFileLoadState> = mutableStateOf(RemoteFileLoadState.NotLoad)
+) {
+    var verifyInfo: FileVerifyInfo? = null
 
     val isDirectory = type == FileType.DIR
 
@@ -51,14 +59,41 @@ data class FileInfoItem(
         FilePermission.parse(permissions) ?: FilePermission()
     }
 
+    fun toggleExpand(targetExpanded: Boolean = !isExpanded.value) {
+        if (isDirectory) {
+            //关闭目录时把子目录都关闭
+            if (!targetExpanded) {
+                children.value.forEach {
+                    it.toggleExpand(false)
+                }
+            }
+            isExpanded.value = targetExpanded
+        }
+    }
+
+    fun refresh() {
+        if (isDirectory) {
+            childrenLoadStates.value = RemoteFileLoadState.NotLoad
+            children.value = emptyList()
+        } else {
+            parent?.refresh()
+        }
+    }
+
     companion object {
-        val ROOT = FileInfoItem(
+        val ROOT = RemoteFile(
             name = "",
             path = "",
             type = FileType.DIR,
+            isExpanded = mutableStateOf(true)
         )
     }
 }
+
+data class FileVerifyInfo(
+    val md5: Result<String>,
+    val sha1: Result<String>,
+)
 
 private val Boolean.value: Int get() = if (this) 1 else 0
 

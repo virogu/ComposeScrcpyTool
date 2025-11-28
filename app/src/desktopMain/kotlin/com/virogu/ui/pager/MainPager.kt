@@ -121,7 +121,7 @@ private fun PagerContainerView(
             deviceConnectListState
         )
 
-        Pager.DeviceExplorer -> FileExplorerPager(tools, fileListState)
+        Pager.DeviceExplorer -> RemoteFilePager(tools, fileListState)
         Pager.DeviceProcess -> DeviceProcessPager(tools)
     }
 }

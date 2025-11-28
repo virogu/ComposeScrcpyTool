@@ -198,6 +198,7 @@ fun FileChooser(
     onClose: () -> Unit = {},
     onFileSelected: (selectedFiles: Array<File>) -> Unit,
 ) {
+    val close by rememberUpdatedState(onClose)
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             val defaultFile = File(defaultPath)
@@ -241,9 +242,9 @@ fun FileChooser(
                 files.takeIf {
                     it.isNotEmpty()
                 }?.also(onFileSelected)
-                onClose()
+                close()
             } else {
-                onClose()
+                close()
             }
         }
     }

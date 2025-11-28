@@ -32,8 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.setText
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,6 +48,7 @@ import com.virogu.ui.view.SelectDeviceView
 import com.virogu.ui.view.TipsView
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import theme.Icon
 import theme.materialColors
 import theme.rememberItemBackground
@@ -279,7 +280,8 @@ private fun ProcessItemView(
     val selected = remember(processInfo, currentSelect) {
         mutableStateOf(currentSelect?.pid == processInfo.pid)
     }
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     var mouseEnter by remember { mutableStateOf(false) }
     val backgroundColor by rememberItemBackground(selected.value, mouseEnter)
     val contextMenuState = remember { ContextMenuState() }
@@ -300,10 +302,14 @@ private fun ProcessItemView(
                 selectProcess(null)
             }.also(::add)
             ContextMenuItem("复制包名") {
-                clipboardManager.setText(AnnotatedString(processInfo.packageName))
+                scope.launch {
+                    clipboard.setText(processInfo.packageName)
+                }
             }.also(::add)
             ContextMenuItem("复制PID") {
-                clipboardManager.setText(AnnotatedString(processInfo.pid))
+                scope.launch {
+                    clipboard.setText(processInfo.pid)
+                }
             }.also(::add)
         }
     }) {

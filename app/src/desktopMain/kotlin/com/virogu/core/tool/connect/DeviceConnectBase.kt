@@ -29,7 +29,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.apache.sshd.client.session.ClientSession
 import org.kodein.di.DI
 import org.kodein.di.conf.global
@@ -107,15 +106,14 @@ abstract class DeviceConnectBase(
 
     protected fun withLock(block: suspend CoroutineScope.() -> Unit) {
         scope.launch {
+            mutex.lock()
             isBusy.emit(true)
             try {
-                mutex.withLock {
-                    isBusy.emit(true)
-                    block()
-                }
+                block()
             } catch (_: Throwable) {
             } finally {
                 isBusy.emit(false)
+                mutex.unlock()
             }
         }
     }

@@ -19,8 +19,6 @@ package com.virogu.core.device.ability.ohos
 
 import com.virogu.core.bean.Additional
 import com.virogu.core.bean.Additional.*
-import com.virogu.core.bean.FileInfoItem
-import com.virogu.core.bean.FileType
 import com.virogu.core.command.HdcCommand
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityAdditional
@@ -90,9 +88,9 @@ class OhosDeviceAdditionalAbility(private val device: Device) : DeviceAbilityAdd
         //val regex = Regex("""/\S+\.jpeg""")
         //val matchResult = regex.find(r)
         //val screenFile = matchResult?.value ?: throw IllegalStateException("截图失败: $r")
-        val item = FileInfoItem(path = screenFile, type = FileType.FILE)
-        device.folderAbility.pullFile(listOf(item), saveDir)
-        device.folderAbility.deleteFile(item)
+        //val item = FileInfoItem(path = screenFile, type = FileType.FILE)
+        device.folderAbility.pullFile(saveDir, screenFile)
+        device.folderAbility.deleteFile(screenFile)
         return "截图已保存至 ${saveDir.path}\\$fileName"
     }
 

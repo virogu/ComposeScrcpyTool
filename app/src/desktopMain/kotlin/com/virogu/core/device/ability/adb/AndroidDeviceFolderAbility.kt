@@ -17,10 +17,9 @@
 
 package com.virogu.core.device.ability.adb
 
-import com.virogu.core.bean.FileInfoItem
-import com.virogu.core.bean.FileItem
-import com.virogu.core.bean.FileTipsItem
 import com.virogu.core.bean.FileType
+import com.virogu.core.bean.FileVerifyInfo
+import com.virogu.core.bean.RemoteFile
 import com.virogu.core.command.AdbCommand
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityFolder
@@ -60,22 +59,6 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         }
     }
 
-    override suspend fun refreshPath(path: String): Result<List<FileItem>> = cmd.adb(
-        *target, "shell",
-        "ls", "-h", "-g", "-L", path
-    ).map {
-        val lines = it.trim().split("\n")
-        val files: List<FileItem> = if (lines.isEmpty()) {
-            emptyList()
-        } else if (Pattern.compile(".*\\$path.*Permission denied.*").matcher(lines.first()).find()) {
-            //println("^(.*)?${parent}(.*)?Permission denied(.*)?$ find")
-            listOf(FileTipsItem.Error(path, lines.first()))
-        } else {
-            lines.parseToFiles(path)
-        }
-        files
-    }
-
     override suspend fun createDir(dir: String, newFile: String): Result<String> = cmd.adb(
         *target, "shell", "mkdir '${dir}/${newFile}'",
         consoleLog = true
@@ -99,8 +82,8 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         }
     }
 
-    override suspend fun deleteFile(fileItem: FileInfoItem): Result<String> = cmd.adb(
-        *target, "shell", "rm -r '${fileItem.path}'",
+    override suspend fun deleteFile(path: String): Result<String> = cmd.adb(
+        *target, "shell", "rm -r '${path}'",
         consoleLog = true
     ).mapCatching {
         if (it.isNotEmpty()) {
@@ -110,66 +93,49 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         }
     }
 
-    override suspend fun getFileDetail(fileItem: FileInfoItem): String = buildString {
-        appendLine("路径: ${fileItem.path}")
-        append("权限: ${fileItem.permissions}")
-        append("  ")
-        append("类型: ${fileItem.type.name}")
-        append("  ")
-        append("大小: ${fileItem.size}")
-        appendLine()
-        appendLine("修改时间: ${fileItem.modificationTime}")
-        cmd.adb(
-            *target,
-            "shell", "md5sum", fileItem.path
-        ).onSuccess {
+    override suspend fun getFileVerifyInfo(path: String): FileVerifyInfo {
+        val md5 = cmd.adb(*target, "shell", "md5sum", path).map {
             it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
                 if (l.size == 2) {
-                    appendLine("MD5: ${l[0]}")
+                    l[0]
                 } else {
-                    appendLine("MD5: $it")
+                    it
                 }
             }
-        }.onFailure {
-            appendLine("获取MD5信息失败 ${it.localizedMessage}")
         }
-        cmd.adb(
-            *target,
-            "shell", "sha1sum", fileItem.path
-        ).onSuccess {
+        val sha1 = cmd.adb(*target, "shell", "sha1sum", path).map {
             it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
                 if (l.size == 2) {
-                    appendLine("SHA1: ${l[0]}")
+                    l[0]
                 } else {
-                    appendLine("SHA1: $it")
+                    it
                 }
             }
-        }.onFailure {
-            appendLine("获取SHA1信息失败 ${it.localizedMessage}")
         }
+        return FileVerifyInfo(md5 = md5, sha1 = sha1)
     }
 
-    override suspend fun pullFile(fromFile: List<FileInfoItem>, toLocalFile: File): String = buildString {
-        fromFile.forEach { f ->
+    override suspend fun pullFile(toLocalFile: File, vararg fromRemotePath: String): String = buildString {
+        fromRemotePath.forEach { path ->
             cmd.adb(
                 *target,
-                "pull", f.path, toLocalFile.absolutePath,
+                "pull", path, toLocalFile.absolutePath,
                 consoleLog = true,
                 timeout = 0L
             ).onSuccess {
                 appendLine(it)
             }.onFailure {
-                appendLine("pull file [${f.path}] fail, ${it.localizedMessage}")
+                appendLine("pull file [${path}] fail, ${it.localizedMessage}")
             }
         }
     }
 
-    override suspend fun pushFile(toFile: FileInfoItem, fromLocalFiles: List<File>): String = buildString {
+    override suspend fun pushFile(toRemotePath: String, vararg fromLocalFiles: File): String = buildString {
         fromLocalFiles.forEach { f ->
             val args = if (f.isDirectory) {
-                arrayOf("${f.absolutePath}\\.", "${toFile.path}/${f.name}/.")
+                arrayOf("${f.absolutePath}\\.", "${toRemotePath}/${f.name}/.")
             } else {
-                arrayOf(f.absolutePath, "${toFile.path}/${f.name}")
+                arrayOf(f.absolutePath, "${toRemotePath}/${f.name}")
             }
             cmd.adb(
                 *target,
@@ -183,23 +149,47 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         }
     }
 
-    override suspend fun chmod(fileInfo: FileInfoItem, permission: String): String = buildString {
-        cmd.adb(
-            *target, "shell",
-            "chmod", permission, fileInfo.path,
-            consoleLog = true
-        ).onSuccess {
+    override suspend fun chmod(path: String, permission: String): String = buildString {
+        cmd.adb(*target, "shell", "chmod", permission, path, consoleLog = true).onSuccess {
             if (it.isNotBlank()) {
                 appendLine(it)
             } else {
-                appendLine("chmod $permission ${fileInfo.path} success")
+                appendLine("chmod $permission $path success")
             }
         }.onFailure {
-            appendLine("chmod $permission ${fileInfo.path} fail, ${it.localizedMessage}")
+            appendLine("chmod $permission $path fail, ${it.localizedMessage}")
         }
     }
 
-    private fun List<String>.parseToFiles(parent: String): List<FileInfoItem> {
+    override suspend fun refreshPath(parent: RemoteFile, path: String): Result<List<RemoteFile>> = cmd.adb(
+        *target, "shell", "ls", "-h", "-g", "-L", "-A", path
+    ).map {
+        val lines = it.trim().split("\n")
+        val files: List<RemoteFile> = if (lines.isEmpty()) {
+            emptyList()
+        } else if (Pattern.compile(".*\\$path.*Permission denied.*").matcher(lines.first()).find()) {
+            //println("^(.*)?${parent}(.*)?Permission denied(.*)?$ find")
+            throw IllegalStateException(lines.first())
+        } else {
+            lines.parseToFiles(parent)
+        }
+        files
+    }
+
+    //> adb shell ls -h -g -lL /sdcard
+    //total 91K
+    //drwxrwx---  4 everybody 3.3K 2025-09-08 21:33 1Backup
+    //drwxrwx---  5 everybody 3.3K 2025-06-29 13:33 Android
+    //drwxrwx--- 18 everybody 3.3K 2025-09-24 10:35 DCIM
+    //drwxrwx---  4 everybody 3.3K 2025-09-08 21:33 DataBackup
+    //drwxrwx---  6 everybody 3.3K 2025-11-10 20:58 Download
+    //drwxrwx---  9 everybody 3.3K 2025-10-11 14:04 MIUI
+    //drwxrwx---  5 everybody 3.3K 2025-11-14 00:12 Movies
+    //drwxrwx---  4 everybody  56K 2025-10-07 19:10 Music
+    //drwxrwx--- 18 everybody 8.0K 2025-11-27 18:33 Pictures
+    //drwxrwx---  3 everybody 3.3K 2025-11-10 21:02 com.milink.service
+    //drwxrwx---  3 everybody 3.3K 2025-10-25 03:01 com.miui.voiceassist
+    private fun List<String>.parseToFiles(parent: RemoteFile): List<RemoteFile> {
         if (this.isEmpty()) {
             return emptyList()
         }
@@ -240,7 +230,11 @@ class AndroidDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
                 } else {
                     "${matcher.group(7).orEmpty()}${matcher.group(8).orEmpty()}"
                 }
-                FileInfoItem(name, parent, "${parent}/${name}", type, size, modificationTime, permissions)
+                RemoteFile(
+                    name, parent, "${parent.path}/${name}",
+                    type, size, modificationTime, permissions,
+                    level = parent.level + 1
+                )
             }
             return files.sortedBy {
                 it.type.sortIndex

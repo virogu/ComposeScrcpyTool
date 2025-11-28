@@ -36,14 +36,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.setText
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import theme.Icon
 import theme.materialColors
 
@@ -65,7 +66,8 @@ fun TipsView(
         mutableStateOf(false)
     }
     var mouseEnter by remember { mutableStateOf(false) }
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val listAdapter = rememberScrollbarAdapter(scrollState = listState)
     LaunchedEffect(Unit) {
@@ -119,7 +121,9 @@ fun TipsView(
                     adapter = listAdapter
                 )
                 IconButton({
-                    clipboardManager.setText(AnnotatedString(tips))
+                    scope.launch {
+                        clipboard.setText(tips)
+                    }
                 }) {
                     Icon(Icon.Outlined.ContentCopy, "复制")
                 }

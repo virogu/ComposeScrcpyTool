@@ -99,14 +99,14 @@ class ScrcpyViewModel : ViewModel() {
 
     private fun withLock(block: suspend CoroutineScope.() -> Unit) {
         scope.launch {
+            mutex.lock()
+            isBusy.emit(true)
             try {
-                mutex.withLock {
-                    isBusy.emit(true)
-                    block()
-                }
+                block()
             } catch (_: Throwable) {
             } finally {
                 isBusy.emit(false)
+                mutex.unlock()
             }
         }
     }
