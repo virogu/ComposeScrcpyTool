@@ -39,7 +39,6 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.clipEntryOf
 import androidx.compose.ui.platform.setText
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -85,13 +84,11 @@ fun RemoteFilePager(
     val selectedOnlineDevice: Device? by remember(selectedDevice) {
         mutableStateOf(selectedDevice?.takeIf { it.isOnline })
     }
-    var selectedFile: RemoteFile? by remember(selectedDevice) {
-        mutableStateOf(null)
-    }
+    var selectedFile: RemoteFile? by remember(selectedDevice) { mutableStateOf(null) }
     val (optionDialogType, updateDialogType) = remember(selectedDevice) {
         mutableStateOf(FileOptionDialogType.Close)
     }
-    val rootFile by remember { mutableStateOf(RemoteFile.ROOT) }
+    val rootFile by remember(selectedDevice) { mutableStateOf(RemoteFile.root()) }
 
     val parentChildren = selectedFile?.parent?.children?.value
     val parentChildrenLoadStates = selectedFile?.parent?.childrenLoadStates?.value

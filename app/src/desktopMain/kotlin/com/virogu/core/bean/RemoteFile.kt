@@ -81,7 +81,7 @@ data class RemoteFile(
     }
 
     companion object {
-        val ROOT = RemoteFile(
+        fun root() = RemoteFile(
             name = "",
             path = "",
             type = FileType.DIR,

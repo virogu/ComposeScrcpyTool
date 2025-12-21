@@ -18,12 +18,14 @@
 package com.virogu.core.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.virogu.core.bean.ScrcpyConfig
 import com.virogu.core.device.Device
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -75,6 +77,7 @@ class ScrcpyViewModel : ViewModel() {
 
     override fun onCleared() {
         disConnect()
+        scope.cancel()
         super.onCleared()
     }
 
