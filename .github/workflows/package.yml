@@ -32,7 +32,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'amazon'
+          distribution: 'corretto'
           cache: 'gradle'
 
       - name: Grant execute permission
