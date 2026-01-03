@@ -26,7 +26,7 @@ plugins {
 val appBuildInfo: AppBuildInfo by project
 
 private val outputDir get() = project.rootDir.resolve("out/main")
-private val targetPlatform = listOf("msi", "deb")
+private val targetPlatform = listOf("msi", "deb", ".dmg")
 
 private fun renameDistribution() {
     targetPlatform.forEach {

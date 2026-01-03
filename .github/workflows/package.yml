@@ -2,15 +2,19 @@ name: Auto Package Release
 
 on:
   push:
+    branches:
+      - master
+      - main
     tags:
       - 'v*'
 
 jobs:
-  build-and-release:
+  # 阶段一：并行编译打包
+  build:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false # 即使一个失败，其他平台也会继续
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
@@ -20,14 +24,11 @@ jobs:
           - os: macos-latest
             task: ":app:packDmg"
 
-    permissions:
-      contents: write
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # 必须设为0，否则你的 gitCommitCount 逻辑会失效
+          fetch-depth: 0
 
       - name: Setup JDK
         uses: actions/setup-java@v4
@@ -39,21 +40,44 @@ jobs:
       - name: Grant execute permission
         run: chmod +x gradlew
 
-      - name: Clean Project
-        run: ./gradlew clean --info
-      - name: Clean Pack Dir
-        run: ./gradlew :app:cleanPackDir --info
-      - name: Package Distributions
-        run: ./gradlew ${{ matrix.task }} --info
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v2
+      - name: Build and Package
+        run: |
+          ./gradlew clean --info
+          ./gradlew :app:cleanPackDir --info
+          ./gradlew ${{ matrix.task }} --info
+
+      # 关键修改：不直接发 Release，而是将产物上传到 Actions 临时存储
+      - name: Upload Artifacts to Actions
+        uses: actions/upload-artifact@v4
         with:
-          files: |
+          name: artifacts-${{ matrix.os }} # 给每个平台的产物起个唯一的临时名字
+          path: |
             out/main/msi/*.msi
             out/main/zip/*.zip
             out/main/deb/*.deb
             out/main/dmg/*.dmg
-          fail_on_unmatched_files: false
+          if-no-files-found: error
+
+  # 阶段二：统一发布（仅在有 Tag 时运行）
+  release:
+    name: Create GitHub Release
+    needs: build # 必须等上面的 build 全部成功后才开始
+    if: startsWith(github.ref, 'refs/tags/') # 只有推标签时才执行发布
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./all-assets
+          merge-multiple: true # 将所有平台的产物合并到同一个文件夹
+
+      - name: Create Single Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./all-assets/* # 一次性上传所有文件
           generate_release_notes: true
+          # 此时不需要 append_body，因为是一次性写入，不会产生冲突
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
