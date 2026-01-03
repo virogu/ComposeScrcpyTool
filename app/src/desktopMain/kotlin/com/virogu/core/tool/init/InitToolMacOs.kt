@@ -23,28 +23,24 @@ import org.kodein.di.conf.global
 import org.kodein.di.instance
 import java.io.File
 
-class InitToolMacOs : InitToolDefault() {
+class InitToolMacOs : InitToolLinux() {
     private val cmd: BaseCommand by DI.global.instance<BaseCommand>()
+
     override suspend fun doInit() {
-        innerInit()
+        super.doInit() // 执行 Linux 的复制和 chmod
+        clearQuarantine() // 补充 Mac 特有的清理动作
     }
 
-    private suspend fun innerInit() = runCatching {
-        listOf(
-            File(workDir, "app/adb"),
-            File(workDir, "app/scrcpy"),
-            File(workDir, "app/scrcpy_bin"),
-            File(workDir, "app/hdc"),
-        ).forEach { f ->
-            chmodX(f.absolutePath)
-        }
-    }
-
-    private suspend fun chmodX(absolutePath: String) = runCatching {
-        cmd.exec("sh", "-c", "chmod +x '${absolutePath}'").onSuccess {
-            println("chmod +x ${absolutePath}, success: [$it]")
-        }.onFailure {
-            println("chmod +x ${absolutePath}, fail: [$it]")
+    private suspend fun clearQuarantine() {
+        val xattrList = appList + listOf(
+            File(workDir, "app/libusb_shared.dylib"),
+            File(workDir, "app/scrcpy-server"),
+        )
+        xattrList.forEach { file ->
+            // 清除隔离属性，防止系统弹窗拦截
+            cmd.exec("xattr", "-d", "com.apple.quarantine", file.absolutePath).onFailure {
+                // 忽略错误，因为如果文件本身没有隔离位，命令会报错
+            }
         }
     }
 }

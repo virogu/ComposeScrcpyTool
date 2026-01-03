@@ -132,7 +132,7 @@ compose.desktop {
                 println("resources: ${it.asFile.absolutePath}")
             })
             outputBaseDir.set(project.rootDir.resolve("out"))
-            targetFormats(TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Dmg)
             packageName = appBuildInfo.programName
             vendor = appBuildInfo.packageVendor
             copyright = appBuildInfo.copyright
@@ -160,6 +160,14 @@ compose.desktop {
                 appCategory = "utils"
                 //installationPath = "/data/opt/apps"
                 shortcut = true
+            }
+            macOS {
+                bundleID = "com.virogu.compose.scrcpy"
+                appCategory = "public.app-category.developer-tools"
+                iconFile.set(project.file("logo/logo.icns"))
+                packageVersion = appBuildInfo.macPackageVersion
+                packageBuildVersion = "${appBuildInfo.gitCommitCount}"
+                dockName = appBuildInfo.programName
             }
         }
         //fromFiles(project.fileTree("app/"))

@@ -54,7 +54,7 @@ object Common {
         val file = when (platform) {
             is Platform.Windows -> resourceDir
 
-            is Platform.Linux -> projectDataDir.also {
+            is Platform.Linux, is Platform.MacOs -> projectDataDir.also {
                 it.runCatching {
                     if (exists() && !isDirectory) {
                         deleteRecursively()

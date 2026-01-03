@@ -1,0 +1,59 @@
+name: Auto Package Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            task: ":app:packageMsi :app:packageZip"
+          - os: ubuntu-latest
+            task: ":app:packageDeb"
+          - os: macos-latest
+            task: ":app:packageDmg"
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 必须设为0，否则你的 gitCommitCount 逻辑会失效
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          cache: 'gradle'
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Package Distributions
+        run: ./gradlew clean --info
+      - name: Package Distributions
+        run: ./gradlew :app:cleanPackDir --info
+      - name: Package Distributions
+        run: ./gradlew ${{ matrix.task }} --info
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/main/msi/*.msi
+            out/main/zip/*.zip
+            out/main/deb/*.deb
+            out/main/dmg/*.dmg
+          fail_on_unmatched_files: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

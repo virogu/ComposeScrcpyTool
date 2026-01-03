@@ -67,6 +67,12 @@ val debPackageVersion: String by lazy {
     }
 }
 
+val macPackageVersion: String by lazy {
+    with(packageVersionTriple) {
+        "${first}.${second}.${third}"
+    }
+}
+
 val packageVendor: String by project
 val winUpgradeUuid: String by project
 val programName: String by project
@@ -81,6 +87,7 @@ val appBuildInfo = AppBuildInfo(
     packageVersionTriple = packageVersionTriple,
     debPackageVersion = debPackageVersion,
     msiPackageVersion = msiPackageVersion,
+    macPackageVersion = macPackageVersion,
     winUpgradeUuid = winUpgradeUuid,
     programName = programName,
     installProgramName = installProgramName,

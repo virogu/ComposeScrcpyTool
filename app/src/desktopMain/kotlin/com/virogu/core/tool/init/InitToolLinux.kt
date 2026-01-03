@@ -25,9 +25,18 @@ import java.io.File
 import java.math.BigInteger
 import java.security.MessageDigest
 
-class InitToolLinux : InitToolDefault() {
+open class InitToolLinux : InitToolDefault() {
 
     private val cmd: BaseCommand by DI.global.instance<BaseCommand>()
+
+    protected open val appList by lazy {
+        listOf(
+            File(workDir, "app/adb"),
+            File(workDir, "app/scrcpy"),
+            File(workDir, "app/scrcpy_bin"),
+            File(workDir, "app/hdc"),
+        )
+    }
 
     override suspend fun doInit() {
         innerInit()
@@ -35,12 +44,7 @@ class InitToolLinux : InitToolDefault() {
 
     private suspend fun innerInit() = runCatching {
         prepareResource(resourceDir, workDir, "")
-        listOf(
-            File(workDir, "app/adb"),
-            File(workDir, "app/scrcpy"),
-            File(workDir, "app/scrcpy_bin"),
-            File(workDir, "app/hdc"),
-        ).forEach { f ->
+        appList.forEach { f ->
             chmodX(f.absolutePath)
         }
     }

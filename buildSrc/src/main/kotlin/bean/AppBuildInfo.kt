@@ -25,6 +25,7 @@ data class AppBuildInfo(
     val packageVersionTriple:  Triple<Int, Int, Int>,
     val debPackageVersion: String,
     val msiPackageVersion: String,
+    val macPackageVersion: String,
     val winUpgradeUuid: String,
     val programName: String,
     val installProgramName: String,
