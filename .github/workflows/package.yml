@@ -35,23 +35,38 @@ jobs:
         with:
           java-version: '21'
           distribution: 'corretto'
-          cache: 'gradle'
+          # 注意：这里一定不要写 cache: 'gradle'，否则会和下方的手动缓存冲突
+
+      # 手动缓存配置：解决 Tag 无法读取 master 缓存的问题
+      - name: Cache Gradle Packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/modules-2
+            ~/.gradle/caches/files-2.1
+            ~/.gradle/wrapper/dists
+            ~/.gradle/compose-jb
+          # Key 包含 OS 信息，如果脚本没变，Key 就保持一致
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          # 关键：如果找不到当前 Tag 的精确缓存，就去匹配 master 分支留下的最新缓存
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Grant execute permission
         run: chmod +x gradlew
 
       - name: Build and Package
         run: |
-          ./gradlew clean --info
+          ./gradlew clean
           ./gradlew :app:cleanPackDir --info
           ./gradlew ${{ matrix.task }} --info
-          ./gradlew --stop 
+          ./gradlew --stop # 释放文件锁，防止 Windows 缓存保存失败
 
-      # 不直接发 Release，而是将产物上传到 Actions 临时存储
-      - name: Upload Artifacts to Actions
+      # 将编译好的文件传给 GitHub 临时存储
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts-${{ matrix.os }} # 给每个平台的产物起个唯一的临时名字
+          name: artifacts-${{ matrix.os }}
           path: |
             out/main/msi/*.msi
             out/main/zip/*.zip
@@ -62,8 +77,8 @@ jobs:
   # 阶段二：统一发布（仅在有 Tag 时运行）
   release:
     name: Create GitHub Release
-    needs: build # 必须等上面的 build 全部成功后才开始
-    if: startsWith(github.ref, 'refs/tags/') # 只有推标签时才执行发布
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -72,13 +87,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ./all-assets
-          merge-multiple: true # 将所有平台的产物合并到同一个文件夹
+          merge-multiple: true # 关键：把不同平台的产物合并到同一个根目录，方便发布
 
       - name: Create Single Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ./all-assets/* # 一次性上传所有文件
+          # 此时 all-assets 目录下已经是平铺的所有安装包
+          files: ./all-assets/*
           generate_release_notes: true
-          # 此时不需要 append_body，因为是一次性写入，不会产生冲突
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
