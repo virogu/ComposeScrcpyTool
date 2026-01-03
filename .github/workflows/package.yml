@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'corretto'
+          distribution: 'temurin'
           # 使用 setup-java 内置的 gradle 缓存支持
           # 它会自动处理 ~/.gradle/caches 和 ~/.gradle/wrapper
           cache: 'gradle'
