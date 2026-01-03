@@ -2,8 +2,8 @@ name: Auto Package Release
 
 on:
   push:
-    branches: [ develop ]
-    tags: [ 'v*' ]
+    branches: [ develop ]  # 监听 develop 变更，用于更新基础缓存
+    tags: [ 'v*' ]         # 监听版本标签，用于正式发布
 
 jobs:
   build:
@@ -19,8 +19,10 @@ jobs:
             task: ":app:packDeb"
           - os: macos-latest
             task: ":app:packDmg"
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -29,26 +31,30 @@ jobs:
         with:
           java-version: '21'
           distribution: 'corretto'
+          # 使用 setup-java 内置的 gradle 缓存支持
+          # 它会自动处理 ~/.gradle/caches 和 ~/.gradle/wrapper
+          cache: 'gradle'
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-            ${{ runner.os }}-gradle-
-
-      - name: Build
+      - name: Build and Sync Dependencies
+        # 使用 shell: bash 确保在 Windows/Linux/macOS 上语法统一
+        shell: bash
         run: |
           chmod +x gradlew
-          ./gradlew :app:cleanPackDir --info
-          ./gradlew ${{ matrix.task }} --info
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo ">>> 检测到 Tag [${{ github.ref_name }}]，开始完整打包流程..."
+            ./gradlew clean --info
+            ./gradlew :app:cleanPackDir --info
+            ./gradlew ${{ matrix.task }} --info
+          else
+            echo ">>> 检测到 develop 分支推送，仅同步依赖以更新缓存..."
+            # help 任务足以触发依赖下载和基础缓存构建
+            ./gradlew help --info
+          fi
           ./gradlew --stop
 
       - name: Upload Artifacts
+        # 仅在推送 Tag 时上传文件，避免 develop 分支产生多余的 Artifact
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
           name: artifacts-${{ matrix.os }}
@@ -62,6 +68,7 @@ jobs:
   release:
     name: Create GitHub Release
     needs: build
+    # 整个 release 任务仅在 Tag 推送时运行
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
