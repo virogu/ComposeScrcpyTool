@@ -10,6 +10,7 @@ jobs:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false # 即使一个失败，其他平台也会继续
       matrix:
         include:
           - os: windows-latest
