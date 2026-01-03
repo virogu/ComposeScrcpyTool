@@ -2,14 +2,10 @@ name: Auto Package Release
 
 on:
   push:
-    branches:
-      - master
-      - main
-    tags:
-      - 'v*'
+    branches: [ master, main ]
+    tags: [ 'v*' ]
 
 jobs:
-  # 阶段一：并行编译打包
   build:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -23,10 +19,8 @@ jobs:
             task: ":app:packDeb"
           - os: macos-latest
             task: ":app:packDmg"
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -35,46 +29,33 @@ jobs:
         with:
           java-version: '21'
           distribution: 'corretto'
-          # 注意：这里一定不要写 cache: 'gradle'，否则会和下方的手动缓存冲突
 
-      # 手动缓存配置：解决 Tag 无法读取 master 缓存的问题
-      - name: Cache Gradle Packages
+      - name: Cache Gradle
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.gradle/caches/modules-2
-            ~/.gradle/caches/files-2.1
-            ~/.gradle/wrapper/dists
-            ~/.gradle/compose-jb
-          # Key 包含 OS 信息，如果脚本没变，Key 就保持一致
+          # 使用相对路径，确保在所有系统下物理位置一致
+          path: .gradle
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          # 关键：如果找不到当前 Tag 的精确缓存，就去匹配 master 分支留下的最新缓存
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          restore-keys: ${{ runner.os }}-gradle-
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
-
-      - name: Build and Package
+      - name: Build
         run: |
-          ./gradlew clean
-          ./gradlew :app:cleanPackDir --info
-          ./gradlew ${{ matrix.task }} --info
-          ./gradlew --stop # 释放文件锁，防止 Windows 缓存保存失败
+          chmod +x gradlew
+          ./gradlew -g .gradle :app:cleanPackDir --info
+          ./gradlew -g .gradle ${{ matrix.task }} --info
+          ./gradlew -g .gradle --stop
 
-      # 将编译好的文件传给 GitHub 临时存储
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: artifacts-${{ matrix.os }}
           path: |
-            out/main/msi/*.msi
-            out/main/zip/*.zip
-            out/main/deb/*.deb
-            out/main/dmg/*.dmg
+            out/main/**/*.msi
+            out/main/**/*.zip
+            out/main/**/*.deb
+            out/main/**/*.dmg
           if-no-files-found: error
 
-  # 阶段二：统一发布（仅在有 Tag 时运行）
   release:
     name: Create GitHub Release
     needs: build
@@ -87,13 +68,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ./all-assets
-          merge-multiple: true # 关键：把不同平台的产物合并到同一个根目录，方便发布
+          merge-multiple: true
 
-      - name: Create Single Release
+      - name: Finalize Release
         uses: softprops/action-gh-release@v2
         with:
-          # 此时 all-assets 目录下已经是平铺的所有安装包
-          files: ./all-assets/*
+          files: ./all-assets/**/*
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
