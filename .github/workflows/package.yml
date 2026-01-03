@@ -2,7 +2,7 @@ name: Auto Package Release
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [ develop ]
     tags: [ 'v*' ]
 
 jobs:
@@ -30,20 +30,23 @@ jobs:
           java-version: '21'
           distribution: 'corretto'
 
-      - name: Cache Gradle
+      - name: Cache Gradle packages
         uses: actions/cache@v4
         with:
-          # 使用相对路径，确保在所有系统下物理位置一致
-          path: .gradle
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-gradle-
+          restore-keys: |
+            ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+            ${{ runner.os }}-gradle-
 
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew -g .gradle :app:cleanPackDir --info
-          ./gradlew -g .gradle ${{ matrix.task }} --info
-          ./gradlew -g .gradle --stop
+          ./gradlew :app:cleanPackDir --info
+          ./gradlew ${{ matrix.task }} --info
+          ./gradlew --stop
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
