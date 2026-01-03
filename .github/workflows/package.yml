@@ -45,8 +45,9 @@ jobs:
           ./gradlew clean --info
           ./gradlew :app:cleanPackDir --info
           ./gradlew ${{ matrix.task }} --info
+          ./gradlew --stop 
 
-      # 关键修改：不直接发 Release，而是将产物上传到 Actions 临时存储
+      # 不直接发 Release，而是将产物上传到 Actions 临时存储
       - name: Upload Artifacts to Actions
         uses: actions/upload-artifact@v4
         with:
