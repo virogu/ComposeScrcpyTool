@@ -16,37 +16,20 @@
  */
 
 import bean.AppBuildInfo
-import java.io.ByteArrayOutputStream
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
-val gitCommitCount: Int = with(ByteArrayOutputStream()) {
-    use { os ->
-        // git rev-list --all --count
-        // git rev-list --count HEAD
-        exec {
-            executable = "git"
-            args = listOf("rev-list", "--count", "HEAD")
-            standardOutput = os
-        }
-        val revision = os.toString().trim()
-        return@with 10000 + revision.toInt()
-    }
-}
-val buildFormatDate: String = with(SimpleDateFormat("yyMMdd")) {
-    format(Date())
+val gitCommitCount: Int = providers.exec {
+    commandLine("git", "rev-list", "--count", "HEAD")
+}.standardOutput.asText.get().trim().let {
+    10000 + it.toInt()
 }
 
-val gitCommitShortId: String = with(ByteArrayOutputStream()) {
-    use { os ->
-        exec {
-            executable = "git"
-            args = listOf("rev-parse", "--short", "HEAD")
-            standardOutput = os
-        }
-        return@with os.toString().trim()
-    }
-}
+val buildFormatDate: String = DateTimeFormatter.ofPattern("yyMMdd").format(LocalDate.now())
+
+val gitCommitShortId: String = providers.exec {
+    commandLine("git", "rev-parse", "--short", "HEAD")
+}.standardOutput.asText.get().trim()
 
 val packageVersionTriple: Triple<Int, Int, Int> by lazy {
     val MAJOR = (gitCommitCount / 100 / 100) + 1

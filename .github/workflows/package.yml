@@ -13,11 +13,11 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            task: ":app:packageMsi :app:packageZip"
+            task: ":app:packMsi :app:packZip"
           - os: ubuntu-latest
-            task: ":app:packageDeb"
+            task: ":app:packDeb"
           - os: macos-latest
-            task: ":app:packageDmg"
+            task: ":app:packDmg"
 
     permissions:
       contents: write
@@ -28,23 +28,22 @@ jobs:
         with:
           fetch-depth: 0 # 必须设为0，否则你的 gitCommitCount 逻辑会失效
 
-      - name: Set up JDK 17
+      - name: Setup JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'zulu'
+          java-version: '21'
+          distribution: 'amazon'
           cache: 'gradle'
 
       - name: Grant execute permission
         run: chmod +x gradlew
 
-      - name: Package Distributions
+      - name: Clean Project
         run: ./gradlew clean --info
-      - name: Package Distributions
+      - name: Clean Pack Dir
         run: ./gradlew :app:cleanPackDir --info
       - name: Package Distributions
         run: ./gradlew ${{ matrix.task }} --info
-
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
