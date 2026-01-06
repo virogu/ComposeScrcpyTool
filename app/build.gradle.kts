@@ -146,7 +146,7 @@ compose.desktop {
             copyright = appBuildInfo.copyright
             windows {
                 packageVersion = appBuildInfo.msiPackageVersion
-                console = true
+                //console = true
                 menu = true
                 dirChooser = true
                 shortcut = true
