@@ -59,10 +59,10 @@ jobs:
         with:
           name: artifacts-${{ matrix.os }}
           path: |
-            out/main/**/*.msi
-            out/main/**/*.zip
-            out/main/**/*.deb
-            out/main/**/*.dmg
+            out/main-release/**/*.msi
+            out/main-release/**/*.zip
+            out/main-release/**/*.deb
+            out/main-release/**/*.dmg
           if-no-files-found: error
 
   release:

@@ -108,7 +108,7 @@ class SSHToolImpl : SSHTool {
 
     }
 
-    internal inner class ConsoleOutputStream : ByteArrayOutputStream() {
+    internal class ConsoleOutputStream : ByteArrayOutputStream() {
         override fun write(b: Int) {
             super.write(b)
             logger.debug { b.toChar().toString() }

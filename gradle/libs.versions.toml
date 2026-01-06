@@ -17,7 +17,7 @@ slf4j = "2.0.17"
 logback = "1.5.18"
 #https://repo1.maven.org/maven2/io/github/oshai/
 kotlin-logging = "7.0.7"
-kodein = "7.26.0"
+kodein = "7.30.0"
 koin-bom = "4.1.0-Beta8"
 #https://klibs.io/project/Kotlin/kotlinx.serialization
 kotlin-serializable = "1.9.0"

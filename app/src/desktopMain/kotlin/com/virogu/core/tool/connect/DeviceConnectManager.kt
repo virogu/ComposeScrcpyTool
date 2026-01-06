@@ -84,8 +84,6 @@ class DeviceConnectManager(
                 if (r) {
                     logger.info { "重新连接 [$ip:$port]" }
                     doConnect(ip, port)
-                } else {
-                    logger.warn { "open device [$ip] port [$port] fail" }
                 }
             }
             innerRefreshDevices(true)

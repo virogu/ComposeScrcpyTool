@@ -25,8 +25,8 @@ plugins {
 
 val appBuildInfo: AppBuildInfo by project
 
-private val outputDir get() = project.rootDir.resolve("out/main")
-private val targetPlatform = listOf("msi", "deb", ".dmg")
+private val outputDir get() = project.rootDir.resolve("out/main-release")
+private val targetPlatform = listOf("msi", "deb", "dmg")
 
 private fun renameDistribution() {
     targetPlatform.forEach {
@@ -45,7 +45,7 @@ private fun renameDistribution() {
 
 val pack by tasks.registering {
     group = "package"
-    dependsOn("packageDistributionForCurrentOS", packZip)
+    dependsOn("packageReleaseDistributionForCurrentOS", packZip)
     doLast {
         renameDistribution()
     }
@@ -61,7 +61,7 @@ val cleanPackDir by tasks.registering {
 
 val zipDistributable by tasks.registering(Zip::class) {
     group = "package"
-    mustRunAfter("createDistributable")
+    mustRunAfter("createReleaseDistributable")
     val path = outputDir.resolve("app/${appBuildInfo.installProgramName}")
     from(path.path)
     with(appBuildInfo) {
@@ -79,9 +79,9 @@ val zipDistributable by tasks.registering(Zip::class) {
 
 targetPlatform.forEach { packName ->
     val pack = packName.uppercaseFirstChar()
-    tasks.create("pack${pack}") {
+    tasks.register("pack${pack}") {
         group = "package"
-        dependsOn("package$pack")
+        dependsOn("packageRelease$pack")
         doLast {
             renameDistribution()
         }
@@ -90,5 +90,5 @@ targetPlatform.forEach { packName ->
 
 val packZip by tasks.registering {
     group = "package"
-    dependsOn("createDistributable", zipDistributable)
+    dependsOn("createReleaseDistributable", zipDistributable)
 }

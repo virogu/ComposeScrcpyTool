@@ -79,7 +79,8 @@ abstract class DeviceConnectBase(
                 throw IllegalStateException("open device [$ip] port [$port] fail")
             }
         }.onFailure {
-            logger.warn { it.localizedMessage }
+            logger.warn { "open device [$ip] port [$port] fail: ${it.localizedMessage}" }
+            logger.debug(it) { it.localizedMessage }
         }.isSuccess
     }
 

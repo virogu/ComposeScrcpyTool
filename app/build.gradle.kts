@@ -69,16 +69,12 @@ kotlin {
             implementation(libs.datastore.preferences.core)
 
             //https://google.github.io/accompanist/
-            //val accompanistVersion = "0.30.1"
-            //implementation("com.google.accompanist:accompanist-animations:$accompanistVersion")
         }
         commonTest.dependencies {
             implementation(compose.desktop.uiTestJUnit4)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlin.test)
             implementation(libs.kotlin.test.junit)
-            implementation(files("libs\\hdc\\device-file-explorer-4.0.0.600.jar"))
-            implementation(files("libs\\hdc\\ohos-hdclib-4.0.0.600.jar"))
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -126,8 +122,20 @@ compose.desktop {
         )
         //args += listOf("-customArgument")
         nativeDistributions {
-            modules("java.naming", "jdk.unsupported", "java.rmi", "java.management")
-            //includeAllModules = true
+            buildTypes.release.proguard {
+                configurationFiles.from(rootProject.rootDir.resolve("proguard-rules.pro"))
+                obfuscate.set(false)
+                optimize.set(true)
+            }
+            //./gradlew :app:suggestModules
+            modules(
+                "java.instrument",
+                "java.management",
+                "java.naming",
+                "java.rmi",
+                "java.security.jgss",
+                "jdk.unsupported"
+            )
             appResourcesRootDir.set(project.layout.projectDirectory.dir("resources").also {
                 println("resources: ${it.asFile.absolutePath}")
             })
@@ -138,7 +146,7 @@ compose.desktop {
             copyright = appBuildInfo.copyright
             windows {
                 packageVersion = appBuildInfo.msiPackageVersion
-                //console = true
+                console = true
                 menu = true
                 dirChooser = true
                 shortcut = true
@@ -172,4 +180,8 @@ compose.desktop {
         }
         //fromFiles(project.fileTree("app/"))
     }
+}
+
+tasks.withType<org.gradle.jvm.tasks.Jar> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
