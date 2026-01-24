@@ -17,6 +17,8 @@
 
 package androidx.compose.ui.platform
 
+import androidx.compose.ui.ExperimentalComposeUiApi
 import java.awt.datatransfer.StringSelection
 
+@OptIn(ExperimentalComposeUiApi::class)
 actual fun clipEntryOf(text: String): ClipEntry = ClipEntry(StringSelection(text))
