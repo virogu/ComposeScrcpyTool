@@ -43,3 +43,4 @@ bin/
 .idea
 device_ssh_config.json
 .kotlin/
+/tmp/

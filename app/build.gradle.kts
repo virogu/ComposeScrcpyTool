@@ -28,21 +28,21 @@ plugins {
     //alias(libs.plugins.ksp)
 }
 
-val appBuildInfo: AppBuildInfo by project
+val appBuildInfo = extra["appBuildInfo"] as AppBuildInfo
 
 kotlin {
     jvm("desktop")
     sourceSets {
-        val desktopMain by getting
+        val desktopMain = getByName("desktopMain")
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material)
-            //implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.materialIconsExtended)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.foundation)
+            implementation(libs.compose.material)
+            //implementation(libs.compose.material3)
+            implementation(libs.compose.ui)
+            implementation(libs.compose.material.icons.extended)
+            implementation(libs.compose.components.resources)
+            implementation(libs.compose.uiToolingPreview)
 
             implementation(libs.lifecycle.runtime.compose)
             implementation(libs.lifecycle.viewmodel.compose)
@@ -82,10 +82,6 @@ kotlin {
         }
     }
 }
-
-//dependencies {
-//    add("kspCommonMainMetadata", project(":app"))
-//}
 
 buildConfig {
     className("BuildConfig")   // forces the class name. Defaults to 'BuildConfig'
@@ -137,7 +133,7 @@ compose.desktop {
                 "jdk.unsupported"
             )
             appResourcesRootDir.set(project.layout.projectDirectory.dir("resources").also {
-                println("resources: ${it.asFile.absolutePath}")
+                logger.lifecycle("resources: ${it.asFile.absolutePath}")
             })
             outputBaseDir.set(project.rootDir.resolve("out"))
             targetFormats(TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Dmg)

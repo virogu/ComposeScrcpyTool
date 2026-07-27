@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2022-2026 Virogu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,8 @@
  */
 
 import bean.AppBuildInfo
+import org.gradle.kotlin.dsl.extra
+import org.gradle.kotlin.dsl.provideDelegate
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -56,11 +58,11 @@ val macPackageVersion: String by lazy {
     }
 }
 
-val packageVendor: String by project
-val winUpgradeUuid: String by project
-val programName: String by project
-val installProgramName: String by project
-val myCopyright: String by project
+val packageVendor = project.property("packageVendor") as String
+val winUpgradeUuid = project.property("winUpgradeUuid") as String
+val programName = project.property("programName") as String
+val installProgramName = project.property("installProgramName") as String
+val myCopyright = project.property("myCopyright") as String
 
 val appBuildInfo = AppBuildInfo(
     packageVersion = msiPackageVersion,
@@ -78,4 +80,4 @@ val appBuildInfo = AppBuildInfo(
     copyright = myCopyright,
 )
 
-project.extra["appBuildInfo"] = appBuildInfo
+extra["appBuildInfo"] = appBuildInfo

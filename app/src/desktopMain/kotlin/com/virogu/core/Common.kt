@@ -29,7 +29,9 @@ object Common {
     }
 
     val isDebug: Boolean by lazy {
-        File(projectHomeDir, "debug").exists()
+        File(projectHomeDir, "debug").exists().also {
+            logger.debug { "isDebug: $it" }
+        }
     }
 
     val osVersion: String by lazy {
@@ -45,9 +47,9 @@ object Common {
     }
 
     val resourceDir: File by lazy {
-        File(resourcePath).also {
-            logger.info { "ResourceDir: ${it.absolutePath}" }
-        }.absoluteFile
+        File(resourcePath).absoluteFile.also {
+            logger.info { "ResourceDir: ${it.path}" }
+        }
     }
 
     val workDir: File by lazy {
@@ -71,11 +73,15 @@ object Common {
     }
 
     val projectDataDir: File by lazy {
-        projectHomeDir.resolve("data")
+        projectHomeDir.resolve("data").also {
+            logger.debug { "projectDataDir: ${it.path}" }
+        }
     }
 
     val projectHomeDir: File by lazy {
-        userHomeDir.resolve(PROJECT_NAME)
+        userHomeDir.resolve(PROJECT_NAME).also {
+            logger.debug { "projectHomeDir: ${it.path}" }
+        }
     }
 
     val projectConfigDir: File by lazy {
@@ -86,6 +92,7 @@ object Common {
             if (!it.exists()) {
                 it.mkdirs()
             }
+            logger.debug { "projectConfigDir: ${it.path}" }
         }
     }
 
@@ -98,6 +105,7 @@ object Common {
             }
             it.mkdirs()
             logger.debug { "mkdir tmp dir: ${it.path}" }
+            logger.debug { "projectTmpDir: ${it.path}" }
         }
     }
 

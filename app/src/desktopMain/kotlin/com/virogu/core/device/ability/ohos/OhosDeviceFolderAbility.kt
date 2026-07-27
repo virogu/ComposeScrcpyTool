@@ -69,7 +69,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     override suspend fun refreshPath(
         parent: RemoteFile, path: String
     ): Result<List<RemoteFile>> = executeShellWithFallback(
-        "ls -h -g -L '${path.ifEmpty { "/" }}'", consoleLog = DEBUG
+        "ls -h -g -l -L -A '${path.ifEmpty { "/" }}'", consoleLog = DEBUG
     ).map {
         val lines = it.trim().split("\n")
         val files: List<RemoteFile> = if (lines.isEmpty()) {
