@@ -20,10 +20,10 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     id("config.package.tasks")
-    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.compose)
-    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.gmazzo.buildconfig)
     //alias(libs.plugins.ksp)
 }
