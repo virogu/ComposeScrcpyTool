@@ -54,22 +54,16 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         }
     }
 
-    private suspend fun executeShellWithFallback(commandStr: String, consoleLog: Boolean = false): Result<String> {
-        // 使用单行命令 `su 0 sh -c "cmd" 2>/dev/null || cmd`，确保在一次网络通信中完成提权尝试。
-        // 如果 su 成功执行并返回 0，短路运算结束，非常快。
-        // 如果 su 不存在或由于无权限等原因导致失败，标准错误被抑制，马上无缝执行正常的 cmd，并输出正常的报错信息。
-        val escapedCmd = commandStr.replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("\$", "\\\$")
-            .replace("`", "\\`")
-        val combinedCmd = "su 0 sh -c \"$escapedCmd\" 2>/dev/null || $commandStr"
+    private suspend fun executeShellWithFallback(commandStr: String, consoleLog: Boolean = true): Result<String> {
+        val escapedCmd = commandStr.replace("'", "'\\''")
+        val combinedCmd = "su 0 -c '$escapedCmd' 2>/dev/null || su -c '$escapedCmd' 2>/dev/null || $commandStr"
         return cmd.hdc(*target, "shell", combinedCmd, consoleLog = consoleLog)
     }
 
     override suspend fun refreshPath(
         parent: RemoteFile, path: String
     ): Result<List<RemoteFile>> = executeShellWithFallback(
-        "ls -h -g -l -L -A '${path.ifEmpty { "/" }}'", consoleLog = DEBUG
+        "ls -l -A -h '${path.ifEmpty { "/" }}'", consoleLog = DEBUG
     ).map {
         val lines = it.trim().split("\n")
         val files: List<RemoteFile> = if (lines.isEmpty()) {
