@@ -57,7 +57,7 @@ private val size by lazy {
 //    } catch (e: Throwable) {
 //        DpSize(700.dp, 620.dp)
 //    }
-    DpSize(700.dp, 820.dp)
+    DpSize(700.dp, (150 + 80 * 9).dp)
 }
 
 private var startTime: Long = 0

@@ -37,7 +37,6 @@ import theme.MainTheme
  **/
 
 @Composable
-@Preview
 fun App(
     window: ComposeWindow,
     applicationScope: ApplicationScope,

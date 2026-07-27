@@ -21,6 +21,8 @@ package com.virogu.ui.pager
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -29,7 +31,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.virogu.core.bean.ScrcpyConfig
@@ -41,6 +45,7 @@ import theme.Icon
 import theme.materialColors
 import theme.textFieldHeight
 import views.OutlinedText
+import views.OutlinedTextField
 import javax.swing.JFileChooser
 
 @Composable
@@ -105,27 +110,19 @@ private fun ScrcpyConfigView(
     Row(
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        val modifier = Modifier.textFieldHeight().align(Alignment.CenterVertically)
-        SelectRecordPathView(modifier.weight(2f), commonConfig.recordPath) {
-            currentUpdateCommonConfig(commonConfig.copy(recordPath = it))
-        }
-    }
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
         val modifier = Modifier.height(40.dp).weight(1f).align(Alignment.CenterVertically)
         val labelModifier = Modifier.width(80.dp).align(Alignment.CenterVertically)
         DropMenuConfigView(
             modifier,
             label = {
-                Text("录像格式", labelModifier)
+                Text("最大尺寸", labelModifier)
             },
-            currentValue = commonConfig.recordFormat,
-            menuList = ScrcpyConfig.RecordFormat.entries,
+            currentValue = specialConfig.maxSize,
+            menuList = ScrcpyConfig.MaxSize.entries,
             valueFormat = { it.value },
+            enabled = specialConfigEnable,
         ) {
-            currentUpdateCommonConfig(commonConfig.copy(recordFormat = it))
+            currentUpdateSpecialConfig(specialConfig.copy(maxSize = it))
         }
         DropMenuConfigView(
             modifier,
@@ -152,25 +149,11 @@ private fun ScrcpyConfigView(
             currentUpdateSpecialConfig(specialConfig.copy(bitRate = it))
         }
     }
-
     Row(
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         val modifier = Modifier.height(40.dp).weight(1f).align(Alignment.CenterVertically)
         val labelModifier = Modifier.width(80.dp).align(Alignment.CenterVertically)
-        DropMenuConfigView(
-            modifier,
-            label = {
-                Text("最大尺寸", labelModifier)
-            },
-            currentValue = specialConfig.maxSize,
-            menuList = ScrcpyConfig.MaxSize.entries,
-            valueFormat = { it.value },
-            enabled = specialConfigEnable,
-        ) {
-            currentUpdateSpecialConfig(specialConfig.copy(maxSize = it))
-        }
-
         DropMenuConfigView(
             modifier,
             label = {
@@ -195,8 +178,75 @@ private fun ScrcpyConfigView(
         ) {
             currentUpdateSpecialConfig(specialConfig.copy(windowRotation = it))
         }
+        DropMenuConfigView(
+            modifier,
+            label = {
+                Text("显示屏幕", labelModifier)
+            },
+            currentValue = specialConfig.displayId,
+            menuList = ScrcpyConfig.DisplayId.entries,
+            valueFormat = { it.desc },
+            enabled = specialConfigEnable,
+        ) {
+            currentUpdateSpecialConfig(specialConfig.copy(displayId = it))
+        }
     }
-
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        val labelModifier = Modifier.width(80.dp).align(Alignment.CenterVertically)
+        Text("启动参数", labelModifier)
+        OutlinedTextField(
+            value = specialConfig.customArgs,
+            modifier = Modifier.textFieldHeight().weight(1f),
+            singleLine = true,
+            onValueChange = {
+                currentUpdateSpecialConfig(specialConfig.copy(customArgs = it))
+            },
+            placeholder = {
+                Text(
+                    "例如: --max-fps=30 --force-adb-forward",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            enabled = specialConfigEnable,
+        )
+    }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        val modifier = Modifier.height(40.dp)
+        val labelModifier = Modifier.width(80.dp).align(Alignment.CenterVertically)
+        Row(
+            modifier = modifier.weight(2f).align(Alignment.CenterVertically),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("录像路径", labelModifier)
+            FileSelectView(
+                text = commonConfig.recordPath,
+                modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+                fileChooserType = JFileChooser.DIRECTORIES_ONLY,
+                defaultPath = commonConfig.recordPath,
+                multiSelectionEnabled = false
+            ) {
+                it.firstOrNull()?.path?.also { path ->
+                    currentUpdateCommonConfig(commonConfig.copy(recordPath = path))
+                }
+            }
+        }
+        DropMenuConfigView(
+            modifier.weight(1f).align(Alignment.CenterVertically),
+            label = {
+                Text("录像格式", labelModifier.padding(start = 8.dp))
+            },
+            currentValue = commonConfig.recordFormat,
+            menuList = ScrcpyConfig.RecordFormat.entries,
+            valueFormat = { it.value },
+        ) {
+            currentUpdateCommonConfig(commonConfig.copy(recordFormat = it))
+        }
+    }
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -229,7 +279,6 @@ private fun ScrcpyConfigView(
         ) {
             currentUpdateCommonConfig(commonConfig.copy(stayAwake = it))
         }
-
     }
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -257,34 +306,6 @@ private fun ScrcpyConfigView(
             currentUpdateCommonConfig(commonConfig.copy(noWindowBorder = it))
         }
         Spacer(modifier)
-    }
-
-}
-
-@Composable
-private fun SelectRecordPathView(
-    modifier: Modifier = Modifier,
-    recordPath: String,
-    onFileSelected: (String) -> Unit
-) {
-    val currentOnFileSelected by rememberUpdatedState(onFileSelected)
-
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text("录像路径", Modifier.width(80.dp).align(Alignment.CenterVertically))
-        FileSelectView(
-            text = recordPath,
-            modifier = modifier,
-            fileChooserType = JFileChooser.DIRECTORIES_ONLY,
-            defaultPath = recordPath,
-            multiSelectionEnabled = false
-        ) {
-            it.firstOrNull()?.path?.also { path ->
-                currentOnFileSelected(path)
-            }
-        }
     }
 }
 

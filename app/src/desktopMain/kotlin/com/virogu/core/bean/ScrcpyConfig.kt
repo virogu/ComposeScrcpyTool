@@ -79,15 +79,20 @@ data class ScrcpyConfig(
         //--capture-orientation
         val videoRotation: VideoRotation = VideoRotation.Default,
         //--orientation=0
-        val windowRotation: WindowRotation = WindowRotation.R0
+        val windowRotation: WindowRotation = WindowRotation.R0,
+        //--display-id=0
+        val displayId: DisplayId = DisplayId.Default,
+        //自定义参数，例如 --max-fps=30 --force-adb-forward
+        val customArgs: String = "",
     ) {
         fun scrcpyArgs() = listOfNotNull(
             "--max-size=${maxSize.value}".takeIf { maxSize != MaxSize.Default },
             "--video-bit-rate=${bitRate.value}",
             "--video-codec=${videoCodec.value}",
             "--capture-orientation=${videoRotation.value}".takeIf { videoRotation != VideoRotation.Default },
-            "--orientation=${windowRotation.value}"
-        )
+            "--orientation=${windowRotation.value}",
+            "--display-id=${displayId.value}".takeIf { displayId != DisplayId.Default },
+        ) + customArgs.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
     }
 
     enum class MaxSize(val value: String) {
@@ -131,6 +136,13 @@ data class ScrcpyConfig(
         R1("90", "90°"),
         R2("180", "180°"),
         R3("270", "270°"),
+    }
+
+    enum class DisplayId(val value: String, val desc: String) {
+        Default("0", "默认"),
+        D1("1", "屏幕1"),
+        D2("2", "屏幕2"),
+        D3("3", "屏幕3"),
     }
 
 }
