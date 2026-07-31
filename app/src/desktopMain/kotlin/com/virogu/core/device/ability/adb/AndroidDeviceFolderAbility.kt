@@ -27,7 +27,6 @@ import org.kodein.di.DI
 import org.kodein.di.conf.global
 import org.kodein.di.instance
 import java.io.File
-import java.util.regex.Pattern
 
 /**
  * @author Virogu
@@ -167,91 +166,68 @@ class AndroidDeviceFolderAbility(device: DeviceEntityAndroid) : DeviceAbilityFol
         }
     }
 
-    override suspend fun refreshPath(parent: RemoteFile, path: String): Result<List<RemoteFile>> =
-        execute("ls -l -A -h '${path.ifEmpty { "/" }}'").map {
+    override suspend fun refreshPath(parent: RemoteFile, path: String): Result<List<RemoteFile>> {
+        val targetPath = if (path.isEmpty() || path == "/") "/" else "${path.removeSuffix("/")}/"
+        val cmdStr =
+            "ls -l -A -h '$targetPath' 2>/dev/null || ls -l -a -h '$targetPath' 2>/dev/null || ls -l -a '$targetPath'"
+        return execute(cmdStr).map {
             val lines = it.trim().split("\n")
+            val firstLine = lines.firstOrNull().orEmpty()
+            val isErrorLine = lines.size == 1 && (
+                    firstLine.contains("Not a directory", ignoreCase = true) ||
+                            firstLine.contains("No such file", ignoreCase = true) ||
+                            firstLine.contains("Permission denied", ignoreCase = true)
+                    )
             val files: List<RemoteFile> = if (lines.isEmpty()) {
                 emptyList()
-            } else if (lines.size == 1 && Pattern.compile(".*\\$path.*Permission denied.*").matcher(lines.first())
-                    .find()
-            ) {
-                //println("^(.*)?${parent}(.*)?Permission denied(.*)?$ find")
-                throw IllegalStateException(lines.first())
+            } else if (isErrorLine) {
+                throw IllegalStateException(firstLine)
             } else {
                 lines.filterNot { l ->
-                    Pattern.compile(".*\\$path.*Permission denied.*").matcher(l).find()
+                    l.contains("Permission denied", ignoreCase = true) ||
+                            l.contains("Not a directory", ignoreCase = true) ||
+                            l.contains("No such file", ignoreCase = true)
                 }.parseToFiles(parent)
             }
-            files
+            resolveSymlinkTypesBatch(targetPath, files)
+        }
+    }
+
+    private suspend fun resolveSymlinkTypesBatch(basePath: String, files: List<RemoteFile>): List<RemoteFile> {
+        val symlinkFiles = files.filter { it.permissions.startsWith("l", true) }
+        if (symlinkFiles.isEmpty()) return files
+
+        // 1. 同级相对路径（如 acpi -> toybox）不含 '/'，在内核层不可能为目录，瞬间 0ms 归类为 LINK_FILE
+        val targetsToTest = symlinkFiles.filter { file ->
+            val target = file.linkTarget
+            target.contains("/")
         }
 
-    //> adb shell ls -h -g -lL /sdcard
-    //total 91K
-    //drwxrwx---  4 everybody 3.3K 2025-09-08 21:33 1Backup
-    //drwxrwx---  5 everybody 3.3K 2025-06-29 13:33 Android
-    //drwxrwx--- 18 everybody 3.3K 2025-09-24 10:35 DCIM
-    //drwxrwx---  4 everybody 3.3K 2025-09-08 21:33 DataBackup
-    //drwxrwx---  6 everybody 3.3K 2025-11-10 20:58 Download
-    //drwxrwx---  9 everybody 3.3K 2025-10-11 14:04 MIUI
-    //drwxrwx---  5 everybody 3.3K 2025-11-14 00:12 Movies
-    //drwxrwx---  4 everybody  56K 2025-10-07 19:10 Music
-    //drwxrwx--- 18 everybody 8.0K 2025-11-27 18:33 Pictures
-    //drwxrwx---  3 everybody 3.3K 2025-11-10 21:02 com.milink.service
-    //drwxrwx---  3 everybody 3.3K 2025-10-25 03:01 com.miui.voiceassist
-    private fun List<String>.parseToFilesOld(parent: RemoteFile): List<RemoteFile> {
-        if (this.isEmpty()) {
-            return emptyList()
-        }
-        try {
-            val files = this.mapNotNull { line ->
-                val matcher = Pattern.compile(
-                    "^(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+\\s+)?(.*)$"
-                ).matcher(line.trim())
-                if (!matcher.find()) {
-                    //println("Failed to parse: $line")
-                    return@mapNotNull null
-                }
-                val permissions = matcher.group(1).orEmpty()
-                if (permissions.startsWith("l")) {
-                    return@mapNotNull null
-                }
-                val type = when {
-                    permissions.startsWith("-") -> FileType.FILE
-                    permissions.startsWith("d", true) -> FileType.DIR
-                    permissions.startsWith("l", true) -> FileType.LINK
-                    else -> FileType.OTHER
-                }
-                val size = matcher.group(4).orEmpty().ifEmpty {
-                    "0"
-                }.also {
-                    if (!it.first().isDigit()) {
-                        return@mapNotNull null
+        val dirPaths = mutableSetOf<String>()
+        if (targetsToTest.isNotEmpty()) {
+            val batchCmd = targetsToTest.joinToString("; ") { file ->
+                "test -d '${file.path}' && echo 'DIR:${file.path}'"
+            }
+            execute(batchCmd).onSuccess { out ->
+                out.trim().split("\n").forEach { line ->
+                    val trimLine = line.trim()
+                    if (trimLine.startsWith("DIR:")) {
+                        dirPaths.add(trimLine.substringAfter("DIR:"))
                     }
-                }.plus("B")
-                val isLowerFormat = matcher.group(5).length < 8 //10  1970-01-01
-                val modificationTime = if (isLowerFormat) {
-                    "${matcher.group(5)} ${matcher.group(6)} ${matcher.group(7)}"
-                } else {
-                    "${matcher.group(5)} ${matcher.group(6)}"
                 }
-                val name = if (isLowerFormat) {
-                    matcher.group(8).orEmpty()
-                } else {
-                    "${matcher.group(7).orEmpty()}${matcher.group(8).orEmpty()}"
-                }
-                RemoteFile(
-                    name, parent, "${parent.path}/${name}",
-                    type, size, modificationTime, permissions,
-                    level = parent.level + 1
-                )
             }
-            return files.sortedBy {
-                it.type.sortIndex
-            }
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            return emptyList()
         }
+
+        return files.map { file ->
+            if (file.permissions.startsWith("l", true)) {
+                val isDir = dirPaths.contains(file.path)
+                val resolvedType = if (isDir) FileType.LINK_DIR else FileType.LINK_FILE
+                file.realType.value = resolvedType
+                file.copy(type = resolvedType)
+            } else {
+                file
+            }
+        }.sortedWith(compareBy({ it.realType.value.sortIndex }, { it.name.lowercase() }))
     }
 
     private fun List<String>.parseToFiles(parent: RemoteFile): List<RemoteFile> {
@@ -267,15 +243,15 @@ class AndroidDeviceFolderAbility(device: DeviceEntityAndroid) : DeviceAbilityFol
                 if (tokens.size < 6) return@mapNotNull null
 
                 val permissions = tokens[0]
-                if (permissions.startsWith("l", ignoreCase = true)) {
-                    return@mapNotNull null
-                }
 
                 var dateStartIndex = -1
+                val validMonths =
+                    setOf("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
                 for (i in 3 until tokens.size - 1) {
                     val token = tokens[i]
+                    val lowerToken = token.lowercase()
                     if (token.matches(Regex("\\d{4}[-/]\\d{2}[-/]\\d{2}")) ||
-                        token.matches(Regex("[a-zA-Z]{3}")) ||
+                        validMonths.contains(lowerToken) ||
                         token.matches(Regex("\\d{1,2}月"))
                     ) {
                         dateStartIndex = i
@@ -284,7 +260,7 @@ class AndroidDeviceFolderAbility(device: DeviceEntityAndroid) : DeviceAbilityFol
                 }
 
                 if (dateStartIndex == -1) {
-                    return@mapNotNull listOf(line).parseToFilesOld(parent).firstOrNull()
+                    return@mapNotNull null
                 }
 
                 val sizeStr = tokens[dateStartIndex - 1]
@@ -294,24 +270,29 @@ class AndroidDeviceFolderAbility(device: DeviceEntityAndroid) : DeviceAbilityFol
                 val nameStartIndex = if (isThreePartDate) dateStartIndex + 3 else dateStartIndex + 2
 
                 if (nameStartIndex > tokens.size) {
-                    return@mapNotNull listOf(line).parseToFilesOld(parent).firstOrNull()
+                    return@mapNotNull null
                 }
 
                 val modificationTime = tokens.subList(dateStartIndex, nameStartIndex).joinToString(" ")
-                val name = tokens.subList(nameStartIndex, tokens.size).joinToString(" ")
+                val rawName = tokens.subList(nameStartIndex, tokens.size).joinToString(" ")
+                val parts = rawName.split(" -> ")
+                val name = parts[0].trim()
+                val target = parts.getOrNull(1)?.trim().orEmpty()
 
-                if (name.isEmpty()) return@mapNotNull null
+                if (name.isEmpty() || name == "." || name == "..") return@mapNotNull null
 
                 val type = when {
                     permissions.startsWith("-") -> FileType.FILE
                     permissions.startsWith("d", true) -> FileType.DIR
+                    permissions.startsWith("l", true) -> FileType.LINK_FILE
                     else -> FileType.OTHER
                 }
 
                 RemoteFile(
                     name, parent, "${parent.path}/$name",
                     type, size, modificationTime, permissions,
-                    level = parent.level + 1
+                    level = parent.level + 1,
+                    linkTarget = target
                 )
             }
             return files.sortedBy {

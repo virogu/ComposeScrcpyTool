@@ -26,7 +26,8 @@ import androidx.compose.runtime.mutableStateOf
 //l：符号连接(软连接/快捷方式) 后面会用 -> 打印出指向的真实文件
 enum class FileType(val sortIndex: Int) {
     DIR(0),
-    LINK(0),
+    LINK_DIR(0),
+    LINK_FILE(1),
     FILE(1),
     OTHER(2)
 }
@@ -47,13 +48,15 @@ data class RemoteFile(
     val modificationTime: String = "",
     val permissions: String = "",
     val level: Int = 0,
+    val linkTarget: String = "",
+    val realType: MutableState<FileType> = mutableStateOf(type),
     val isExpanded: MutableState<Boolean> = mutableStateOf(false),
     val children: MutableState<List<RemoteFile>> = mutableStateOf(emptyList()),
     val childrenLoadStates: MutableState<RemoteFileLoadState> = mutableStateOf(RemoteFileLoadState.NotLoad)
 ) {
     var verifyInfo: FileVerifyInfo? = null
 
-    val isDirectory = type == FileType.DIR
+    val isDirectory get() = realType.value == FileType.DIR || realType.value == FileType.LINK_DIR
 
     val permission: FilePermission by lazy {
         FilePermission.parse(permissions) ?: FilePermission()

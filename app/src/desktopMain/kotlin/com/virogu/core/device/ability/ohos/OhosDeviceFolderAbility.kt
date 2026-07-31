@@ -198,7 +198,7 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
                 val type = when {
                     permissions.startsWith("-") -> FileType.FILE
                     permissions.startsWith("d", true) -> FileType.DIR
-                    permissions.startsWith("l", true) -> FileType.LINK
+                    permissions.startsWith("l", true) -> FileType.LINK_FILE
                     else -> FileType.OTHER
                 }
                 val size = matcher.group(4).orEmpty().ifEmpty {

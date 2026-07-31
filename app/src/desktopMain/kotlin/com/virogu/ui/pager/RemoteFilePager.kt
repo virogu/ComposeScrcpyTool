@@ -58,6 +58,7 @@ import com.virogu.ui.view.SelectDeviceView
 import com.virogu.ui.view.TipsView
 import kotlinx.coroutines.launch
 import theme.Icon
+import theme.icons.NorthEast
 import theme.materialColors
 import theme.textFieldHeight
 import java.net.URI
@@ -280,12 +281,19 @@ fun LazyListScope.FileTreeRecursive(
                 )
             }
 
-            is RemoteFileLoadState.Error -> item {
-                FilePlaceholdersItem(
-                    state.msg,
-                    materialColors.error,
-                    file.level
-                )
+            is RemoteFileLoadState.Error -> {
+                if (file.realType.value == FileType.LINK_DIR) {
+                    file.realType.value = FileType.LINK_FILE
+                    file.isExpanded.value = false
+                } else {
+                    item {
+                        FilePlaceholdersItem(
+                            state.msg,
+                            materialColors.error,
+                            file.level
+                        )
+                    }
+                }
             }
 
             RemoteFileLoadState.NotLoad -> item {
@@ -408,12 +416,10 @@ fun FileNodeItem(
             }.combinedClickable(onClick = {}, onDoubleClick = {
                 file.toggleExpand()
             }).run {
-                when (file.type) {
-                    FileType.DIR -> {
-                        dragAndDropTarget(shouldStartDragAndDrop = { true }, target = dragAndDropTargetCallback)
-                    }
-
-                    else -> this
+                if (file.isDirectory) {
+                    dragAndDropTarget(shouldStartDragAndDrop = { true }, target = dragAndDropTargetCallback)
+                } else {
+                    this
                 }
             }.onPointerEvent(PointerEventType.Press) { selectFile(file) }
         ) {
@@ -439,8 +445,8 @@ fun FileNodeItem(
                         modifier = modifier.weight(5f), horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Spacer(Modifier.width((file.level * 8).dp))
-                        when (file.type) {
-                            FileType.DIR -> {
+                        when (file.realType.value) {
+                            FileType.DIR, FileType.LINK_DIR -> {
                                 Icon(
                                     modifier = modifier.size(30.dp).clickable(role = Role.Button) {
                                         selectFile(file)
@@ -451,20 +457,42 @@ fun FileNodeItem(
                                         Icon.Outlined.KeyboardArrowRight
                                     }, contentDescription = file.name
                                 )
-                                Icon(
-                                    modifier = iconModifier,
-                                    painter = Icon.Outlined.FileFolder,
-                                    contentDescription = file.name
-                                )
+                                if (file.realType.value == FileType.LINK_DIR) {
+                                    Box(modifier = iconModifier) {
+                                        Icon(
+                                            modifier = Modifier.fillMaxSize(),
+                                            painter = Icon.Outlined.FileFolder,
+                                            contentDescription = file.name
+                                        )
+                                        Icon(
+                                            modifier = Modifier.size(12.dp).align(Alignment.TopEnd),
+                                            painter = Icon.Outlined.NorthEast,
+                                            contentDescription = null,
+                                        )
+                                    }
+                                } else {
+                                    Icon(
+                                        modifier = iconModifier,
+                                        painter = Icon.Outlined.FileFolder,
+                                        contentDescription = file.name
+                                    )
+                                }
                             }
 
-                            FileType.LINK -> {
+                            FileType.LINK_FILE -> {
                                 Spacer(iconModifier)
-                                Icon(
-                                    modifier = iconModifier,
-                                    painter = Icon.Outlined.FileLink,
-                                    contentDescription = file.name
-                                )
+                                Box(modifier = iconModifier) {
+                                    Icon(
+                                        modifier = Modifier.fillMaxSize(),
+                                        painter = Icon.Outlined.FileDocument,
+                                        contentDescription = file.name
+                                    )
+                                    Icon(
+                                        modifier = Modifier.size(9.dp).align(Alignment.TopEnd),
+                                        painter = Icon.Outlined.NorthEast,
+                                        contentDescription = null,
+                                    )
+                                }
                             }
 
                             FileType.FILE -> {
@@ -559,14 +587,14 @@ private fun ToolBarView(
         Row(Modifier.align(Alignment.CenterStart), Arrangement.spacedBy(8.dp)) {
             OptionButton(
                 "新建文件夹",
-                enable = deviceConnected && selectedFile?.type == FileType.DIR && !isBusy,
+                enable = deviceConnected && selectedFile?.isDirectory == true && !isBusy,
                 painter = Icon.Outlined.FileNewFolder
             ) {
                 showOptionDialog(FileOptionDialogType.NewFolder)
             }
             OptionButton(
                 "新建文件",
-                enable = deviceConnected && selectedFile?.type == FileType.DIR && !isBusy,
+                enable = deviceConnected && selectedFile?.isDirectory == true && !isBusy,
                 painter = Icon.Outlined.FileNewFile
             ) {
                 showOptionDialog(FileOptionDialogType.NewFile)
@@ -580,7 +608,7 @@ private fun ToolBarView(
             }
             OptionButton(
                 "导入文件",
-                enable = deviceConnected && selectedFile?.type == FileType.DIR && !isBusy,
+                enable = deviceConnected && selectedFile?.isDirectory == true && !isBusy,
                 painter = Icon.Outlined.Upload
             ) {
                 showOptionDialog(FileOptionDialogType.Upload)
