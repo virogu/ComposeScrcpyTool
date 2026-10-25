@@ -24,7 +24,6 @@ import com.virogu.core.device.Device
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import java.io.File
 
 class RemoteFileViewModel : BaseJobViewModel() {
@@ -151,15 +150,27 @@ class RemoteFileViewModel : BaseJobViewModel() {
             }
             file.childrenLoadStates.value = RemoteFileLoadState.Loading
             try {
-                val children: List<RemoteFile> = if (!file.isDirectory) {
-                    emptyList()
+                if (!file.isDirectory) {
+                    file.children.value = emptyList()
+                    file.childrenLoadStates.value = RemoteFileLoadState.Loaded
                 } else {
                     lineJob {
-                        device.folderAbility.refreshPath(file).getOrNull().orEmpty()
+                        // 失败必须透到 Error 状态：getOrNull().orEmpty() 会把
+                        // 权限不足等真实错误渲染成"空文件夹"
+                        device.folderAbility.refreshPath(file).fold(
+                            onSuccess = { children ->
+                                file.children.value = children
+                                file.childrenLoadStates.value = RemoteFileLoadState.Loaded
+                            },
+                            onFailure = { e ->
+                                file.children.value = emptyList()
+                                file.childrenLoadStates.value = RemoteFileLoadState.Error(
+                                    e.localizedMessage ?: "加载目录失败"
+                                )
+                            }
+                        )
                     }
                 }
-                file.children.value = children
-                file.childrenLoadStates.value = RemoteFileLoadState.Loaded
             } catch (e: Throwable) {
                 file.children.value = emptyList()
                 file.childrenLoadStates.value = RemoteFileLoadState.Error(e.localizedMessage)

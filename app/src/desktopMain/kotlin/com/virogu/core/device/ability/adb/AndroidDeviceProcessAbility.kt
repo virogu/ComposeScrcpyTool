@@ -17,105 +17,77 @@
 
 package com.virogu.core.device.ability.adb
 
-import com.virogu.core.command.AdbCommand
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityProcess
 import com.virogu.core.device.process.ProcessInfo
 import com.virogu.core.device.process.ProcessInfoAndroid
-import org.kodein.di.DI
-import org.kodein.di.conf.global
-import org.kodein.di.instance
+import com.virogu.core.device.process.ProcessListParser
 
 /**
  * @author Virogu
  * @since 2024-03-27 下午 8:47
  **/
-class AndroidDeviceProcessAbility(private val device: Device) : DeviceAbilityProcess {
-    companion object {
-        private val cmd: AdbCommand by DI.global.instance<AdbCommand>()
-    }
+class AndroidDeviceProcessAbility(device: Device) : DeviceAbilityProcess {
 
-    private val target = arrayOf("-s", device.serial)
+    private val shell = AdbShellExecutor(device.serial)
 
-    override suspend fun refresh(): List<ProcessInfo> {
-        return refresh1()
+    override suspend fun refresh(): Result<List<ProcessInfo>> {
+        // 无参数的 ps 在 toolbox（Android 5/6）与 toybox（Android 7+）上都输出全部进程，
+        // 首列 USER/次列 PID/末列 NAME 两代一致，由 ProcessListParser 过滤应用进程。
+        // 不能用 `ps -A || ps` 回退：toolbox 的 ps -A 不报错，而是把 -A 当进程名过滤器，
+        // 输出仅表头且退出码 0，回退链永远不会触发。
+        // 旧实现 `am dump -a | grep 'PID #'` 在 Android 5 上没有 am dump 子命令、
+        // 输出数 MB 且受 5 秒超时限制，失败一律静默成空列表。
+        return shell.execNoSu("ps", consoleLog = false, timeout = 20L).mapCatching { sr ->
+            if (sr.exitCode != 0) {
+                throw IllegalStateException(sr.output.ifEmpty { "ps 执行失败 (exit ${sr.exitCode})" })
+            }
+            ProcessListParser.parseAppProcesses(sr.output.lines()).map {
+                ProcessInfoAndroid(
+                    user = it.user,
+                    uid = it.user,
+                    pid = it.pid,
+                    processName = it.processName,
+                    packageName = it.processName.substringBefore(':'),
+                )
+            }
+        }
     }
 
     override suspend fun killProcess(info: ProcessInfo): Result<String> {
-        return cmd.adb(*target, "shell", "am", "kill", info.packageName, consoleLog = true)
-    }
-
-    override suspend fun forceStopProcess(info: ProcessInfo): Result<String> {
-        return cmd.adb(*target, "shell", "am", "force-stop", info.packageName, consoleLog = true)
-    }
-
-    private suspend fun refresh1(): List<ProcessInfo> {
-        return cmd.adb(*target, "shell", "am dump -a | grep 'PID #'").map(::parse1).getOrNull().orEmpty()
-    }
-
-    private suspend fun refresh2(): List<ProcessInfo> {
-        return cmd.adb(*target, "shell", "dumpsys activity processes").map(::parse2).getOrNull().orEmpty()
-    }
-
-    //am dump -a | grep 'PID #'
-    private fun parse1(info: String): List<ProcessInfoAndroid> {
-        //PID #4466: ProcessRecord{35f4c1b 4466:com.android.keychain/1000}
-        //PID #4494: ProcessRecord{9b3c996 4494:com.android.tv.settings/1000}
-        val pidRegex = Regex("""PID #(\d+):\s+ProcessRecord\{\S+\s+\d+:(\S+)/(\S+)}""")
-        return info.trim().split("\n").mapNotNull {
-            val r = pidRegex.find(it.trim())?.groupValues ?: return@mapNotNull null
-            if (r.size < 3) {
-                return@mapNotNull null
+        // `am kill` 只杀"安全可杀"的后台进程，前台/常驻进程会被静默跳过且退出码仍为 0，
+        // 表现为"不生效"；改为直接对选中的 PID 发信号（toolbox/toybox 的 kill 均可用，
+        // 对 :子进程 也能精确停止）。shell 用户被 SELinux 拒绝时按设备画像走 su 重试。
+        // 注意：前台 Activity 的进程被 kill 后系统会立即重建（列表里出现新 PID），
+        // 要彻底停止整个应用需使用 force-stop，这是系统行为。
+        val pid = info.pid
+        val direct = shell.execNoSu("kill $pid", timeout = 10L).getOrNull()
+        if (direct != null && direct.exitCode == 0) {
+            return Result.success("kill $pid success")
+        }
+        return shell.exec("kill $pid", timeout = 10L).mapCatching { sr ->
+            when {
+                // 进程已退出视为达成目的
+                sr.exitCode == 0 || sr.output.contains("No such process", ignoreCase = true) ->
+                    sr.output.trim().ifEmpty { "kill $pid success" }
+                else -> throw IllegalStateException(
+                    sr.output.ifEmpty { "停止进程失败 (exit ${sr.exitCode})" } +
+                            "；无 root 权限时无法停止前台进程，可改用「强行停止」"
+                )
             }
-            val pid = r[1]
-            val uid = r[3]
-            val packageName = r[2]
-            ProcessInfoAndroid(
-                user = uid,
-                uid = uid,
-                pid = pid,
-                processName = packageName,
-                packageName = packageName,
-            )
         }
     }
 
-    //dumpsys activity processes
-    private fun parse2(info: String): List<ProcessInfoAndroid> = info.runCatching {
-        val matches = Regex("""(?s)(APP|PERS)\*\s+(.*?)(\*|PID mappings:)""").findAll(this)
-        if (matches.count() <= 0) {
-            return emptyList()
-        }
-        matches.mapNotNull { matchesResult ->
-            val process = matchesResult.groupValues[2]
-            val first = process.reader().readLines().firstOrNull()?.trim() ?: return@mapNotNull null
-            //UID 1000 ProcessRecord{a0f6d00 727:com.microsoft.windows.systemapp/u0a48}
-            val baseInfo = Regex("""\S+\s+(\d+)\s+ProcessRecord\{(\S+)\s+(\d+):(\S+)/(\S+)}(.*)""").find(first)
-                ?: return@mapNotNull null
-            val uid = baseInfo.groupValues.getOrNull(1) ?: return@mapNotNull null
-            val pid = baseInfo.groupValues.getOrNull(3) ?: return@mapNotNull null
-            val processName = baseInfo.groupValues.getOrNull(4) ?: return@mapNotNull null
-            val packageName = processName.split(":").firstOrNull() ?: return@mapNotNull null
-            val user: String = baseInfo.groupValues.getOrNull(5).orEmpty().let {
-                if (it.first().isDigit()) {
-                    it.toIntOrNull()?.toString() ?: "0"
-                } else {
-                    val m = Regex("""(.*?)(\d+)(.*?)""").find(it)
-                    m?.groupValues?.getOrNull(2) ?: "0"
-                }
-            }
-            val maps = Regex("""\s*(\w+)=(\{[^{}]*}|\S+)\s*""").findAll(process).associate { kv ->
-                kv.groupValues[1] to kv.groupValues[2]
-            }
-            ProcessInfoAndroid(
-                user = user,
-                uid = uid,
-                pid = pid,
-                processName = processName,
-                packageName = packageName,
-                params = maps
-            )
-        }.toList()
-    }.getOrNull().orEmpty()
+    override suspend fun forceStopProcess(info: ProcessInfo): Result<String> =
+        execAm("am force-stop ${info.packageName}")
 
+    /** am 系列命令出错时打印 Error: 文本但退出码为 0，需要一并判定 */
+    private suspend fun execAm(commandStr: String): Result<String> =
+        shell.execNoSu(commandStr, timeout = 15L).mapCatching { sr ->
+            val output = sr.output.trim()
+            if (sr.exitCode != 0 || output.startsWith("Error", ignoreCase = true)) {
+                throw IllegalStateException(output.ifEmpty { "执行失败 (exit ${sr.exitCode})" })
+            }
+            output
+        }
 }

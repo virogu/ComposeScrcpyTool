@@ -35,7 +35,13 @@ object DeviceShell {
 
     fun escapeSingleQuotes(command: String): String = command.replace("'", "'\\''")
 
-    fun wrapWithExitMarker(command: String): String = "$command; echo; echo $RC_MARKER\$?"
+    /**
+     * 退出码必须先存进变量再输出：`cmd; echo; echo __RC:$?` 中间的 echo 会把 `$?`
+     * 覆盖成 0，导致任何命令的失败都被掩盖成成功。
+     * 该串可能整体嵌入 `su 0 sh -c '<...>'` 的内层（su 不透传子命令退出码，
+     * 标记放外层同样拿不到真实值），由内层 sh 求值 `$__scrc`。
+     */
+    fun wrapWithExitMarker(command: String): String = "$command; __scrc=\$?; echo; echo $RC_MARKER\$__scrc"
 
     /**
      * 从设备输出解析退出码标记，返回 (exitCode, 业务输出)。

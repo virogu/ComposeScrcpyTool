@@ -17,7 +17,9 @@
 
 package com.virogu.core.device.ability.ohos
 
+import com.virogu.core.command.DeviceShell
 import com.virogu.core.command.HdcCommand
+import com.virogu.core.command.ShellResult
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityProcess
 import com.virogu.core.device.process.ProcessInfo
@@ -37,20 +39,36 @@ class OhosDeviceProcessAbility(private val device: Device) : DeviceAbilityProces
 
     private val target = arrayOf("-t", device.serial)
 
-    override suspend fun refresh(): List<ProcessInfo> {
-        //hdc shell "aa dump -a"
-        val pidInfo = cmd.hdc(*target, "shell", "ps -ef").getOrNull() ?: return emptyList()
-        val bundleInfo = cmd.hdc(*target, "shell", "aa dump -a | grep 'bundle name'").getOrNull() ?: return emptyList()
-        return parse(pidInfo = pidInfo, bundleInfo = bundleInfo)
+    override suspend fun refresh(): Result<List<ProcessInfo>> {
+        // hdc shell 不回传设备端退出码，统一用标记法获取真实结果；
+        // aa dump -a 偏慢，超时放宽，失败透出而不是静默空列表
+        val pidInfo = execShell("ps -ef", timeout = 15L).getOrElse { return Result.failure(it) }.output
+        val bundleInfo = execShell("aa dump -a | grep 'bundle name'", timeout = 30L)
+            .getOrElse { return Result.failure(it) }.output
+        return runCatching { parse(pidInfo = pidInfo, bundleInfo = bundleInfo) }
     }
 
     override suspend fun killProcess(info: ProcessInfo): Result<String> {
         return forceStopProcess(info)
     }
 
-    override suspend fun forceStopProcess(info: ProcessInfo): Result<String> {
-        return cmd.hdc(*target, "shell", "aa force-stop ${info.packageName}")
-    }
+    override suspend fun forceStopProcess(info: ProcessInfo): Result<String> =
+        execShell("aa force-stop ${info.packageName}", timeout = 15L).mapCatching {
+            if (it.exitCode != 0) {
+                throw IllegalStateException(it.output.ifEmpty { "执行失败 (exit ${it.exitCode})" })
+            }
+            it.output.trim()
+        }
+
+    private suspend fun execShell(commandStr: String, timeout: Long): Result<ShellResult> =
+        cmd.hdcChecked(*target, "shell", DeviceShell.wrapWithExitMarker(commandStr), timeout = timeout)
+            .mapCatching { sr ->
+                val parsed = DeviceShell.parseShellResult(sr.output)
+                if (parsed.exitCode < 0) {
+                    throw IllegalStateException(parsed.output.ifEmpty { "设备无响应或命令未执行 (exit ${sr.exitCode})" })
+                }
+                parsed
+            }
 
     private fun parse(pidInfo: String, bundleInfo: String): List<ProcessInfoOhos> {
         //UID            PID  PPID C STIME TTY          TIME CMD

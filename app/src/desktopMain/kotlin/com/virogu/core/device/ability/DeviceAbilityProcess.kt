@@ -24,7 +24,8 @@ import com.virogu.core.device.process.ProcessInfo
  * @since 2024-03-27 下午 8:35
  **/
 interface DeviceAbilityProcess {
-    suspend fun refresh(): List<ProcessInfo>
+    /** 刷新进程列表；失败时返回 Result.failure（设备报错透出），不再静默空列表 */
+    suspend fun refresh(): Result<List<ProcessInfo>>
 
     suspend fun killProcess(info: ProcessInfo): Result<String>
 

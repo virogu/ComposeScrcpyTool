@@ -22,7 +22,6 @@ import com.virogu.core.bean.FileVerifyInfo
 import com.virogu.core.bean.RemoteFile
 import com.virogu.core.command.AdbCommand
 import com.virogu.core.command.DeviceShell
-import com.virogu.core.command.ShellResult
 import com.virogu.core.device.DeviceEntityAndroid
 import com.virogu.core.device.ability.DeviceAbilityFolder
 import com.virogu.core.device.ability.LsOutputParser
@@ -51,50 +50,17 @@ class AndroidDeviceFolderAbility(device: DeviceEntityAndroid) : DeviceAbilityFol
 
     private val serial: String = device.serial
     private val target = arrayOf("-s", serial)
+    private val shell = AdbShellExecutor(serial)
 
     /**
      * 单引号包裹的 shell 参数；路径中的 `'` 会被正确转义，
-     * 配合 [execute] 里对 su 上下文的二次转义，文件名含空格/引号/`$` 都不会破坏命令。
+     * 配合 [AdbShellExecutor.exec] 里对 su 上下文的二次转义，文件名含空格/引号/`$` 都不会破坏命令。
      */
     private fun q(path: String): String = "'${DeviceShell.escapeSingleQuotes(path)}'"
 
-    /**
-     * 执行设备端命令并解析真实退出码：
-     * - su 状态按设备画像只探测一次（[AdbDeviceProfileCache]），不再每条命令三连回退
-     * - stderr 不再整体丢弃，失败原因可以透出到 UI，杜绝"输出为空即成功"的假成功
-     */
-    private suspend fun execute(
-        commandStr: String,
-        consoleLog: Boolean = true,
-        timeout: Long = 30L
-    ): Result<ShellResult> {
-        val su = AdbDeviceProfileCache.suMode(serial)
-        val body = when (su) {
-            SuMode.NONE -> commandStr
-            SuMode.SU0 -> "su 0 -c '${DeviceShell.escapeSingleQuotes(commandStr)}'"
-            SuMode.SU_C -> "su -c '${DeviceShell.escapeSingleQuotes(commandStr)}'"
-        }
-        return cmd.adbChecked(
-            *target,
-            "shell",
-            DeviceShell.wrapWithExitMarker(body),
-            consoleLog = consoleLog,
-            timeout = timeout
-        ).mapCatching { sr ->
-            val parsed = DeviceShell.parseShellResult(sr.output)
-            if (parsed.exitCode < 0) {
-                // 没拿到退出码标记：su 被拒、设备掉线等，必须报错而不是当空结果
-                throw IllegalStateException(
-                    parsed.output.ifEmpty { "设备无响应或命令未执行 (exit ${sr.exitCode})" }
-                )
-            }
-            parsed
-        }
-    }
-
     /** 以设备端退出码为成败依据，失败时抛出设备原始报错文本 */
     private suspend fun execChecked(commandStr: String, consoleLog: Boolean = true, timeout: Long = 30L): Result<String> =
-        execute(commandStr, consoleLog, timeout).mapCatching { sr ->
+        shell.exec(commandStr, consoleLog, timeout).mapCatching { sr ->
             if (sr.exitCode != 0) {
                 throw IllegalStateException(sr.output.ifEmpty { "命令执行失败 (exit ${sr.exitCode})" })
             }
@@ -201,7 +167,7 @@ class AndroidDeviceFolderAbility(device: DeviceEntityAndroid) : DeviceAbilityFol
         val cmdStr = "/system/bin/toybox ls -A -l ${q(targetPath)} 2>/dev/null" +
                 " || ls -A -l ${q(targetPath)} 2>/dev/null" +
                 " || ls -l -a ${q(targetPath)}"
-        return execute(cmdStr, timeout = 30L).mapCatching { sr ->
+        return shell.exec(cmdStr, timeout = 30L).mapCatching { sr ->
             val lines = sr.output.lines()
             val outcome = LsOutputParser.parse(lines)
             var entries = outcome.entries
@@ -240,7 +206,7 @@ class AndroidDeviceFolderAbility(device: DeviceEntityAndroid) : DeviceAbilityFol
                 }.joinToString("; ")
                 // 与列表同通道（含 su 包装），保证 root 下对受限路径的判定一致；
                 // su 状态在首次列表时已探测完成，这里不会再次触发授权弹窗
-                execute(batch, consoleLog = false).onSuccess { sr ->
+                shell.exec(batch, consoleLog = false).onSuccess { sr ->
                     sr.output.lineSequence().forEach { line ->
                         Regex("^D(\\d+)$").find(line.trim())?.let { m ->
                             targetsToTest.getOrNull(m.groupValues[1].toInt())?.let { dirPaths.add(it.path) }

@@ -26,8 +26,10 @@ class DeviceShellTest {
     @Test
     fun wrapWithExitMarker() {
         val wrapped = DeviceShell.wrapWithExitMarker("ls -l '/sdcard'")
-        assertTrue(wrapped.endsWith("; echo; echo __RC:\$?"))
         assertTrue(wrapped.startsWith("ls -l '/sdcard'"))
+        // $? 必须先存变量再输出：echo 会把 $? 覆盖成 0，导致失败被掩盖成成功
+        assertTrue(wrapped.endsWith("; __scrc=\$?; echo; echo __RC:\$__scrc"))
+        assertTrue(wrapped.indexOf("__scrc=\$?") < wrapped.indexOf("echo __RC:"))
     }
 
     @Test

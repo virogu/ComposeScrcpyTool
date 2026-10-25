@@ -33,7 +33,7 @@ enum class SuMode {
     /** 设备无 su 或探测超时（如 Magisk 授权弹窗未处理），命令以 shell 用户直跑 */
     NONE,
 
-    /** Magisk / KernelSU 风格：su 0 -c 'cmd' */
+    /** Magisk / KernelSU / AOSP su 通用形式：su 0 sh -c 'cmd' */
     SU0,
 
     /** 旧 SuperSU 风格：su -c 'cmd' */
@@ -69,11 +69,13 @@ object AdbDeviceProfileCache {
     }
 
     private suspend fun probe(serial: String): SuMode {
-        // 先用 command -v 判断 su 是否存在，避免在无 root 的设备上产生无谓的错误输出；
-        // 两段探测分别对应 Magisk/KernelSU 的 `su 0 -c` 与旧 SuperSU 的 `su -c`。
+        // 先用 command -v 判断 su 是否存在，避免在无 root 的设备上产生无谓的错误输出。
+        // SU0 的探测形式必须是 `su 0 sh -c`：Android 5 的 AOSP su 对 `su 0 -c id` 会
+        // 静默失败，对 `su -c <串>` 只做 execv 不经 shell，只有 argv 透传形式全版本可用。
+        // 两段探测分别对应 Magisk/KernelSU（su 0 sh -c）与旧 SuperSU（su -c）。
         // stderr 抑制仅用于探测本身，业务命令的错误不会被丢弃。
         val probeCmd = "if command -v su >/dev/null 2>&1; then " +
-                "echo \"U0:$(su 0 -c id 2>/dev/null)\"; " +
+                "echo \"U0:$(su 0 sh -c id 2>/dev/null)\"; " +
                 "echo \"UC:$(su -c id 2>/dev/null)\"; " +
                 "else echo NOSU; fi"
         val out = cmd.adbChecked("-s", serial, "shell", probeCmd, timeout = 15L, consoleLog = false)

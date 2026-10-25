@@ -98,8 +98,13 @@ class ProcessViewModel : BaseJobViewModel() {
     }
 
     private suspend fun refreshProcess(device: Device) {
-        val process = device.processAbility.refresh()
-        processListFlow.emit(process)
+        device.processAbility.refresh().fold(
+            onSuccess = { processListFlow.emit(it) },
+            onFailure = {
+                it.printStackTrace()
+                tipsFlow.emit("刷新进程列表失败, ${it.localizedMessage}")
+            }
+        )
     }
 
     fun killProcess(info: ProcessInfo) {
@@ -118,9 +123,8 @@ class ProcessViewModel : BaseJobViewModel() {
         }
     }
 
-    private suspend fun Result<String>.toast() = onSuccess {
-        if (it.isNotEmpty()) {
-            tipsFlow.emit(it)
-        }
-    }
+    private suspend fun Result<String>.toast() = fold(
+        onSuccess = { if (it.isNotEmpty()) tipsFlow.emit(it) },
+        onFailure = { tipsFlow.emit(it.localizedMessage ?: "执行失败") }
+    )
 }

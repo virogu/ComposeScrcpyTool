@@ -118,7 +118,8 @@ fun DeviceProcessPager(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     processes.forEach {
-                        item {
+                        // pid 作 key：5 秒轮询整表刷新时保住滚动位置与选中态
+                        item(key = it.pid) {
                             ProcessItemView(viewModel, it, currentSelect) {
                                 currentSelect = it
                             }
