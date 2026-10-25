@@ -26,9 +26,20 @@ import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+
+/**
+ * 带退出码的命令执行结果。
+ * [exitCode] 为宿主进程（adb/hdc 客户端）的退出码；设备端 shell 命令的真实退出码
+ * 由 [DeviceShell] 的标记机制获取（Android 5/6 的 adb shell 不回传退出码）。
+ */
+data class ShellResult(
+    val exitCode: Int,
+    val output: String,
+)
 
 /**
  * @author Virogu
@@ -117,6 +128,80 @@ open class BaseCommand(val configStores: ConfigStores) {
                     return@withContext Result.success("")
                 }
                 //e.printStackTrace()
+                logger.error { "run error. $e" }
+                return@withContext Result.failure(e)
+            } finally {
+                process?.destroyRecursively()
+                redirect.takeIf {
+                    autoDeleteRedirect && it.exists()
+                }?.delete()
+            }
+        }
+    }
+
+    /**
+     * 与 [exec] 相同的执行机制，但返回宿主进程退出码，且失败语义严格：
+     * - 超时返回 failure，而不是伪装成空输出成功
+     * - 任务取消时向上抛出 CancellationException，由调用方的协程正常终止
+     * 文件管理等需要可靠成败判定的链路使用本方法；旧的 [exec] 保持原语义不动。
+     */
+    open suspend fun execWithExitCode(
+        vararg command: String,
+        workDir: File? = this.workDir,
+        redirectFile: File? = null,
+        env: Map<String, String>? = null,
+        showLog: Boolean = false,
+        consoleLog: Boolean = Common.isDebug,
+        timeout: Long = 5L,
+        inputCharset: Charset = Charsets.UTF_8,
+        outCharset: Charset = Charsets.UTF_8
+    ): Result<ShellResult> = mutex.withLock {
+        val redirect = redirectFile ?: defaultRedirectFile
+        val autoDeleteRedirect = redirectFile == null
+        withContext(Dispatchers.IO) {
+            var process: Process? = null
+            try {
+                if (command.isEmpty()) {
+                    return@withContext Result.failure(IllegalArgumentException("command is empty!"))
+                }
+                val cmdString = command.joinToString(" ")
+                val commandEncoded = if (inputCharset.name() == Charsets.UTF_8.name()) {
+                    command
+                } else {
+                    command.map {
+                        String(it.toByteArray(Charsets.UTF_8), inputCharset)
+                    }.toTypedArray()
+                }
+                if (showLog) {
+                    logger.info { "\n${commandEncoded.contentToString()} wait" }
+                } else if (consoleLog) {
+                    logger.debug { "\n${commandEncoded.contentToString()} wait" }
+                }
+                process = ProcessBuilder(*commandEncoded).fixEnv(env, workDir, redirect).start()
+                if (timeout <= 0) {
+                    process.waitFor()
+                } else {
+                    if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
+                        throw TimeoutException("time out after ${timeout}s")
+                    }
+                }
+                val exitCode = process.exitValue()
+                val result = if (autoDeleteRedirect) {
+                    redirect.readText(outCharset).trim()
+                } else {
+                    ""
+                }
+                if (showLog) {
+                    val msg = "\n" + formatLog(cmdString, result)
+                    logger.info { msg }
+                } else if (consoleLog) {
+                    val msg = "\n" + formatLog(cmdString, result)
+                    logger.debug { msg }
+                }
+                return@withContext Result.success(ShellResult(exitCode, result))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 logger.error { "run error. $e" }
                 return@withContext Result.failure(e)
             } finally {

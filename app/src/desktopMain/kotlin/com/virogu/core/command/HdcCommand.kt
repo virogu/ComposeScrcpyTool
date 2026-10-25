@@ -82,6 +82,32 @@ class HdcCommand(configStores: ConfigStores) : BaseCommand(configStores) {
         )
     }
 
+    /**
+     * 带宿主退出码的执行（用于设备端标记法命令）。
+     * 超时/取消会返回 failure 或向上抛出，不再伪装成空输出成功。
+     */
+    suspend fun hdcChecked(
+        vararg command: String,
+        timeout: Long = 5L,
+        consoleLog: Boolean = Common.isDebug,
+        charset: Charset = Charsets.UTF_8
+    ): Result<ShellResult> {
+        if (!active) {
+            return Result.failure(IllegalStateException("hdc server is not active"))
+        }
+        if (!started) {
+            startServer()
+            showVersion()
+        }
+        return execWithExitCode(
+            *executable,
+            *command,
+            consoleLog = consoleLog,
+            timeout = timeout,
+            outCharset = charset
+        )
+    }
+
     override suspend fun startServer() {
         exec(*executable, "start", consoleLog = true)
         started = true

@@ -74,7 +74,15 @@ class AdbCommand(configStores: ConfigStores) : BaseCommand(configStores) {
     private val innerExe by lazy {
         when (Common.platform) {
             is Platform.Linux, is Platform.MacOs -> arrayOf("./adb")
-            is Platform.Windows -> arrayOf("cmd.exe", "/c", "adb")
+            is Platform.Windows -> {
+                // 直接用绝对路径启动，避免经 cmd.exe /c 中转时引号与空格被 cmd 二次解析
+                val exe = workDir.resolve("adb.exe")
+                if (exe.exists()) {
+                    arrayOf(exe.absolutePath)
+                } else {
+                    arrayOf("cmd.exe", "/c", "adb")
+                }
+            }
             else -> arrayOf("adb")
         }
     }
@@ -105,6 +113,25 @@ class AdbCommand(configStores: ConfigStores) : BaseCommand(configStores) {
             timeout = timeout,
             outCharset = charset
         )
+    }
+
+    /**
+     * 带宿主退出码的执行（用于 adb push/pull 的成败判定与设备端标记法命令）。
+     * 超时/取消会返回 failure 或向上抛出，不再伪装成空输出成功。
+     */
+    suspend fun adbChecked(
+        vararg command: String,
+        timeout: Long = 5L,
+        consoleLog: Boolean = Common.isDebug
+    ): Result<ShellResult> {
+        if (!active) {
+            return Result.failure(IllegalStateException("adb server is not active"))
+        }
+        if (!started) {
+            showVersion()
+            startServer()
+        }
+        return execWithExitCode(*executable, *command, consoleLog = consoleLog, timeout = timeout)
     }
 
     override suspend fun startServer() {

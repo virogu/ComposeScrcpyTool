@@ -20,7 +20,9 @@ package com.virogu.core.device.ability.ohos
 import com.virogu.core.bean.FileType
 import com.virogu.core.bean.FileVerifyInfo
 import com.virogu.core.bean.RemoteFile
+import com.virogu.core.command.DeviceShell
 import com.virogu.core.command.HdcCommand
+import com.virogu.core.command.ShellResult
 import com.virogu.core.device.Device
 import com.virogu.core.device.ability.DeviceAbilityFolder
 import org.kodein.di.DI
@@ -54,38 +56,44 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         }
     }
 
-    private suspend fun executeShellWithFallback(commandStr: String, consoleLog: Boolean = true): Result<String> {
-        val escapedCmd = commandStr.replace("'", "'\\''")
+    private suspend fun executeShellWithFallback(commandStr: String, consoleLog: Boolean = true): Result<ShellResult> {
+        val escapedCmd = DeviceShell.escapeSingleQuotes(commandStr)
         val combinedCmd = "su 0 -c '$escapedCmd' 2>/dev/null || su -c '$escapedCmd' 2>/dev/null || $commandStr"
-        return cmd.hdc(*target, "shell", combinedCmd, consoleLog = consoleLog)
+        // hdc shell 不回传设备端退出码，统一用标记法获取真实结果，
+        // 避免"输出为空即成功"把权限不足等失败吞成假成功
+        return cmd.hdcChecked(*target, "shell", DeviceShell.wrapWithExitMarker(combinedCmd), consoleLog = consoleLog)
+            .mapCatching { sr ->
+                val parsed = DeviceShell.parseShellResult(sr.output)
+                if (parsed.exitCode < 0) {
+                    throw IllegalStateException(parsed.output.ifEmpty { "设备无响应或命令未执行 (exit ${sr.exitCode})" })
+                }
+                parsed
+            }
     }
 
     override suspend fun refreshPath(
         parent: RemoteFile, path: String
     ): Result<List<RemoteFile>> = executeShellWithFallback(
         "ls -l -A -h '${path.ifEmpty { "/" }}'", consoleLog = DEBUG
-    ).map {
-        val lines = it.trim().split("\n")
-        val files: List<RemoteFile> = if (lines.isEmpty()) {
-            emptyList()
-        } else if (Pattern.compile(".*\\$path.*Permission denied.*").matcher(lines.first()).find()) {
-            //println("^(.*)?${parent}(.*)?Permission denied(.*)?$ find")
-            throw IllegalStateException(lines.first())
-        } else {
-            lines.parseToFiles(parent)
+    ).mapCatching { sr ->
+        if (sr.exitCode != 0) {
+            throw IllegalStateException(
+                sr.output.lineSequence().firstOrNull { it.isNotBlank() }
+                    ?: "ls 失败 (exit ${sr.exitCode})"
+            )
         }
-        files
+        val lines = sr.output.trim().split("\n")
+        lines.parseToFiles(parent)
     }
 
     override suspend fun createDir(dir: String, newFile: String): Result<String> = executeShellWithFallback(
         "mkdir -p '${dir}/${newFile}'",
         consoleLog = true
     ).mapCatching {
-        if (it.isNotEmpty()) {
-            throw IllegalStateException(it)
-        } else {
-            ""
+        if (it.exitCode != 0) {
+            throw IllegalStateException(it.output.ifEmpty { "mkdir 失败 (exit ${it.exitCode})" })
         }
+        it.output.trim()
     }
 
 
@@ -93,45 +101,36 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
         "touch '${dir}/${newFile}'",
         consoleLog = true
     ).mapCatching {
-        if (it.isNotEmpty()) {
-            throw IllegalStateException(it)
-        } else {
-            ""
+        if (it.exitCode != 0) {
+            throw IllegalStateException(it.output.ifEmpty { "touch 失败 (exit ${it.exitCode})" })
         }
+        it.output.trim()
     }
 
     override suspend fun deleteFile(path: String): Result<String> = executeShellWithFallback(
         "rm -r '${path}'",
         consoleLog = true
     ).mapCatching {
-        if (it.isNotEmpty()) {
-            throw IllegalStateException(it)
-        } else {
-            ""
+        if (it.exitCode != 0) {
+            throw IllegalStateException(it.output.ifEmpty { "rm 失败 (exit ${it.exitCode})" })
         }
+        it.output.trim()
     }
 
-    override suspend fun getFileVerifyInfo(path: String): FileVerifyInfo {
-        val md5 = executeShellWithFallback("md5sum '${path}'", consoleLog = DEBUG).map {
-            it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
-                if (l.size == 2) {
-                    l[0]
-                } else {
-                    it
-                }
+    override suspend fun getFileVerifyInfo(path: String): FileVerifyInfo = FileVerifyInfo(
+        md5 = hashInfo("md5sum", path),
+        sha1 = hashInfo("sha1sum", path)
+    )
+
+    private suspend fun hashInfo(cmdName: String, path: String): Result<String> =
+        executeShellWithFallback("$cmdName '${path}'", consoleLog = DEBUG).mapCatching {
+            if (it.exitCode != 0) {
+                throw IllegalStateException(it.output.ifEmpty { "执行失败 (exit ${it.exitCode})" })
             }
+            val collapsed = it.output.trim().replace(Regex("\\s+"), " ")
+            val tokens = collapsed.split(" ")
+            if (tokens.size >= 2) tokens[0] else collapsed
         }
-        val sha1 = executeShellWithFallback("sha1sum '${path}'", consoleLog = DEBUG).map {
-            it.replace("\\s+".toRegex(), " ").split(" ").let { l ->
-                if (l.size == 2) {
-                    l[0]
-                } else {
-                    it
-                }
-            }
-        }
-        return FileVerifyInfo(md5 = md5, sha1 = sha1)
-    }
 
     override suspend fun pullFile(toLocalFile: File, vararg fromRemotePath: String): String = buildString {
         fromRemotePath.forEach { path ->
@@ -167,9 +166,11 @@ class OhosDeviceFolderAbility(device: Device) : DeviceAbilityFolder {
     }
 
     override suspend fun chmod(path: String, permission: String): String = buildString {
-        executeShellWithFallback("chmod $permission '${path}'", consoleLog = true).onSuccess {
-            if (it.isNotBlank()) {
-                appendLine(it)
+        executeShellWithFallback("chmod $permission '${path}'", consoleLog = true).onSuccess { sr ->
+            if (sr.exitCode != 0) {
+                appendLine(sr.output.ifEmpty { "chmod fail (exit ${sr.exitCode})" })
+            } else if (sr.output.isNotBlank()) {
+                appendLine(sr.output.trim())
             } else {
                 appendLine("chmod $permission $path success")
             }
