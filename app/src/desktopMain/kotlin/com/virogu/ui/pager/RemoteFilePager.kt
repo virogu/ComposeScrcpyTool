@@ -538,7 +538,7 @@ fun FileNodeItem(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = file.size,
+                        text = file.displaySize,
                         color = materialColors.onSurface.copy(0.8f),
                         overflow = TextOverflow.Ellipsis,
                         modifier = modifier.weight(1f), textAlign = TextAlign.End, maxLines = 1,

@@ -19,6 +19,7 @@ package com.virogu.core.bean
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import java.util.*
 
 //drwxr-xr-x  -rwxrwxr-x
 //-：普通文件
@@ -58,6 +59,13 @@ data class RemoteFile(
 
     val isDirectory get() = realType.value == FileType.DIR || realType.value == FileType.LINK_DIR
 
+    val displaySize: String
+        get() {
+            if (isDirectory) return ""
+            val bytes = size.removeSuffix("B").trim().toLongOrNull() ?: return size
+            return formatFileSize(bytes)
+        }
+
     val permission: FilePermission by lazy {
         FilePermission.parse(permissions) ?: FilePermission()
     }
@@ -84,6 +92,38 @@ data class RemoteFile(
     }
 
     companion object {
+        fun formatFileSize(bytes: Long): String {
+            if (bytes <= 0L) return "0 B"
+            val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB")
+            var value = bytes.toDouble()
+            var unitIndex = 0
+            while (value >= 1024.0 && unitIndex < units.size - 1) {
+                value /= 1024.0
+                unitIndex++
+            }
+            if (unitIndex == 0) return "$bytes B"
+
+            if (value >= 999.95 && unitIndex < units.size - 1) {
+                val nextValue = value / 1024.0
+                val nextUnit = units[unitIndex + 1]
+                val formatted = if (nextValue >= 100.0) {
+                    String.format(Locale.US, "%.1f", nextValue)
+                } else {
+                    String.format(Locale.US, "%.2f", nextValue)
+                }
+                val trimmed = formatted.trimEnd('0').trimEnd('.')
+                return "$trimmed $nextUnit"
+            }
+
+            val formatted = if (value >= 100.0) {
+                String.format(Locale.US, "%.1f", value)
+            } else {
+                String.format(Locale.US, "%.2f", value)
+            }
+            val trimmed = formatted.trimEnd('0').trimEnd('.')
+            return "$trimmed ${units[unitIndex]}"
+        }
+
         fun root() = RemoteFile(
             name = "",
             path = "",

@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import java.io.File
+import java.text.NumberFormat
+import java.util.*
 
 class RemoteFileViewModel : BaseJobViewModel() {
     private val _tipsFlow = MutableSharedFlow<String>()
@@ -191,7 +193,15 @@ class RemoteFileViewModel : BaseJobViewModel() {
                 append("  ")
                 append("类型: ${file.type.name}")
                 append("  ")
-                append("大小: ${file.size}")
+                val rawBytes = file.size.removeSuffix("B").trim().toLongOrNull()
+                if (file.isDirectory) {
+                    append("大小: 目录 (项大小 ${file.size})")
+                } else if (rawBytes != null) {
+                    val formattedBytes = NumberFormat.getNumberInstance(Locale.US).format(rawBytes)
+                    append("大小: ${file.displaySize} ($formattedBytes 字节)")
+                } else {
+                    append("大小: ${file.size}")
+                }
                 appendLine()
                 appendLine("修改时间: ${file.modificationTime}")
                 appendLine("MD5: ${verifyInfo.md5.fold({ it }, { "获取MD5信息失败 ${it.localizedMessage}" })}")
